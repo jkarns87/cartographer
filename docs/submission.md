@@ -19,8 +19,8 @@ sections from Tagline through Judging criteria below into it.
 | --- | --- |
 | Project name | Cartographer |
 | Tagline | A daily island to chart: read the surveyor's notes, place the landmarks, light every clue. |
-| Thumbnail | `docs/brand/icon-1024.png` (Devpost crops gallery cards to 3:2; the island stays centered) |
-| Image gallery | `docs/brand/banner-1600x480.png`, then `docs/screenshots/cover.png` and `docs/screenshots/board.png` |
+| Thumbnail | `docs/brand/thumbnail-1200x800.png` (3:2, the icon on a widened sea; built from `thumbnail-1200x800.svg`) |
+| Image gallery | `docs/brand/thumbnail-1200x800.png`, `docs/brand/banner-1600x480.png`, then `docs/screenshots/cover.png` and `docs/screenshots/board.png` |
 | Try it out links | demo post, app listing, https://github.com/jkarns87/cartographer |
 | Video demo link | the under-one-minute video (optional) |
 | Built with | typescript, react, tailwindcss, hono, redis, vite, vitest, devvit, reddit |
