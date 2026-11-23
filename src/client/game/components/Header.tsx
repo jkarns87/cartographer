@@ -44,7 +44,7 @@ export const Header = ({ name, startedAt, serverNow, corrections, solved }: Prop
           </dd>
         </div>
         <div className="flex items-baseline gap-1">
-          <dt className="text-ink/60">Corrections</dt>
+          <dt className="text-muted">Corrections</dt>
           <dd className="font-semibold text-ink">{corrections}</dd>
         </div>
       </dl>

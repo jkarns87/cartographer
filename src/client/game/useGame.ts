@@ -62,6 +62,9 @@ export const useGame = (): UseGame => {
         setLoadError(res.error);
         return;
       }
+      // The server state replaces anything queued locally; a stale pending
+      // save must not be flushed over it by the next chart().
+      pendingRef.current = null;
       savedHistoryRef.current = res.history;
       setGame(res);
       dispatch({
@@ -86,7 +89,10 @@ export const useGame = (): UseGame => {
 
   useEffect(() => {
     if (!game) return;
-    if (state.history === savedHistoryRef.current) return;
+    if (state.history === savedHistoryRef.current) {
+      pendingRef.current = null;
+      return;
+    }
     pendingRef.current = {
       placements: state.placements,
       history: state.history,

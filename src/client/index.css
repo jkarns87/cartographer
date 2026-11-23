@@ -8,9 +8,20 @@
   --color-sand: #f1e3c3;
   --color-land: #d8c39a;
   --color-ink: #2b2a28;
-  --color-lit: #2e8b57;
+  /* Fills: chart button, check badge, stamp. White text on lit is 4.89:1. */
+  --color-lit: #29804e;
   --color-warn: #d98e04;
   --color-paper: #fbf7ee;
+  /* Content on sand surfaces (board cells, legend chips, sand buttons). Never
+     overridden in dark mode: sand stays light there, so its ink stays dark. */
+  --color-ink-on-sand: #2b2a28;
+  /* Clue-sheet surface and the glyph/text colors that must read on it. */
+  --color-sheet: #f5ebd4;
+  --color-lit-text: #1f6e43;
+  --color-warn-text: #8a5200;
+  /* Secondary text: >= 4.5:1 on paper and on sheet in both modes. */
+  --color-muted: #625d54;
+  --color-line: #d8c39a;
 
   --animate-shake: shake 300ms ease-in-out 1;
   --animate-pulse-mark: pulse-mark 600ms ease-in-out 2;
@@ -48,24 +59,28 @@
     }
   }
 
+  /* Only the drop is animated here. Centring comes from the -translate-x-1/2
+     -translate-y-1/2 utilities, which Tailwind 4 emits as the separate
+     `translate` property; `translate` and `transform` compose, so a
+     translate(-50%, -50%) in the keyframe would double the offset. */
   @keyframes settle {
     from {
-      transform: translate(-50%, calc(-50% - 24px));
+      transform: translateY(-24px);
       opacity: 0;
     }
     to {
-      transform: translate(-50%, -50%);
+      transform: none;
       opacity: 1;
     }
   }
 
   @keyframes settle-me {
     from {
-      transform: translate(-50%, calc(-50% - 28px));
+      transform: translateY(-28px);
       opacity: 0;
     }
     to {
-      transform: translate(-50%, -50%);
+      transform: none;
       opacity: 1;
     }
   }
@@ -76,6 +91,11 @@
     --color-sand: #cdb889;
     --color-ink: #f3efe6;
     --color-paper: #1b2733;
+    --color-sheet: #243340;
+    --color-lit-text: #6fd39a;
+    --color-warn-text: #f3b53f;
+    --color-muted: #b5afa3;
+    --color-line: #3b4b5c;
   }
 }
 

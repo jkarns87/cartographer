@@ -87,7 +87,7 @@ export const IslandView = ({
                   className={[
                     'flex items-center justify-center',
                     isBoard ? 'h-[70%] w-[70%]' : 'h-[72%] w-[72%]',
-                    'text-ink drop-shadow-sm',
+                    'text-ink-on-sand drop-shadow-sm',
                     pulsing
                       ? 'motion-safe:animate-pulse-mark motion-reduce:[filter:drop-shadow(0_0_3px_var(--color-warn))]'
                       : '',

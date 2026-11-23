@@ -5,8 +5,9 @@ type Props = {
 };
 
 /**
- * "Chart it" appears once every clue is lit. On portrait it is fixed to the
- * bottom edge and slides up; at `lg:` it sits in the sidebar flow. The slide
+ * "Chart it" appears once every clue is lit. On portrait phones it is fixed
+ * to the bottom edge and slides up; in the sidebar layout (`md:` and
+ * `sm:landscape:`, matching GamePage) it sits in the sidebar flow. The slide
  * is a transform transition that `motion-reduce:` disables.
  */
 export const ChartButton = ({ visible, onChart, busy }: Props) => (
@@ -15,8 +16,11 @@ export const ChartButton = ({ visible, onChart, busy }: Props) => (
       'fixed inset-x-0 bottom-0 z-30 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]',
       'bg-linear-to-t from-paper via-paper/95 to-transparent',
       'transition-transform duration-300 ease-out motion-reduce:transition-none',
-      'lg:static lg:bg-none lg:p-0 lg:transition-none',
-      visible ? 'translate-y-0' : 'pointer-events-none translate-y-full lg:hidden',
+      'md:static md:bg-none md:p-0 md:transition-none',
+      'sm:landscape:static sm:landscape:bg-none sm:landscape:p-0 sm:landscape:transition-none',
+      visible
+        ? 'translate-y-0'
+        : 'pointer-events-none translate-y-full md:hidden sm:landscape:hidden',
     ].join(' ')}
     aria-hidden={!visible}
   >

@@ -13,9 +13,9 @@ type Props = {
 
 /** Shape and color together: pending hollow circle, lit green check, contradicted amber mark. */
 const GLYPH: Record<ClueState, { char: string; className: string }> = {
-  pending: { char: '○', className: 'text-ink/50' },
-  lit: { char: '✓', className: 'text-lit' },
-  contradicted: { char: '!', className: 'text-warn' },
+  pending: { char: '○', className: 'text-muted' },
+  lit: { char: '✓', className: 'text-lit-text' },
+  contradicted: { char: '!', className: 'text-warn-text' },
 };
 
 /**
@@ -25,8 +25,8 @@ const GLYPH: Record<ClueState, { char: string; className: string }> = {
  */
 export const ClueSheet = ({ clues, states, highlighted, onTapClue }: Props) => (
   <section aria-label="Clue sheet" className="flex flex-col gap-1">
-    <h2 className="text-xs font-semibold tracking-wide text-ink/60 uppercase">Survey notes</h2>
-    <ol className="flex flex-col divide-y divide-land/60 rounded-xl border border-land bg-sand/60">
+    <h2 className="text-xs font-semibold tracking-wide text-muted uppercase">Survey notes</h2>
+    <ol className="flex flex-col divide-y divide-line rounded-xl border border-line bg-sheet">
       {clues.map((clue, i) => {
         const state = states[i] ?? 'pending';
         const glyph = GLYPH[state];

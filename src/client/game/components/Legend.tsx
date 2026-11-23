@@ -34,10 +34,10 @@ export const Legend = ({ landmarks, placements, selected, onSelect, onLift, high
                 aria-current={isSelected ? 'true' : undefined}
                 onClick={() => (placed ? onLift(id) : onSelect(id))}
                 className={[
-                  'relative flex h-11 w-11 items-center justify-center rounded-lg border bg-sand text-ink',
+                  'relative flex h-11 w-11 items-center justify-center rounded-lg border bg-sand text-ink-on-sand',
                   'transition-[box-shadow,filter,opacity] motion-reduce:transition-none',
                   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-water-deep',
-                  placed ? 'border-land opacity-60 grayscale' : 'border-land',
+                  placed ? 'border-land opacity-75 grayscale' : 'border-land',
                   isSelected ? 'ring-2 ring-water-deep ring-offset-2 ring-offset-paper' : '',
                   pulsing ? 'motion-safe:animate-pulse-mark motion-reduce:ring-2 motion-reduce:ring-warn' : '',
                 ].join(' ')}
@@ -63,7 +63,7 @@ export const Legend = ({ landmarks, placements, selected, onSelect, onLift, high
         {selected ? (
           <>
             Placing <span className="font-semibold">{LANDMARK_NAMES[selected]}</span>
-            <span className="text-ink/60">
+            <span className="text-muted">
               {' '}
               · {remaining} left
             </span>
