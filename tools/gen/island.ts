@@ -92,8 +92,10 @@ const lineIsFull = (land: LandMask, line: (k: number) => Cell): boolean => {
  * Why an island is unacceptable, or null when it is fine. The first five rules are the spec's
  * (section 3.3); the rest are readability rules from playtesting the generator output:
  *
- * - No row or column completely filled: a full-width bar reads as a blob and makes every
- *   east/west (or north/south) shore clue about that line trivially true.
+ * - No row or column completely filled. This is for silhouette quality only: a strip of land
+ *   that runs the full width (or height) meets the frame on both sides, so the shape reads as a
+ *   band cut off by the grid rather than an island. It does not make shore clues trivial (only
+ *   the strip's two end cells become coastal on those sides).
  * - No lakes: enclosed water makes "northern shore" ambiguous to a player scanning the coast.
  * - At least 3 distinct rows hold a cell on the northern or southern shore, and at least 3
  *   distinct columns hold a cell on the eastern or western shore. A near-rectangle has only

@@ -20,7 +20,10 @@ export type PropagateStatus = 'solved' | 'stuck' | 'contradiction';
 
 export type PropagateResult = {
   status: PropagateStatus;
-  /** Loop iterations in which at least one candidate was removed. */
+  /**
+   * Rounds in which at least one candidate was removed. For `propagate` this is independent of
+   * clue order (see `runRounds`).
+   */
   passes: number;
   cands: Candidates;
   /** Every landmark whose candidate set is a singleton. */
@@ -61,12 +64,17 @@ export type Constraints = {
   ternary: TernaryConstraint[];
 };
 
+/**
+ * Bands over `propagate` rounds. Calibrated 2026-11-23 on the 200 generated islands (masterSeed
+ * 7), whose rounds ranged 3..19 (median 7): this split gives about 38% easy, 48% medium, 15% hard
+ * overall, and puts 9-landmark Expeditions about 93% medium or hard.
+ */
 export const DIFFICULTY_THRESHOLDS: {
-  readonly easyMax: 3;
-  readonly mediumMax: 6;
+  readonly easyMax: 6;
+  readonly mediumMax: 10;
 } = {
-  easyMax: 3,
-  mediumMax: 6,
+  easyMax: 6,
+  mediumMax: 10,
 };
 
 export const difficultyFor = (passes: number): Difficulty => {
@@ -229,14 +237,14 @@ const placementOf = (
   return placement;
 };
 
-/** Remove from `target` every p with no q in `other` (q !== p) such that `supports(p, q)`. */
-const reviseBinary = (
+/** Every p in `target` with no q in `other` (q !== p) such that `supports(p, q)`. Pure. */
+const unsupportedBinary = (
   target: Set<number>,
   other: Set<number>,
   supports: (p: Cell, q: Cell) => boolean
-): boolean => {
+): number[] => {
   const others = Array.from(other);
-  let changed = false;
+  const out: number[] = [];
   for (const p of target) {
     const pc = cellOf(p);
     let ok = false;
@@ -246,22 +254,19 @@ const reviseBinary = (
         break;
       }
     }
-    if (!ok) {
-      target.delete(p);
-      changed = true;
-    }
+    if (!ok) out.push(p);
   }
-  return changed;
+  return out;
 };
 
 type Role = 0 | 1 | 2;
 const ROLES: Role[] = [0, 1, 2];
 
-/** Keep a candidate of the member in `role` only if two other distinct cells complete `between`. */
-const reviseTernary = (
+/** Candidates of the member in `role` that no two other distinct cells complete `between` for. Pure. */
+const unsupportedTernary = (
   sets: [Set<number>, Set<number>, Set<number>],
   role: Role
-): boolean => {
+): number[] => {
   const target = sets[role];
   const [x, y] =
     role === 0
@@ -271,7 +276,7 @@ const reviseTernary = (
         : [sets[0], sets[1]];
   const xs = Array.from(x);
   const ys = Array.from(y);
-  let changed = false;
+  const out: number[] = [];
   for (const p of target) {
     const pc = cellOf(p);
     let ok = false;
@@ -295,38 +300,73 @@ const reviseTernary = (
       }
       if (ok) break;
     }
-    if (!ok) {
-      target.delete(p);
-      changed = true;
-    }
+    if (!ok) out.push(p);
+  }
+  return out;
+};
+
+const deleteAll = (set: Set<number>, values: readonly number[]): boolean => {
+  let changed = false;
+  for (const v of values) {
+    if (set.delete(v)) changed = true;
   }
   return changed;
 };
 
-/** Fixpoint propagation, in place on `cands`. Never guesses. */
-const runPropagation = (
+/** Constraints resolved to the live candidate sets of `cands`. */
+type Prepared = {
+  sets: Set<number>[];
+  unary: { set: Set<number>; test: (cellIdx: number) => boolean }[];
+  binary: {
+    a: Set<number>;
+    b: Set<number>;
+    rel: (pa: Cell, pb: Cell) => boolean;
+    flipped: (pb: Cell, pa: Cell) => boolean;
+  }[];
+  ternary: [Set<number>, Set<number>, Set<number>][];
+};
+
+const prepare = (
   landmarks: readonly LandmarkId[],
   constraints: Constraints,
   cands: Candidates
-): PropagateResult => {
-  const unary = constraints.unary.map((u) => ({
+): Prepared => ({
+  sets: landmarks.map((id) => setFor(cands, id)),
+  unary: constraints.unary.map((u) => ({
     set: setFor(cands, u.a),
     test: u.test,
-  }));
-  const binary = constraints.binary.map((b) => ({
+  })),
+  binary: constraints.binary.map((b) => ({
     a: setFor(cands, b.a),
     b: setFor(cands, b.b),
     rel: b.rel,
     flipped: (q: Cell, p: Cell): boolean => b.rel(p, q),
-  }));
-  const ternary = constraints.ternary.map(
+  })),
+  ternary: constraints.ternary.map(
     (t): [Set<number>, Set<number>, Set<number>] => [
       setFor(cands, t.a),
       setFor(cands, t.b),
       setFor(cands, t.c),
     ]
+  ),
+});
+
+/**
+ * Fixpoint propagation in place on `cands`, sweeping constraints in order: a removal is visible to
+ * every later constraint in the same sweep. Same fixpoint as `runRounds` (both compute the
+ * greatest set of candidates closed under the same monotone rules), but the sweep count depends
+ * on constraint order, and it usually needs fewer sweeps, so `countSolutions` uses it.
+ */
+const runInPlace = (
+  landmarks: readonly LandmarkId[],
+  constraints: Constraints,
+  cands: Candidates
+): PropagateResult => {
+  const { sets, unary, binary, ternary } = prepare(
+    landmarks,
+    constraints,
+    cands
   );
-  const sets = landmarks.map((id) => setFor(cands, id));
 
   let passes = 0;
   const finish = (status: PropagateStatus): PropagateResult => ({
@@ -359,14 +399,16 @@ const runPropagation = (
     }
 
     for (const bc of binary) {
-      if (reviseBinary(bc.a, bc.b, bc.rel)) changed = true;
-      if (reviseBinary(bc.b, bc.a, bc.flipped)) changed = true;
+      if (deleteAll(bc.a, unsupportedBinary(bc.a, bc.b, bc.rel)))
+        changed = true;
+      if (deleteAll(bc.b, unsupportedBinary(bc.b, bc.a, bc.flipped)))
+        changed = true;
       if (bc.a.size === 0 || bc.b.size === 0) return wipedOut();
     }
 
     for (const tc of ternary) {
       for (const role of ROLES) {
-        if (reviseTernary(tc, role)) changed = true;
+        if (deleteAll(tc[role], unsupportedTernary(tc, role))) changed = true;
       }
       if (tc[0].size === 0 || tc[1].size === 0 || tc[2].size === 0)
         return wipedOut();
@@ -396,6 +438,81 @@ const runPropagation = (
   }
 };
 
+/**
+ * Fixpoint propagation in rounds, on `cands`. Every removal in a round (unary, binary support,
+ * ternary support, naked singles) is computed from the sets as they stood when the round began,
+ * and all of them are applied together at its end. The removals of a round are a union over
+ * constraints, so the round count is the depth of the deduction chain and does not depend on clue
+ * order. That count is the difficulty signal.
+ */
+const runRounds = (
+  landmarks: readonly LandmarkId[],
+  constraints: Constraints,
+  cands: Candidates
+): PropagateResult => {
+  const { sets, unary, binary, ternary } = prepare(
+    landmarks,
+    constraints,
+    cands
+  );
+
+  let passes = 0;
+  const finish = (status: PropagateStatus): PropagateResult => ({
+    status,
+    passes,
+    cands,
+    placement: placementOf(landmarks, cands),
+  });
+
+  if (sets.some((s) => s.size === 0)) return finish('contradiction');
+
+  for (;;) {
+    // Nothing is deleted until every removal of the round is known.
+    const removals = new Map<Set<number>, number[]>();
+    const mark = (set: Set<number>, values: readonly number[]): void => {
+      if (values.length === 0) return;
+      const list = removals.get(set);
+      if (list) list.push(...values);
+      else removals.set(set, [...values]);
+    };
+
+    for (const u of unary) {
+      const out: number[] = [];
+      for (const p of u.set) {
+        if (!u.test(p)) out.push(p);
+      }
+      mark(u.set, out);
+    }
+    for (const bc of binary) {
+      mark(bc.a, unsupportedBinary(bc.a, bc.b, bc.rel));
+      mark(bc.b, unsupportedBinary(bc.b, bc.a, bc.flipped));
+    }
+    for (const tc of ternary) {
+      for (const role of ROLES) mark(tc[role], unsupportedTernary(tc, role));
+    }
+    for (let k = 0; k < sets.length; k++) {
+      const set = sets[k];
+      const only = set ? onlyValue(set) : undefined;
+      if (only === undefined) continue;
+      for (let m = 0; m < sets.length; m++) {
+        const other = sets[m];
+        if (m !== k && other && other.has(only)) mark(other, [only]);
+      }
+    }
+
+    let changed = false;
+    for (const [set, values] of removals) {
+      if (deleteAll(set, values)) changed = true;
+    }
+    if (!changed) {
+      // At a fixpoint every remaining value is supported, so all-singletons is a full solution.
+      return finish(sets.every((s) => s.size === 1) ? 'solved' : 'stuck');
+    }
+    passes++;
+    if (sets.some((s) => s.size === 0)) return finish('contradiction');
+  }
+};
+
 const startCandidates = (
   puzzle: Pick<Puzzle, 'land' | 'landmarks'>,
   start: Candidates | undefined
@@ -415,21 +532,37 @@ const startCandidates = (
 };
 
 /**
- * Human solver: propagation only, until fixpoint. `start` is copied, never mutated; landmarks it
- * omits start with every land cell, and non-land indexes are dropped.
+ * Human solver: propagation only, until fixpoint, in rounds (see `runRounds`), so `passes` is the
+ * same for every clue order. `start` is copied, never mutated; landmarks it omits start with every
+ * land cell, and non-land indexes are dropped.
  */
 export const propagate = (
   puzzle: Pick<Puzzle, 'land' | 'landmarks' | 'clues'>,
   start?: Candidates
 ): PropagateResult =>
-  runPropagation(
+  runRounds(
     puzzle.landmarks,
     compileConstraints(puzzle),
     startCandidates(puzzle, start)
   );
 
 /**
- * Uniqueness solver: backtracking with `propagate` as the forward check. Branches on the
+ * `propagate` with in-place sweeps: identical `status` and final candidates, but `passes` depends
+ * on clue order. Exported for the equivalence test; `countSolutions` uses the same loop.
+ */
+export const propagateInPlace = (
+  puzzle: Pick<Puzzle, 'land' | 'landmarks' | 'clues'>,
+  start?: Candidates
+): PropagateResult =>
+  runInPlace(
+    puzzle.landmarks,
+    compileConstraints(puzzle),
+    startCandidates(puzzle, start)
+  );
+
+/**
+ * Uniqueness solver: backtracking with propagation (in-place sweeps, same fixpoint as
+ * `propagate`) as the forward check. Branches on the
  * unassigned landmark with the fewest candidates, trying its cells in ascending order. Stops at
  * `limit` solutions (default 2) or when more than `nodeCap` branches (default 200,000) are needed.
  */
@@ -446,7 +579,7 @@ export const countSolutions = (
   let capped = false;
 
   const search = (cands: Candidates): void => {
-    const result = runPropagation(landmarks, constraints, cands);
+    const result = runInPlace(landmarks, constraints, cands);
     if (result.status === 'contradiction') return;
     if (result.status === 'solved') {
       solutions.push(result.placement);

@@ -13,6 +13,7 @@ import {
   CAPS,
   capProblems,
   clueWeight,
+  fixForHumans,
   isNegative,
   REJECT_REASONS,
 } from './build';
@@ -268,6 +269,89 @@ describe('names', () => {
     expect(NAME_NOUNS.length).toBeGreaterThanOrEqual(24);
     expect(islandName(mulberry32(4))).toMatch(/^[A-Z][a-z]+ [A-Z][a-z]+$/);
     expect(islandName(mulberry32(4))).toBe(islandName(mulberry32(4)));
+  });
+});
+
+// Copied from solver.test.ts: 9 landmarks on 22 cells, unique, but propagation alone stalls.
+const ISLAND_22 = maskFromRows([
+  '.LLLL.',
+  'LLLLLL',
+  'LLLL.L',
+  '.LLLLL',
+  '..LL..',
+  '......',
+]);
+const EXPEDITION_LANDMARKS: LandmarkId[] = [
+  'well',
+  'windmill',
+  'temple',
+  'shipwreck',
+  'beacon',
+  'farm',
+  'mine',
+  'watchtower',
+  'cave',
+];
+const EXPEDITION_SOLUTION: Placement = {
+  well: { r: 0, c: 4 },
+  windmill: { r: 3, c: 5 },
+  temple: { r: 1, c: 3 },
+  shipwreck: { r: 1, c: 2 },
+  beacon: { r: 1, c: 1 },
+  farm: { r: 1, c: 4 },
+  mine: { r: 2, c: 3 },
+  watchtower: { r: 3, c: 2 },
+  cave: { r: 2, c: 5 },
+};
+const EXPEDITION_CLUES: Clue[] = [
+  { type: 'inland', a: 'beacon' },
+  { type: 'due', a: 'farm', dir: 'S', b: 'well' },
+  { type: 'between', a: 'shipwreck', b: 'beacon', c: 'farm' },
+  { type: 'due', a: 'windmill', dir: 'E', b: 'watchtower' },
+  { type: 'due', a: 'cave', dir: 'N', b: 'windmill' },
+  { type: 'due', a: 'cave', dir: 'E', b: 'mine' },
+  { type: 'inland', a: 'temple' },
+  { type: 'somewhere', a: 'shipwreck', dir: 'W', b: 'mine' },
+  { type: 'due', a: 'farm', dir: 'E', b: 'temple' },
+  { type: 'due', a: 'watchtower', dir: 'S', b: 'shipwreck' },
+];
+
+describe('fixForHumans', () => {
+  const ctx = { land: ISLAND_22, landmarks: EXPEDITION_LANDMARKS };
+  const puzzle = { ...ctx, clues: EXPEDITION_CLUES };
+  const pool = enumerateTrueClues(
+    ISLAND_22,
+    EXPEDITION_LANDMARKS,
+    EXPEDITION_SOLUTION
+  );
+
+  it('adds a clue to a unique sheet the human solver is stuck on, keeping it unique', () => {
+    expect(propagate(puzzle).status).toBe('stuck');
+    expect(countSolutions(puzzle).count).toBe(1);
+
+    const fixed = fixForHumans(mulberry32(1), ctx, [...EXPEDITION_CLUES], pool);
+    expect(fixed).not.toBeNull();
+    if (!fixed) return;
+    const before = new Set(EXPEDITION_CLUES.map(clueKey));
+    const added = fixed.filter((c) => !before.has(clueKey(c)));
+    expect(added.length).toBeGreaterThan(0);
+    for (const clue of fixed) {
+      expect(
+        clueHolds(clue, EXPEDITION_SOLUTION, ISLAND_22, EXPEDITION_LANDMARKS)
+      ).toBe(true);
+    }
+    expect(propagate({ ...ctx, clues: fixed }).status).toBe('solved');
+    const count = countSolutions({ ...ctx, clues: fixed });
+    expect(count.count).toBe(1);
+    expect(count.capped).toBe(false);
+  });
+
+  it('returns a solvable sheet untouched and gives up when no clue helps', () => {
+    const solvable = [...EXPEDITION_CLUES, ...pool];
+    expect(fixForHumans(mulberry32(1), ctx, solvable, pool)).toBe(solvable);
+    expect(
+      fixForHumans(mulberry32(1), ctx, [...EXPEDITION_CLUES], [])
+    ).toBeNull();
   });
 });
 

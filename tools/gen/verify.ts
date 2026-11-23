@@ -19,7 +19,12 @@ import { capProblems } from './build';
 import { impliedPairs } from './clues';
 import { islandProblem } from './island';
 import { PRACTICE_PATH, readSchedule, SCHEDULE_PATH } from './io';
-import { isIsoDate, landmarkCountFor } from './schedule';
+import {
+  isIsoDate,
+  landmarkCountFor,
+  NAME_WINDOW_DAYS,
+  nameWords,
+} from './schedule';
 
 export type VerifyProblem = { id: string; problem: string };
 
@@ -57,7 +62,12 @@ export const entryProblems = (entry: ScheduleEntry): string[] => {
 
   const inPuzzle = new Set<string>(landmarks);
   for (const clue of entry.clues) {
-    if (!clueLandmarks(clue).every((id) => inPuzzle.has(id))) {
+    const named = clueLandmarks(clue);
+    if (new Set(named).size !== named.length) {
+      problems.push(
+        `clue names the same landmark twice: ${JSON.stringify(clue)}`
+      );
+    } else if (!named.every((id) => inPuzzle.has(id))) {
       problems.push(
         `clue names a landmark outside the puzzle: ${JSON.stringify(clue)}`
       );
@@ -121,12 +131,17 @@ export const verifySchedule = (schedule: Schedule): VerifyProblem[] => {
 
   const ids = new Set<string>();
   const names = new Set<string>();
+  const masks = new Map<string, string>();
   for (const entry of schedule.entries) {
     if (ids.has(entry.id)) add(entry.id, 'id is not unique');
     ids.add(entry.id);
     if (names.has(entry.name))
       add(entry.id, `name "${entry.name}" is not unique`);
     names.add(entry.name);
+    const first = masks.get(entry.land);
+    if (first !== undefined)
+      add(entry.id, `silhouette repeats that of ${first}`);
+    else masks.set(entry.land, entry.id);
   }
 
   const dated: Array<ScheduleEntry & { date: string }> = [];
@@ -157,19 +172,38 @@ export const verifySchedule = (schedule: Schedule): VerifyProblem[] => {
       add(entry.id, `date ${entry.date} is not unique`);
     dates.add(entry.date);
   }
-  [...dated]
-    .sort((x, y) => (x.date < y.date ? -1 : x.date > y.date ? 1 : 0))
-    .forEach((entry, k) => {
-      if (entry.number !== k + 1)
+  const byDate = [...dated].sort((x, y) =>
+    x.date < y.date ? -1 : x.date > y.date ? 1 : 0
+  );
+  byDate.forEach((entry, k) => {
+    if (entry.number !== k + 1)
+      add(entry.id, `number ${entry.number}, expected ${k + 1} in date order`);
+  });
+  // No adjective or noun repeats among dated names within NAME_WINDOW_DAYS.
+  byDate.forEach((entry, k) => {
+    const words = nameWords(entry.name);
+    for (let j = k - 1; j >= 0; j--) {
+      const earlier = byDate[j];
+      if (!earlier) break;
+      const gap = Math.round(
+        (Date.parse(`${entry.date}T00:00:00Z`) -
+          Date.parse(`${earlier.date}T00:00:00Z`)) /
+          86_400_000
+      );
+      if (gap >= NAME_WINDOW_DAYS) break;
+      const shared = nameWords(earlier.name).filter((w) => words.includes(w));
+      if (shared.length > 0) {
         add(
           entry.id,
-          `number ${entry.number}, expected ${k + 1} in date order`
+          `name shares "${shared.join('", "')}" with ${earlier.id}, ${gap} day(s) earlier`
         );
-    });
+      }
+    }
+  });
   return out;
 };
 
-/** Ids and names must also be unique across the dated and practice files. */
+/** Ids, names and silhouettes must also be unique across the dated and practice files. */
 export const crossFileProblems = (
   a: Schedule,
   b: Schedule
@@ -177,7 +211,13 @@ export const crossFileProblems = (
   const out: VerifyProblem[] = [];
   const ids = new Set(a.entries.map((e) => e.id));
   const names = new Set(a.entries.map((e) => e.name));
+  const masks = new Set(a.entries.map((e) => e.land));
   for (const entry of b.entries) {
+    if (masks.has(entry.land))
+      out.push({
+        id: entry.id,
+        problem: 'silhouette also appears in the other file',
+      });
     if (ids.has(entry.id))
       out.push({ id: entry.id, problem: 'id also appears in the other file' });
     if (names.has(entry.name))

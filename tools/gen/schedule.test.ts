@@ -6,6 +6,8 @@ import {
   generateSchedule,
   isIsoDate,
   landmarkCountFor,
+  NAME_WINDOW_DAYS,
+  nameWords,
   practiceId,
   regenerateDay,
   withUniqueName,
@@ -83,6 +85,53 @@ describe('generatePractice', () => {
     for (const e of practice.entries) expect(avoid.has(e.name)).toBe(false);
     expect(verifySchedule(practice)).toEqual([]);
     expect(practiceId(19)).toBe('practice-20');
+  });
+});
+
+describe('silhouettes and name words', () => {
+  it('two weeks of dated islands repeat no silhouette and no name word within 7 days', () => {
+    const schedule = generateSchedule({
+      masterSeed: 21,
+      startDate: '2026-12-01',
+      days: 14,
+    });
+    expect(new Set(schedule.entries.map((e) => e.land)).size).toBe(14);
+    schedule.entries.forEach((entry, k) => {
+      const words = nameWords(entry.name);
+      for (let j = Math.max(0, k - (NAME_WINDOW_DAYS - 1)); j < k; j++) {
+        const earlier = schedule.entries[j];
+        if (!earlier) continue;
+        for (const w of nameWords(earlier.name)) {
+          expect(words, `${earlier.id} vs ${entry.id}`).not.toContain(w);
+        }
+      }
+    });
+    expect(verifySchedule(schedule)).toEqual([]);
+  });
+
+  it('rebuilds a practice island whose silhouette is already taken', () => {
+    const [plain] = generatePractice({ masterSeed: 3, count: 1 }).entries;
+    if (!plain) throw new Error('no entry');
+    const [moved] = generatePractice({
+      masterSeed: 3,
+      count: 1,
+      avoidMasks: new Set([plain.land]),
+    }).entries;
+    expect(moved?.land).not.toBe(plain.land);
+    expect(moved?.seed).not.toBe(plain.seed);
+    expect(
+      moved && verifySchedule({ version: 1, masterSeed: 3, entries: [moved] })
+    ).toEqual([]);
+  });
+
+  it('withUniqueName also avoids forbidden words', () => {
+    const [entry] = generatePractice({ masterSeed: 5, count: 1 }).entries;
+    if (!entry) throw new Error('no entry');
+    const [adjective, noun] = nameWords(entry.name);
+    const renamed = withUniqueName(entry, new Set(), new Set([noun]));
+    expect(nameWords(renamed.name)[1]).not.toBe(noun);
+    const again = withUniqueName(entry, new Set(), new Set([adjective]));
+    expect(nameWords(again.name)[0]).not.toBe(adjective);
   });
 });
 

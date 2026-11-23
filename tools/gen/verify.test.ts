@@ -50,8 +50,9 @@ describe('verifySchedule catches', () => {
     return entry;
   };
   // 2026-12-01 and 2026-12-02 are a Tuesday and a Wednesday: 7 landmarks each.
-  const a = dated(21, '2026-12-01', 1);
-  const b = dated(22, '2026-12-02', 2);
+  // Fixed names so the 7-day name-word rule cannot trip on whatever the seeds drew.
+  const a = { ...dated(21, '2026-12-01', 1), name: 'Amber Atoll' };
+  const b = { ...dated(22, '2026-12-02', 2), name: 'Bracken Bank' };
   const wrap = (...entries: ScheduleEntry[]): Schedule => ({
     version: 1,
     masterSeed: 0,
@@ -100,6 +101,62 @@ describe('verifySchedule catches', () => {
         /already implies/.test(p)
       )
     ).toBe(true);
+  });
+
+  it('a clue that names the same landmark twice', () => {
+    const [x, y] = a.landmarks;
+    if (!x || !y) throw new Error('no landmarks');
+    const selfRef: Clue[] = [
+      { type: 'due', a: x, dir: 'E', b: x },
+      { type: 'somewhere', a: x, dir: 'N', b: x },
+      { type: 'touches', a: x, b: x, not: true },
+      { type: 'shares', a: x, axis: 'row', b: x },
+      { type: 'between', a: x, b: y, c: x },
+    ];
+    for (const clue of selfRef) {
+      expect(
+        problemsOf({ ...a, clues: [...a.clues, clue] }).some((p) =>
+          /same landmark twice/.test(p)
+        ),
+        JSON.stringify(clue)
+      ).toBe(true);
+    }
+  });
+
+  it('a repeated silhouette, within a file and across files', () => {
+    expect(
+      problemsOf(a, { ...b, land: a.land }).some((p) =>
+        /silhouette repeats/.test(p)
+      )
+    ).toBe(true);
+    const practice = {
+      ...b,
+      id: 'practice-01',
+      date: null,
+      number: 0,
+      land: a.land,
+    };
+    expect(
+      crossFileProblems(wrap(a), wrap(practice)).some((p) =>
+        /silhouette/.test(p.problem)
+      )
+    ).toBe(true);
+  });
+
+  it('a name word repeated within seven days', () => {
+    expect(
+      problemsOf(a, { ...b, name: 'Amber Bank' }).some((p) =>
+        /shares "Amber"/.test(p)
+      )
+    ).toBe(true);
+    expect(
+      problemsOf(a, { ...b, name: 'Bracken Atoll' }).some((p) =>
+        /shares "Atoll"/.test(p)
+      )
+    ).toBe(true);
+    // Seven days apart is outside the window.
+    const later = { ...dated(23, '2026-12-08', 2), name: 'Amber Bank' };
+    expect(problemsOf(a, later).filter((p) => /shares/.test(p))).toEqual([]);
   });
 
   it('a wrong difficulty label', () => {

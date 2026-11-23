@@ -8,6 +8,7 @@ import {
   difficultyFor,
   initialCandidates,
   propagate,
+  propagateInPlace,
 } from './solver';
 import type { Candidates } from './solver';
 import { DIRS, LANDMARKS } from './types';
@@ -377,20 +378,32 @@ describe('propagate', () => {
     }
     const result = propagate(UNIQUE);
     expect(result.status).toBe('solved');
-    expect(result.passes).toBeGreaterThanOrEqual(1);
-    expect(result.passes).toBe(1);
+    // One round per link of the chain: the shores pin the lighthouse, then touches pins the
+    // well, then due pins the windmill.
+    expect(result.passes).toBe(3);
     expect(result.placement).toEqual(UNIQUE_SOLUTION);
     for (const id of UNIQUE.landmarks) {
       expect(result.cands.get(id)?.size).toBe(1);
     }
   });
 
-  it('counts only passes that removed a candidate', () => {
-    // Same clues, reversed: the windmill can only be pinned in the pass after the well is.
-    const result = propagate({ ...UNIQUE, clues: [...UNIQUE.clues].reverse() });
-    expect(result.status).toBe('solved');
-    expect(result.passes).toBe(2);
-    expect(result.placement).toEqual(UNIQUE_SOLUTION);
+  it('counts the same passes whatever the clue order', () => {
+    const rand = lcg(2024);
+    const orders = [
+      [...UNIQUE.clues].reverse(),
+      ...Array.from({ length: 5 }, () => shuffle(UNIQUE.clues, rand)),
+    ];
+    for (const clues of orders) {
+      const result = propagate({ ...UNIQUE, clues });
+      expect(result.status).toBe('solved');
+      expect(result.passes).toBe(3);
+      expect(result.placement).toEqual(UNIQUE_SOLUTION);
+    }
+    // The in-place sweep, by contrast, depends on order: 1 pass forward, 2 reversed.
+    expect(propagateInPlace(UNIQUE).passes).toBe(1);
+    expect(
+      propagateInPlace({ ...UNIQUE, clues: [...UNIQUE.clues].reverse() }).passes
+    ).toBe(2);
   });
 
   it('is stuck when a clue is missing, keeping the singletons it found', () => {
@@ -700,12 +713,12 @@ describe('countSolutions', () => {
 
 describe('difficultyFor', () => {
   it('grades by propagation passes', () => {
-    expect(DIFFICULTY_THRESHOLDS).toEqual({ easyMax: 3, mediumMax: 6 });
+    expect(DIFFICULTY_THRESHOLDS).toEqual({ easyMax: 6, mediumMax: 10 });
     expect(difficultyFor(1)).toBe('easy');
-    expect(difficultyFor(3)).toBe('easy');
-    expect(difficultyFor(4)).toBe('medium');
-    expect(difficultyFor(6)).toBe('medium');
-    expect(difficultyFor(7)).toBe('hard');
+    expect(difficultyFor(6)).toBe('easy');
+    expect(difficultyFor(7)).toBe('medium');
+    expect(difficultyFor(10)).toBe('medium');
+    expect(difficultyFor(11)).toBe('hard');
   });
 });
 
@@ -781,6 +794,55 @@ describe('randomized cross-check', () => {
       expect(human.status).not.toBe('contradiction');
       if (human.status === 'solved') expect(expected.length).toBe(1);
     }
+  });
+
+  it('rounds and in-place sweeps reach the same status and candidates on 60 random puzzles', () => {
+    const sorts = (cands: Candidates): Array<[string, number[]]> =>
+      [...cands.entries()].map(([id, set]) => [id, sorted(set)]);
+    let contradictions = 0;
+    for (let seed = 1; seed <= 60; seed++) {
+      const rand = lcg(seed * 6151 + 3);
+      const land = seed % 2 === 0 ? ISLAND : ISLAND_22;
+      const count = 3 + (seed % 7);
+      const { landmarks, placement } = randomPlacement(land, count, rand);
+      const clues = pickMixed(
+        trueClues(placement, land, landmarks),
+        2 + Math.floor(rand() * 10),
+        rand
+      );
+      // Every fifth puzzle gets a false clue so contradictions are compared too.
+      if (seed % 5 === 0) {
+        const [a, b] = landmarks;
+        if (a && b) {
+          const pa = placement[a];
+          const pb = placement[b];
+          const touching =
+            pa && pb && Math.abs(pa.r - pb.r) + Math.abs(pa.c - pb.c) === 1;
+          clues.push(
+            touching
+              ? { type: 'touches', a, b, not: true }
+              : { type: 'touches', a, b }
+          );
+        }
+      }
+      const puzzle: TestPuzzle = { land, landmarks, clues };
+      const rounds = propagate(puzzle);
+      const inPlace = propagateInPlace(puzzle);
+      expect(rounds.status, `seed ${seed}`).toBe(inPlace.status);
+      if (rounds.status === 'contradiction') {
+        contradictions++;
+        continue;
+      }
+      expect(sorts(rounds.cands), `seed ${seed}`).toEqual(sorts(inPlace.cands));
+      expect(rounds.placement).toEqual(inPlace.placement);
+      // Order independence on the same puzzle.
+      for (let k = 0; k < 3; k++) {
+        const again = propagate({ ...puzzle, clues: shuffle(clues, rand) });
+        expect(again.passes, `seed ${seed}`).toBe(rounds.passes);
+        expect(sorts(again.cands)).toEqual(sorts(rounds.cands));
+      }
+    }
+    expect(contradictions).toBeGreaterThan(0);
   });
 
   it('stays fast and consistent on 10 random 9-landmark, 10-clue puzzles', () => {

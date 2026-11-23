@@ -4,6 +4,7 @@ import {
   countSolutions,
   difficultyFor,
   propagate,
+  propagateInPlace,
 } from '../../src/shared/puzzle/solver';
 import type { PropagateResult } from '../../src/shared/puzzle/solver';
 import { LANDMARKS } from '../../src/shared/puzzle/types';
@@ -190,10 +191,20 @@ const weightedOrder = (rng: Rng, all: readonly Clue[]): Clue[] => {
   return keyed.map((k) => k.clue);
 };
 
-type Ctx = { land: LandMask; landmarks: LandmarkId[] };
+/** The island and landmark draw a clue sheet is being built for. */
+export type SheetContext = { land: LandMask; landmarks: LandmarkId[] };
+type Ctx = SheetContext;
 
+/**
+ * Propagation for status and candidate checks. The in-place sweep reaches exactly the same
+ * fixpoint as `propagate` in fewer sweeps; only grading needs `propagate`'s round count.
+ */
 const run = (ctx: Ctx, clues: readonly Clue[]): PropagateResult =>
-  propagate({ land: ctx.land, landmarks: ctx.landmarks, clues: [...clues] });
+  propagateInPlace({
+    land: ctx.land,
+    landmarks: ctx.landmarks,
+    clues: [...clues],
+  });
 
 /** Sum of candidate set sizes after propagation. Lower is more progress; solved = landmark count. */
 const progressScore = (result: PropagateResult): number => {
@@ -331,6 +342,30 @@ const bestFix = (
   return best;
 };
 
+/**
+ * Spec 3.3 step 5: while the human solver is stuck on `sheet`, add the best unused clue from
+ * `pool` (pinned so re-minimization keeps it) and re-minimize, at most `HUMAN_FIXES` times.
+ * Returns the solvable sheet (unchanged if it already was), or null when it stays stuck.
+ */
+export const fixForHumans = (
+  rng: Rng,
+  ctx: SheetContext,
+  sheet: Clue[],
+  pool: readonly Clue[]
+): Clue[] | null => {
+  let current = sheet;
+  const pinned = new Set<Clue>();
+  for (let fix = 0; ; fix++) {
+    const result = run(ctx, current);
+    if (result.status === 'solved') return current;
+    if (fix === HUMAN_FIXES) return null;
+    const clue = bestFix(ctx, current, pool, result);
+    if (clue === null) return null;
+    pinned.add(clue);
+    current = reminimize(rng, ctx, [...current, clue], pinned);
+  }
+};
+
 type AttemptResult = { entry: ScheduleEntry } | { reject: RejectReason };
 
 const attempt = (
@@ -371,18 +406,14 @@ const attempt = (
 
   const prefix = shortestUniquePrefix(ctx, ordered);
   if (prefix === null) return { reject: 'not-unique' };
-  let sheet = minimizeWithinCap(rng, ctx, prefix);
-
-  const pinned = new Set<Clue>();
-  for (let fix = 0; ; fix++) {
-    const result = run(ctx, sheet);
-    if (result.status === 'solved') break;
-    if (fix === HUMAN_FIXES) return { reject: 'stuck' };
-    const clue = bestFix(ctx, sheet, pool, result);
-    if (clue === null) return { reject: 'stuck' };
-    pinned.add(clue);
-    sheet = reminimize(rng, ctx, [...sheet, clue], pinned);
-  }
+  const fixed = fixForHumans(
+    rng,
+    ctx,
+    minimizeWithinCap(rng, ctx, prefix),
+    pool
+  );
+  if (fixed === null) return { reject: 'stuck' };
+  let sheet = fixed;
 
   // A clue implied by another single clue on the sheet adds nothing; drop the weaker one.
   for (
@@ -399,8 +430,8 @@ const attempt = (
   if (first) return { reject: first.reason };
 
   const clues = rng.shuffle(sheet);
-  // Graded on the emitted order: the pass count depends on clue order.
-  const graded = run(ctx, clues);
+  // Rounds of the human solver; the same for every clue order.
+  const graded = propagate({ land, landmarks, clues });
   if (graded.status !== 'solved') return { reject: 'stuck' };
 
   const orderedSolution: Placement = {};

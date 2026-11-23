@@ -97,12 +97,18 @@ const regenerateOne = (date: string): void => {
   const schedule = readSchedule(SCHEDULE_PATH);
   const index = schedule.entries.findIndex((e) => e.date === date);
   if (index < 0) throw new Error(`${date} is not in schedule.json`);
-  const practiceNames = existsSync(PRACTICE_PATH)
-    ? new Set(readSchedule(PRACTICE_PATH).entries.map((e) => e.name))
-    : new Set<string>();
+  const practiceEntries = existsSync(PRACTICE_PATH)
+    ? readSchedule(PRACTICE_PATH).entries
+    : [];
   // A fresh sub-seed each run: the point of --day is to replace an island someone disliked.
   const seed = (hashSeed(schedule.masterSeed, index) ^ Date.now()) >>> 0;
-  const next = regenerateDay(schedule, date, seed, practiceNames);
+  const next = regenerateDay(
+    schedule,
+    date,
+    seed,
+    new Set(practiceEntries.map((e) => e.name)),
+    new Set(practiceEntries.map((e) => e.land))
+  );
   writeSchedule(SCHEDULE_PATH, next);
   const entry = next.entries[index];
   if (entry)
@@ -129,6 +135,7 @@ const regenerateAll = (): void => {
     masterSeed,
     count,
     avoidNames: new Set(schedule.entries.map((e) => e.name)),
+    avoidMasks: new Set(schedule.entries.map((e) => e.land)),
     onBuild,
   });
   const seconds = (performance.now() - t0) / 1000;
