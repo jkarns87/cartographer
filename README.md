@@ -84,8 +84,8 @@ A new island is posted every day at 12:00 UTC (7 am Eastern). Islands are not wr
 not generated at runtime. An offline generator in `tools/gen` builds them ahead of time from a fixed
 master seed and writes two files that ship inside the server bundle:
 
-- `src/server/puzzles/schedule.json`: 180 dated islands, one per day from 2026-12-01 to
-  2027-05-29, numbered 1 to 180 in date order.
+- `src/server/puzzles/schedule.json`: 188 dated islands, one per day from 2026-11-23 to
+  2027-05-29, numbered 1 to 188 in date order.
 - `src/server/puzzles/practice.json`: 20 undated practice islands (number 0) for playtests and the
   moderator's "post a practice island" menu item.
 

@@ -146,7 +146,7 @@ Seed for day i is `hash(masterSeed, i)`. A small deterministic PRNG (mulberry32)
 
 ### 3.4 Files and commands
 
-- `src/server/puzzles/schedule.json`: server-only, holds solutions. ~180 dated entries from 2026-12-01. Dated entries are numbered from 1 in date order.
+- `src/server/puzzles/schedule.json`: server-only, holds solutions. 188 dated entries from 2026-11-23. Dated entries are numbered from 1 in date order.
 - `src/server/puzzles/practice.json`: 20 entries with `date: null` and `number: 0` for playtest and the mod "post a practice island" action.
 - `npm run gen` regenerates both files deterministically from `masterSeed`. `npm run gen -- --day 2026-12-14` regenerates one day with a new sub-seed. `npm run gen:review` prints every clue sheet as plain text. `npm run gen:verify` re-solves both files and asserts uniqueness, human-solvability, and the caps; it also runs as part of `npm run test:unit`.
 

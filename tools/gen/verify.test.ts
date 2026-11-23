@@ -14,10 +14,10 @@ describe('committed puzzle files', () => {
   const schedule = readSchedule(SCHEDULE_PATH);
   const practice = readSchedule(PRACTICE_PATH);
 
-  it('schedule.json holds 180 consecutive days from 2026-12-01', () => {
-    expect(schedule.entries).toHaveLength(180);
+  it('schedule.json holds 188 consecutive days from 2026-11-23', () => {
+    expect(schedule.entries).toHaveLength(188);
     schedule.entries.forEach((entry, k) => {
-      expect(entry.date).toBe(addDays('2026-12-01', k));
+      expect(entry.date).toBe(addDays('2026-11-23', k));
     });
   });
 

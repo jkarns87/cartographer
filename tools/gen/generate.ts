@@ -24,8 +24,8 @@ import {
 const { values } = parseArgs({
   options: {
     seed: { type: 'string', default: '7' },
-    start: { type: 'string', default: '2026-12-01' },
-    days: { type: 'string', default: '180' },
+    start: { type: 'string', default: '2026-11-23' },
+    days: { type: 'string', default: '188' },
     practice: { type: 'string', default: '20' },
     day: { type: 'string' },
   },

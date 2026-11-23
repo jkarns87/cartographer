@@ -56,7 +56,7 @@ appear on it.
   used by the client for live clue states, by the server to verify a chart, and by the generator.
 - Islands are generated offline. The generator grows a coastline, places the landmarks, lists every
   true clue, adds clues until the solution is unique, removes every clue it can, and then requires
-  a propagation-only "human solver" to finish the island without guessing. 180 dated islands and 20
+  a propagation-only "human solver" to finish the island without guessing. 188 dated islands and 20
   practice islands are committed, and the test suite re-proves every one of them on each run.
 - The server takes all of its dependencies (Redis, the Reddit client, settings, the clock, the
   request context) as one object, so every route and Reddit interaction is tested against
@@ -155,7 +155,7 @@ results thread for the cards, snoovatars on the solved map, and streak flair tha
 subreddit's comments. Commenting and subscribing are separate, optional buttons, as Devvit's rules
 require.
 
-**Daily Content.** 180 dated islands (2026-12-01 to 2027-05-29) and 20 practice islands are
+**Daily Content.** 188 dated islands (2026-11-23 to 2027-05-29) and 20 practice islands are
 generated from a fixed seed and verified on every test run, with a weekly ramp from 7 to 9
 landmarks and an easy, medium or hard grade measured by the depth of deduction each island needs.
 Every island is snapshotted into Redis when it is posted, so a redeploy never changes a live
