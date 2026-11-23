@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../dist/types/tools-src",
+    "tsBuildInfoFile": "../dist/types/tools-src/tsconfig.tsbuildinfo",
+    "types": ["node"],
+    "lib": ["ES2023", "DOM"],
+    "rootDir": "..",
+    "exactOptionalPropertyTypes": false
+  },
+  "include": ["../tools/**/*.ts"],
+  "exclude": ["../tools/tsconfig*.json"],
+  "references": [{ "path": "./tsconfig.shared.json" }]
+}
