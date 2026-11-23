@@ -222,8 +222,8 @@ Post my chart and Join act as you on Reddit, so Reddit asks for your permission 
 the button hands its click to Devvit's `canRunAsUser` check, which shows Reddit's consent prompt
 when needed. If you decline, the game says so and leaves the button enabled; nothing else
 changes. Seen in playtest on 2026-11-23: without that consent Reddit rejects the comment with
-"refresh token does not exist". TODO(joey): confirm the account the reply appears under once
-consent is granted.
+"refresh token does not exist"; with it, the prompt appears once and the reply shows under the
+player's own username, even while the app is unpublished.
 
 ## Architecture
 

@@ -159,14 +159,15 @@ Useful tools: the app logs from the playtest session, the browser devtools Netwo
     `/api/reveal` returns an empty `settlers` list.
   - If it fails: blocker. Fix `toPuzzle` in `src/server/services/snapshot.ts` before submitting.
 
-- [ ] **Post my chart identity and placement.** The app declares `permissions.reddit.scope: 'user'`
+- [x] **Post my chart identity and placement.** The app declares `permissions.reddit.scope: 'user'`
       and `asUser: ['SUBMIT_COMMENT', 'SUBSCRIBE_TO_SUBREDDIT']`, and posts with `runAs: 'USER'`.
-  - Look at: tap Post my chart as the owner and as the non-owner account. Record which username
-    each reply shows (Devvit runs user actions from the app account for unpublished apps unless
-    the owner acts). Each reply is under the stickied results comment, never top-level, and
-    matches the fixed card. A second tap shows Posted and creates no second reply.
+  - Seen 2026-11-23 as the owner: Reddit's consent prompt appeared on the first tap, and after
+    allowing it the reply showed under the player's own username. Still to check with the
+    non-owner account: the prompt appears for them too, the reply is under the stickied results
+    comment and matches the fixed card, and a second tap shows Posted with no second reply.
   - If it fails: if the call errors, the claim is released and the button shows "Could not post
-    your chart"; read the logs. Update the README note on playtest identity with what you saw.
+    your chart"; read the logs. A "refresh token does not exist" error means consent was not
+    granted; the client asks through `canRunAsUser` before calling the server.
 
 - [ ] **Nothing is gated.**
   - Look at: chart an island without tapping Post my chart, Share or Join. The result, rank,
