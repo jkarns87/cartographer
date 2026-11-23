@@ -5,7 +5,7 @@ Draft text for the Reddit Game of the Day 2026 submission form. Submissions clos
 and `devvit playtest` only.
 
 - Demo post: TODO(joey): link to the post in the public test subreddit (under 200 members)
-- App listing: TODO(joey): confirm `https://developers.reddit.com/apps/cartographer-daily` after `devvit upload`
+- App listing: TODO(joey): confirm `https://developers.reddit.com/apps/cartographer-isle` after `devvit upload`
 - Video: TODO(joey): link (under one minute)
 - Repository: https://github.com/jkarns87/cartographer
 - README: https://github.com/jkarns87/cartographer/blob/main/README.md

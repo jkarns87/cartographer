@@ -14,7 +14,7 @@ TODO(joey): capture `docs/screenshots/cover.png` (the inline cover in the feed, 
 `docs/screenshots/board.png` (the expanded board with a few clues lit).
 
 - Play: TODO(joey): link to the demo post in the public test subreddit (under 200 members)
-- App listing: TODO(joey): confirm `https://developers.reddit.com/apps/cartographer-daily` after `devvit upload`
+- App listing: TODO(joey): confirm `https://developers.reddit.com/apps/cartographer-isle` after `devvit upload`
 - Video (under one minute): TODO(joey): link
 - Source: https://github.com/jkarns87/cartographer
 
