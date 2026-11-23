@@ -380,6 +380,17 @@ circle; the compass sits inside the crop) and `banner-1920x384.png` the banner, 
 into `devvit.json` as `marketingAssets.icon` for the app listing. Regenerate everything with
 `python3 tools/brand/build.py`; the SVGs next to the PNGs are the sources.
 
+**Community colors.** From the game's palette, so the page matches the banner and the board:
+
+| Setting           | Hex       | In the game                 | Note                                                        |
+| ----------------- | --------- | --------------------------- | ----------------------------------------------------------- |
+| Key color         | `#3D7AA5` | water-deep, one step darker | 4.6:1 as white text on it; the palette's `#5B93BA` is 3.3:1 |
+| Base color        | `#F5EBD4` | sheet (the clue sheet)      | Page background behind the post cards                       |
+| Pinned post color | `#1F6E43` | lit-text (a satisfied clue) | 6.2:1 on white, 5.3:1 on the base color                     |
+
+Alternatives: `#2B2A28` (ink) as a neutral key color, `#8A5200` (warn-text) for an amber pinned
+color. Reddit ignores the base color in dark mode and keeps the other two.
+
 **Setting.** "Award user flair for streaks" (`flairEnabled`, on by default). When it is off, the
 app never writes user flair. When it is on, the app writes flair only after a counted solve, and
 only when the user's current flair is empty or is the text the app wrote last.
