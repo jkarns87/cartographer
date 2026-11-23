@@ -40,7 +40,7 @@ export const onShore = (land: LandMask, cell: Cell, dir: Dir): boolean =>
   !isLand(land, neighbor(cell, dir));
 
 export const isCoast = (land: LandMask, cell: Cell): boolean =>
-  DIRS.some((d) => onShore(land, cell, d));
+  isLand(land, cell) && DIRS.some((d) => onShore(land, cell, d));
 
 export const isInland = (land: LandMask, cell: Cell): boolean =>
   isLand(land, cell) && DIRS.every((d) => isLand(land, neighbor(cell, d)));
