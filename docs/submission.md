@@ -108,6 +108,13 @@ appear on it.
 - **Platform unknowns.** The cron time zone, whether snoovatar images load inside the webview, and
   how post flair behaves on a subreddit without a matching template are not documented. Each has a
   fallback in code and an item on the playtest checklist.
+- **User actions before approval.** Devvit grants `runAs: 'USER'` and subscribing only to the app
+  owner until the app version is published and approved, which cannot happen before judging ends.
+  A playtest with a second account showed it: the card posted under the app account, and
+  subscribing failed with `permission not granted for [SUBSCRIBE_TO_SUBREDDIT]`. The server now
+  reports that refusal as a 403 instead of a 500, and the result screen swaps Join for an
+  "Open r/cartographer_dev" button, so a judge sees the limitation explained instead of a retry
+  that can never work.
 
 ## Accomplishments that we're proud of
 
@@ -119,7 +126,7 @@ appear on it.
   user under one stickied app comment, a fixed template, no free text, nothing gated on it.
 - Clue states use shape and color, every cell has a screen-reader label, tap targets are at least
   44 px, and dark mode and reduced motion are supported.
-- 807 automated tests cover the puzzle rules, both solvers, the generator, every server service
+- 814 automated tests cover the puzzle rules, both solvers, the generator, every server service
   and route, and the client's reducer and components.
 
 ## What we learned
@@ -161,7 +168,7 @@ island around you.
 
 **Polish.** The app is built for publishing: the inline cover stays small and tap-only, the board
 fits a phone in portrait and moves the clues to a sidebar in landscape and on desktop, and dark mode
-and reduced motion are handled. Every service has tests (807 in all), the server
+and reduced motion are handled. Every service has tests (814 in all), the server
 verifies every solve, the cron is idempotent with a retry 15 minutes later, and Reddit-side failures
 are logged without breaking the game. Icons are open-licensed and credited, and there are no
 third-party requests at runtime.

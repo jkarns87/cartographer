@@ -15,6 +15,7 @@ import type { ResultScreenProps } from './ResultScreen';
 
 vi.mock('@devvit/web/client', () => ({
   canRunAsUser: vi.fn(() => Promise.resolve(true)),
+  context: { subredditName: 'testsub' },
   navigateTo: vi.fn(),
   showShareSheet: vi.fn(() => Promise.resolve()),
   showToast: vi.fn(),
@@ -103,7 +104,8 @@ const renderScreen = (overrides: Partial<ResultScreenProps> = {}) => {
     revealDone: true,
     onComment: vi.fn(() => Promise.resolve(true)),
     onShare: vi.fn(),
-    onSubscribe: vi.fn(() => Promise.resolve(true)),
+    onSubscribe: vi.fn(() => Promise.resolve('subscribed' as const)),
+    onOpenSubreddit: vi.fn(),
     onResults: vi.fn(),
     ...overrides,
   };
@@ -145,7 +147,8 @@ describe('ResultScreen', () => {
         revealDone={false}
         onComment={() => Promise.resolve(true)}
         onShare={() => {}}
-        onSubscribe={() => Promise.resolve(true)}
+        onSubscribe={() => Promise.resolve('subscribed' as const)}
+        onOpenSubreddit={() => {}}
         onResults={() => {}}
       />
     );
@@ -262,7 +265,7 @@ describe('ResultScreen', () => {
 
   it('keeps Join and shows an error line when subscribing fails', async () => {
     const props = renderScreen({
-      onSubscribe: vi.fn(() => Promise.resolve(false)),
+      onSubscribe: vi.fn(() => Promise.resolve('failed' as const)),
     });
     fireEvent.click(
       screen.getByRole('button', { name: "Join for tomorrow's island" })
@@ -293,6 +296,38 @@ describe('ResultScreen', () => {
     expect(
       screen.getByRole('button', { name: "Join for tomorrow's island" })
     ).toBeEnabled();
+  });
+
+  it('swaps Join for the subreddit page when Reddit refuses to subscribe as the user', async () => {
+    const props = renderScreen({
+      subredditName: 'testsub',
+      onSubscribe: vi.fn(() => Promise.resolve('forbidden' as const)),
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Reddit only lets approved apps subscribe for you. Until Cartographer is approved, join from the subreddit page.'
+    );
+    expect(
+      screen.queryByRole('button', { name: "Join for tomorrow's island" })
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Open r/testsub' }));
+    expect(props.onOpenSubreddit).toHaveBeenCalledTimes(1);
+    expect(props.onSubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it('labels the subreddit button generically when the name is unknown', async () => {
+    renderScreen({
+      onSubscribe: vi.fn(() => Promise.resolve('forbidden' as const)),
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
+    expect(
+      await screen.findByRole('button', { name: 'Open the subreddit' })
+    ).toBeInTheDocument();
   });
 
   it('hides Join when the subscribe prompt was already seen', () => {
@@ -420,6 +455,19 @@ describe('ResultContainer', () => {
     );
     expect(await screen.findByRole('status')).toHaveTextContent('Subscribed');
     expect(api.postSubscribe).toHaveBeenCalledTimes(2);
+  });
+
+  it('offers the subreddit page when the server answers forbidden', async () => {
+    vi.mocked(api.postSubscribe).mockResolvedValueOnce({ error: 'forbidden' });
+    renderContainer(STATS);
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Open r/testsub' })
+    );
+    expect(navigateTo).toHaveBeenCalledWith('https://www.reddit.com/r/testsub');
+    await waitFor(() => expect(api.getReveal).toHaveBeenCalled());
   });
 
   it('treats an already-posted chart as posted', async () => {

@@ -577,6 +577,28 @@ describe('POST /api/subscribe', () => {
       me: { result: { subscribePromptSeen: true } },
     });
   });
+
+  it('is 403 forbidden when Reddit refuses to act as the user, and leaves the prompt unseen', async () => {
+    const { deps, postId } = await setup();
+    deps.reddit.denySubscribe = true;
+    expect(await post(deps, '/api/subscribe')).toEqual({
+      status: 403,
+      body: { error: 'forbidden' },
+    });
+    expect(deps.reddit.subscribeCalls).toBe(1);
+    expect(
+      await deps.redis.hGet(keys.user(postId, UID), 'subscribePromptSeen')
+    ).toBeUndefined();
+  });
+
+  it('is 500 server when subscribing fails for any other reason', async () => {
+    const { deps } = await setup();
+    deps.reddit.failSubscribe = true;
+    expect(await post(deps, '/api/subscribe')).toEqual({
+      status: 500,
+      body: { error: 'server' },
+    });
+  });
 });
 
 describe('POST /api/tutorial-seen', () => {

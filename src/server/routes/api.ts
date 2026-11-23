@@ -13,7 +13,6 @@ import { buildResult, chart } from '../services/chart';
 import { postChart } from '../services/comments';
 import {
   ensureStarted,
-  markSubscribePromptSeen,
   markTutorialSeen,
   parsePlaceRequest,
   readProgress,
@@ -24,6 +23,7 @@ import {
 import { reveal } from '../services/snoovatar';
 import { loadSnapshot, toPuzzle, toSummary } from '../services/snapshot';
 import { readStats } from '../services/stats';
+import { subscribe } from '../services/subscribe';
 
 /**
  * Client-facing routes under `/api` (spec 5.2). Every response is JSON.
@@ -174,8 +174,8 @@ api.post('/subscribe', async (c) => {
   const s = scope(c);
   if (!s) return invalid(c);
   if (!isAuthed(s)) return login(c);
-  await s.deps.reddit.subscribeToCurrentSubreddit();
-  await markSubscribePromptSeen(s.deps, s.postId, s.userId);
+  const out = await subscribe(s.deps, s.postId, s.userId);
+  if (out.kind === 'forbidden') return fail(c, 'forbidden', 403);
   return c.json<Ok>({ ok: true }, 200);
 });
 

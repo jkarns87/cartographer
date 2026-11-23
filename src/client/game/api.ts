@@ -21,6 +21,7 @@ const KNOWN_ERRORS = {
   invalid: true,
   already: true,
   'not-found': true,
+  forbidden: true,
   server: true,
 } satisfies Record<ApiError['error'], true>;
 
@@ -43,6 +44,7 @@ const errorFrom = async (res: Response): Promise<ApiError> => {
     // Non-JSON error body; fall through to the status mapping.
   }
   if (res.status === 401) return { error: 'login' };
+  if (res.status === 403) return { error: 'forbidden' };
   if (res.status === 404) return { error: 'not-found' };
   return { error: 'server' };
 };

@@ -75,7 +75,10 @@ export type Settler = { userId: string; snoovatar: string | null; cell: Cell; is
 
 export type RevealResponse = { settlers: Settler[]; more: number };
 
-export type ApiError = { error: 'login' | 'mismatch' | 'invalid' | 'already' | 'not-found' | 'server' };
+/** `forbidden`: Reddit refused to act as the player (an app not yet approved for user actions). */
+export type ApiError = {
+  error: 'login' | 'mismatch' | 'invalid' | 'already' | 'not-found' | 'forbidden' | 'server';
+};
 
 /** Shape stored in postData at post time. Must stay well under 2 KB. */
 export type IslandPostData = {

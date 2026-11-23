@@ -1,5 +1,6 @@
 import {
   canRunAsUser,
+  context,
   navigateTo,
   showShareSheet,
   showToast,
@@ -25,6 +26,11 @@ const statsLine = (stats: Stats): string =>
 const resultsThreadUrl = (postId: string): string =>
   `https://www.reddit.com/comments/${postId.replace(/^t3_/, '')}`;
 
+const subredditUrl = (name: string): string => `https://www.reddit.com/r/${name}`;
+
+/** What `onSubscribe` resolves to. `forbidden`: Reddit refused to act as the player. */
+export type SubscribeOutcome = 'subscribed' | 'failed' | 'forbidden';
+
 const settlerCaption = (done: boolean, shown: number, more: number): string => {
   if (!done) return 'Settlers arriving…';
   const total = shown + more;
@@ -47,13 +53,16 @@ export type ResultScreenProps = {
   /** Resolves true when the chart is posted (or was already), false on failure. */
   onComment: () => Promise<boolean>;
   onShare: () => void;
-  /** Resolves true when the subscription went through, false on failure. */
-  onSubscribe: () => Promise<boolean>;
+  /** `forbidden` swaps Join for a button to the subreddit page, where the player can join by hand. */
+  onSubscribe: () => Promise<SubscribeOutcome>;
+  /** Names the subreddit on that button; a generic label is used when unknown. */
+  subredditName?: string | undefined;
+  onOpenSubreddit: () => void;
   onResults: () => void;
 };
 
 type CommentState = 'idle' | 'busy' | 'posted' | 'failed' | 'consent';
-type SubscribeState = 'idle' | 'busy' | 'done' | 'failed' | 'consent';
+type SubscribeState = 'idle' | 'busy' | 'done' | 'failed' | 'consent' | 'forbidden';
 
 const PRIMARY =
   'flex h-12 items-center justify-center rounded-xl bg-lit px-4 text-base font-semibold text-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lit disabled:bg-lit/55 disabled:shadow-none';
@@ -75,6 +84,8 @@ export const ResultScreen = ({
   onComment,
   onShare,
   onSubscribe,
+  subredditName,
+  onOpenSubreddit,
   onResults,
 }: ResultScreenProps) => {
   const headingId = useId();
@@ -89,6 +100,8 @@ export const ResultScreen = ({
 
   // Both buttons act as the player on Reddit, which needs the player's consent.
   // `canRunAsUser` shows Reddit's prompt when needed and must get the trusted click.
+  // Until the app is approved, Reddit grants user actions only to the app owner: other
+  // players' comments fall back to the app account, and subscribing is refused outright.
   const comment = async (e: MouseEvent<HTMLButtonElement>): Promise<void> => {
     if (posted || commentState === 'busy') return;
     setCommentState('busy');
@@ -109,8 +122,8 @@ export const ResultScreen = ({
       setSubscribeState('consent');
       return;
     }
-    const ok = await onSubscribe().catch(() => false);
-    setSubscribeState(ok ? 'done' : 'failed');
+    const outcome = await onSubscribe().catch((): SubscribeOutcome => 'failed');
+    setSubscribeState(outcome === 'subscribed' ? 'done' : outcome);
   };
 
   return (
@@ -257,6 +270,19 @@ export const ResultScreen = ({
             >
               Subscribed. See you tomorrow.
             </p>
+          ) : subscribeState === 'forbidden' ? (
+            <>
+              <p
+                role="alert"
+                className="rounded-lg border border-warn/60 bg-warn/10 px-3 py-2 text-center text-sm text-ink"
+              >
+                Reddit only lets approved apps subscribe for you. Until Cartographer is
+                approved, join from the subreddit page.
+              </p>
+              <button type="button" className={SECONDARY} onClick={onOpenSubreddit}>
+                {subredditName ? `Open r/${subredditName}` : 'Open the subreddit'}
+              </button>
+            </>
           ) : (
             <>
               <button
@@ -330,10 +356,15 @@ export const ResultContainer = ({
     return 'error' in res ? res.error === 'already' : true;
   };
 
-  const onSubscribe = async (): Promise<boolean> => {
+  const onSubscribe = async (): Promise<SubscribeOutcome> => {
     const res = await postSubscribe();
-    return !('error' in res);
+    if (!('error' in res)) return 'subscribed';
+    return res.error === 'forbidden' ? 'forbidden' : 'failed';
   };
+
+  // The post page also carries a Join button, so it is the fallback when the name is missing.
+  const subredditName = context.subredditName;
+  const subredditPage = subredditName ? subredditUrl(subredditName) : resultsThreadUrl(postId);
 
   const onShare = () => {
     const text = chartCardText({
@@ -363,6 +394,8 @@ export const ResultContainer = ({
       onComment={onComment}
       onShare={onShare}
       onSubscribe={onSubscribe}
+      subredditName={subredditName}
+      onOpenSubreddit={() => navigateTo(subredditPage)}
       onResults={() => navigateTo(resultsThreadUrl(postId))}
     />
   );

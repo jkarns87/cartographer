@@ -25,6 +25,8 @@ const CHART_ERROR_TEXT: Record<ApiError['error'], string> = {
   already: 'This island is already charted.',
   login: 'Your session expired. Log in and try again.',
   'not-found': 'This island could not be found.',
+  // Only /api/subscribe answers this; kept for the same reason as `already`.
+  forbidden: 'Reddit did not allow that for your account.',
   server: 'The survey office did not answer. Try again.',
 };
 

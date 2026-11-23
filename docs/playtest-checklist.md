@@ -162,9 +162,13 @@ Useful tools: the app logs from the playtest session, the browser devtools Netwo
 - [x] **Post my chart identity and placement.** The app declares `permissions.reddit.scope: 'user'`
       and `asUser: ['SUBMIT_COMMENT', 'SUBSCRIBE_TO_SUBREDDIT']`, and posts with `runAs: 'USER'`.
   - Seen 2026-11-23 as the owner: Reddit's consent prompt appeared on the first tap, and after
-    allowing it the reply showed under the player's own username. Still to check with the
-    non-owner account: the prompt appears for them too, the reply is under the stickied results
-    comment and matches the fixed card, and a second tap shows Posted with no second reply.
+    allowing it the reply showed under the player's own username. Seen the same day with the
+    non-owner account: the reply was posted by the app account. That is Devvit's documented
+    behavior ("Differences during playtesting" in the user-actions docs): until the app version
+    is approved, `runAs: 'USER'` runs as the app for everyone but the owner, so attribution for
+    other players cannot be verified before publishing on 2026-12-17. Still to check with the
+    non-owner account: the reply sits under the stickied results comment and matches the fixed
+    card, and a second tap shows Posted with no second reply.
   - If it fails: if the call errors, the claim is released and the button shows "Could not post
     your chart"; read the logs. A "refresh token does not exist" error means consent was not
     granted; the client asks through `canRunAsUser` before calling the server.
@@ -176,10 +180,16 @@ Useful tools: the app logs from the playtest session, the browser devtools Netwo
   - If it fails: blocker for review; remove the dependency.
 
 - [ ] **Subscribe.**
-  - Look at: Join for tomorrow's island subscribes the account to the subreddit, then shows
-    "Subscribed. See you tomorrow." and does not show again on that island.
-  - If it fails: check the logs for the `/api/subscribe` error and the `SUBSCRIBE_TO_SUBREDDIT`
-    permission.
+  - Look at: as the owner, Join for tomorrow's island subscribes the account to the subreddit,
+    then shows "Subscribed. See you tomorrow." and does not show again on that island. As the
+    non-owner account, Reddit refuses (`permission not granted for [SUBSCRIBE_TO_SUBREDDIT]`,
+    seen 2026-11-23, expected until the app is approved); the server answers 403 `forbidden`, the
+    result screen replaces Join with "Open r/cartographer_dev", that button opens the subreddit,
+    and Join is offered again on the next island.
+  - If it fails: for the owner, check the logs for the `/api/subscribe` error and the
+    `SUBSCRIBE_TO_SUBREDDIT` permission. For the non-owner, a "Could not subscribe" line instead
+    of the subreddit button means the refusal text changed; update `isUserActionDenied` in
+    `src/server/services/subscribe.ts`.
 
 - [ ] **No free text and no Snoo.**
   - Look at: there is no text input anywhere in the cover, board or result screen, and the only

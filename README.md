@@ -208,7 +208,15 @@ but left out of the median. The result screen adds your rank by time.
 
 **Share and subscribe.** Share opens Reddit's share sheet with the same card text, and Reddit adds
 the post link. "Join for tomorrow's island" subscribes you to the subreddit. After you use it on an
-island, it no longer shows on that island's result screen.
+island, it no longer shows on that island's result screen. If Reddit refuses to subscribe you (see
+the next paragraph), the button is replaced by one that opens the subreddit page.
+
+**Before approval.** Devvit grants user actions (`runAs: 'USER'` comments and subscribing) only to
+the app owner until the app version is published and approved. For every other player, including
+judges in the test subreddit, Post my chart lands under the app account, and subscribing is refused
+with `permission not granted for [SUBSCRIBE_TO_SUBREDDIT]`. The server reports that refusal as a
+403 `forbidden`, and the result screen shows "Open r/cartographer_dev" instead of Join. Publishing
+is blocked until judging ends on 2026-12-17, so this is the state judges will see.
 
 **Comment policy.** Cartographer follows Devvit's rules for user-authored comments. A comment is
 posted only when you tap Post my chart. It is posted as you (`runAs: 'USER'`), only as a reply under
@@ -331,9 +339,9 @@ post a practice island".
 | `npm run deploy`     | Type check, lint, then `devvit upload` (a private upload, not a publish)              |
 | `npm run launch`     | Disabled on purpose. The app is not published before judging ends on 2026-12-17.      |
 
-**Tests.** 807 Vitest tests in 35 files: 345 for the shared puzzle module (table-driven tests per
+**Tests.** 814 Vitest tests in 36 files: 345 for the shared puzzle module (table-driven tests per
 clue type, sentence templates, solver fixtures with known solution and round counts, and a
-randomized cross-check of the two solvers), 311 for the server (every service and route), 90 for
+randomized cross-check of the two solvers), 315 for the server (every service and route), 93 for
 the client (the reducer, components, the game hook and the cover), 54 for the generator (including
 a property test over 100 seeds for each landmark count and verification of the committed files),
 and 7 for the icon pipeline.

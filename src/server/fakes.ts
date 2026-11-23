@@ -264,6 +264,13 @@ export class FakeReddit implements RedditLike {
   rejectFlairText = false;
   /** While true every `submitComment` rejects. */
   failSubmitComment = false;
+  /**
+   * While true `subscribeToCurrentSubreddit` rejects the way Reddit does for an app that is not
+   * yet approved for user actions, as seen in playtest on 2026-11-23 with a non-owner account.
+   */
+  denySubscribe = false;
+  /** While true `subscribeToCurrentSubreddit` rejects (simulates a Reddit outage). */
+  failSubscribe = false;
   private nextId = 1;
 
   private record(method: string, args: unknown[]): void {
@@ -375,6 +382,10 @@ export class FakeReddit implements RedditLike {
   async subscribeToCurrentSubreddit(): Promise<void> {
     this.record('subscribeToCurrentSubreddit', []);
     this.subscribeCalls++;
+    if (this.denySubscribe)
+      throw new Error('2 UNKNOWN: permission not granted for [SUBSCRIBE_TO_SUBREDDIT]');
+    if (this.failSubscribe)
+      throw new Error('FakeReddit: subscribeToCurrentSubreddit failed');
   }
 
   async getCurrentSubreddit(): Promise<SubredditLike> {
