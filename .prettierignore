@@ -1,0 +1,5 @@
+src/server/puzzles/schedule.json
+src/server/puzzles/practice.json
+dist
+node_modules
+.superpowers
