@@ -20,6 +20,7 @@ import {
   clueKey,
   enumerateTrueClues,
   impliedPairs,
+  OPPOSITE,
   isImpliedBySheet,
 } from './clues';
 import { growIsland, isAcceptableIsland, MAX_LAND, MIN_LAND } from './island';
@@ -104,8 +105,29 @@ const tally = (clues: readonly Clue[]): Tally => {
   return t;
 };
 
+/**
+ * Two shore clues on one landmark in opposite directions. Both can hold on a one-cell-wide
+ * strip of land, but to a player they read as a contradiction (playtest, 2026-11-23).
+ */
+export const isOppositeShorePair = (x: Clue, y: Clue): boolean =>
+  x.type === 'shore' &&
+  y.type === 'shore' &&
+  x.a === y.a &&
+  OPPOSITE[x.dir] === y.dir;
+
+const oppositeShorePairs = (clues: readonly Clue[]): [Clue, Clue][] => {
+  const out: [Clue, Clue][] = [];
+  clues.forEach((x, i) => {
+    clues.slice(i + 1).forEach((y) => {
+      if (isOppositeShorePair(x, y)) out.push([x, y]);
+    });
+  });
+  return out;
+};
+
 /** Whether adding `clue` to `sheet` keeps the per-type caps (negatives, between, extreme). */
 const fitsTypeCaps = (clue: Clue, sheet: readonly Clue[]): boolean => {
+  if (sheet.some((s) => isOppositeShorePair(clue, s))) return false;
   const t = tally(sheet);
   if (isNegative(clue) && t.negatives >= CAPS.maxNegatives) return false;
   if (clue.type === 'between' && t.between >= CAPS.maxBetween) return false;
@@ -159,6 +181,12 @@ export const capProblems = (
     problems.push({
       reason: 'caps',
       message: `${t.extreme} extreme clues > ${CAPS.maxExtreme}`,
+    });
+  }
+  for (const [x] of oppositeShorePairs(clues)) {
+    problems.push({
+      reason: 'caps',
+      message: `opposite shore clues on ${x.a}`,
     });
   }
   const unnamed = unnamedLandmarks(clues, landmarks);

@@ -16,6 +16,7 @@ import {
   fixForHumans,
   isNegative,
   REJECT_REASONS,
+  isOppositeShorePair,
 } from './build';
 import type { RejectReason } from './build';
 import { clueKey, enumerateTrueClues, impliedPairs, implies } from './clues';
@@ -315,6 +316,43 @@ const EXPEDITION_CLUES: Clue[] = [
   { type: 'due', a: 'farm', dir: 'E', b: 'temple' },
   { type: 'due', a: 'watchtower', dir: 'S', b: 'shipwreck' },
 ];
+
+describe('opposite shore clues', () => {
+  const beaconE: Clue = { type: 'shore', a: 'beacon', dir: 'E' };
+  const beaconW: Clue = { type: 'shore', a: 'beacon', dir: 'W' };
+  const beaconN: Clue = { type: 'shore', a: 'beacon', dir: 'N' };
+  const fortE: Clue = { type: 'shore', a: 'fort', dir: 'E' };
+
+  it('recognizes only the same landmark with opposite directions', () => {
+    expect(isOppositeShorePair(beaconE, beaconW)).toBe(true);
+    expect(isOppositeShorePair(beaconW, beaconE)).toBe(true);
+    expect(isOppositeShorePair(beaconE, beaconN)).toBe(false);
+    expect(isOppositeShorePair(beaconE, fortE)).toBe(false);
+  });
+
+  it('is a cap problem on a finished sheet', () => {
+    const base: Clue[] = [
+      { type: 'inland', a: 'fort' },
+      { type: 'due', a: 'fort', dir: 'W', b: 'beacon' },
+      beaconE,
+      beaconN,
+      { type: 'somewhere', a: 'temple', dir: 'S', b: 'fort' },
+      { type: 'touches', a: 'temple', b: 'well' },
+      { type: 'shares', a: 'well', axis: 'row', b: 'cave' },
+    ];
+    const landmarks: LandmarkId[] = [
+      'fort',
+      'beacon',
+      'temple',
+      'well',
+      'cave',
+    ];
+    expect(capProblems(base, landmarks)).toEqual([]);
+    expect(capProblems([...base, beaconW], landmarks)).toEqual([
+      { reason: 'caps', message: 'opposite shore clues on beacon' },
+    ]);
+  });
+});
 
 describe('fixForHumans', () => {
   const ctx = { land: ISLAND_22, landmarks: EXPEDITION_LANDMARKS };
