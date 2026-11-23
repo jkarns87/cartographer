@@ -325,9 +325,9 @@ island".
 | `npm run deploy`     | Type check, lint, then `devvit upload` (a private upload, not a publish)              |
 | `npm run launch`     | Disabled on purpose. The app is not published before judging ends on 2026-12-17.      |
 
-**Tests.** 755 Vitest tests in 33 files: 345 for the shared puzzle module (table-driven tests per
+**Tests.** 796 Vitest tests in 35 files: 345 for the shared puzzle module (table-driven tests per
 clue type, sentence templates, solver fixtures with known solution and round counts, and a
-randomized cross-check of the two solvers), 274 for the server (every service and route), 77 for
+randomized cross-check of the two solvers), 305 for the server (every service and route), 87 for
 the client (the reducer, components, the game hook and the cover), 52 for the generator (including
 a property test over 100 seeds for each landmark count and verification of the committed files),
 and 7 for the icon pipeline.
