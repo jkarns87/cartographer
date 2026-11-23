@@ -75,7 +75,8 @@ once dismissed.
 **Streaks.** A solve counts toward your streak when you chart a dated island within 24 hours of
 its post. Miss an island and the streak ends: once that island's window closes, your streak reads 0
 and your tier drops back to Deckhand until your next counted solve starts a new one. Your best
-streak is kept, and your flair updates on that next solve. Practice islands never change streaks.
+streak is kept, and your flair updates on that next solve. Practice islands never count: your
+streak, total and tier stay exactly as they were.
 
 ## Daily content
 
@@ -365,7 +366,8 @@ created on the first flair write.
 - "Cartographer: post today's island" posts the scheduled island for today's UTC date and opens it.
   If today's island is already posted, or nothing is scheduled for today, it shows a toast instead.
 - "Cartographer: post a practice island" posts the next island from the 20-island practice pool,
-  cycling through it, and opens it. Practice islands never affect streaks or flair.
+  cycling through it, and opens it. Practice islands never count toward streaks, totals, tiers or
+  flair.
 
 **Setting.** "Award user flair for streaks" (`flairEnabled`, on by default). When it is off, the
 app never writes user flair. When it is on, the app writes flair only after a counted solve, and

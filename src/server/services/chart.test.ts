@@ -436,8 +436,38 @@ describe('chart', () => {
       current: 3,
       best: 5,
       cleanRun: 2,
-      total: 11,
+      total: 10,
       counted: false,
+    });
+    expect(deps.reddit.setFlairs).toHaveLength(0);
+  });
+
+  it('awards no tier and writes no streak hash for a practice solve on a fresh account', async () => {
+    const deps = makeDeps();
+    const postId = await post(deps, practice);
+    await ensureStarted(deps, postId, UID);
+    deps.clock.now += 20_000;
+    const out = await chart(
+      deps,
+      postId,
+      UID,
+      NAME,
+      solve(practice, { corrections: 0 })
+    );
+    expect(out.kind).toBe('ok');
+    if (out.kind !== 'ok') return;
+    expect(out.result.streak).toMatchObject({
+      current: 0,
+      total: 0,
+      tier: null,
+      counted: false,
+    });
+    expect(await readStreak(deps, UID)).toEqual({
+      current: 0,
+      best: 0,
+      lastDate: null,
+      cleanRun: 0,
+      total: 0,
     });
     expect(deps.reddit.setFlairs).toHaveLength(0);
   });

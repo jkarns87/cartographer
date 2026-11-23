@@ -64,3 +64,11 @@ streak to 1 as before. `best`, `cleanRun` and `total` are untouched. Result-scre
 `Streak ended · best N` for a lapsed streak, and the late-solve note now says the chart did not
 count toward a streak. Flair still changes only on a counted solve. The 12:00 UTC assumption is
 only used for display; the stored rule keeps using each post's real `postedAt`.
+
+## Follow-up 2026-11-23: practice does not count
+
+Owner correction to ruling 13 of the overnight build, which let practice solves increment `total`
+and so earn Deckhand. Now `applySolve` returns the previous state untouched for a practice island
+and `chart` skips the streak write entirely, so a practice solve leaves the `user:<uid>:streak`
+hash exactly as it was and awards no tier. Per-post community stats, rank and settlers on a
+practice post are unchanged; they describe that post, not the player's record.
