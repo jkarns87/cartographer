@@ -2,17 +2,17 @@ import { showLoginPrompt } from '@devvit/web/client';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import type { ApiError, Result, Stats } from '../../shared/api';
+import type { ApiError } from '../../shared/api';
 import { clueLandmarks } from '../../shared/puzzle/predicates';
 import { DIFFICULTY_LABEL } from '../../shared/puzzle/types';
-import type { LandmarkId, Placement, Puzzle } from '../../shared/puzzle/types';
+import type { LandmarkId } from '../../shared/puzzle/types';
 import { Board } from './components/Board';
 import { ChartButton } from './components/ChartButton';
 import { ClueSheet } from './components/ClueSheet';
 import { Header } from './components/Header';
-import { IslandView } from './components/IslandView';
 import { Legend } from './components/Legend';
-import { formatElapsed } from './format';
+import { ResultContainer } from './ResultScreen';
+import { Tutorial } from './Tutorial';
 import { useGame } from './useGame';
 
 const HIGHLIGHT_MS = 1200;
@@ -66,65 +66,11 @@ const ErrorPanel = ({ onRetry }: { onRetry: () => void }) => (
     <button
       type="button"
       onClick={onRetry}
-      className="h-12 w-full rounded-xl border border-land bg-sand px-6 text-base font-semibold text-ink"
+      className="h-12 w-full rounded-xl border border-land bg-sand px-6 text-base font-semibold text-ink-on-sand"
     >
       Try again
     </button>
   </Panel>
-);
-
-type ResultPlaceholderProps = {
-  puzzle: Puzzle;
-  placements: Placement;
-  result: Result;
-  stats: Stats | null;
-};
-
-/**
- * Minimal "Charted" panel. Task 7 replaces this with `ResultScreen`
- * (reveal animation, comment/share/subscribe/results buttons).
- */
-export const ResultPlaceholder = ({ puzzle, placements, result, stats }: ResultPlaceholderProps) => (
-  <section aria-label="Charted" className="flex flex-col gap-4">
-    <div className="relative">
-      <IslandView land={puzzle.land} placements={placements} size="board" />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 flex items-center justify-center"
-      >
-        <span className="-rotate-12 rounded-md border-4 border-lit bg-paper/85 px-4 py-1 text-3xl font-black tracking-widest text-lit uppercase">
-          Charted
-        </span>
-      </div>
-    </div>
-    <dl className="grid grid-cols-3 gap-2 text-center">
-      <div className="rounded-xl border border-land bg-sand/60 p-2">
-        <dt className="text-xs text-ink/60">Time</dt>
-        <dd className="font-mono text-lg font-semibold">{formatElapsed(result.elapsedMs)}</dd>
-      </div>
-      <div className="rounded-xl border border-land bg-sand/60 p-2">
-        <dt className="text-xs text-ink/60">Corrections</dt>
-        <dd className="text-lg font-semibold">{result.corrections}</dd>
-      </div>
-      <div className="rounded-xl border border-land bg-sand/60 p-2">
-        <dt className="text-xs text-ink/60">Rank</dt>
-        <dd className="text-lg font-semibold">
-          #{result.rank} <span className="text-sm font-normal text-ink/60">of {result.total}</span>
-        </dd>
-      </div>
-    </dl>
-    <p className="text-sm text-ink/80">
-      Streak {result.streak.current}
-      {result.streak.tier ? ` · ${result.streak.tier}` : ''}
-      {result.streak.steadyHand ? ' · steady hand' : ''}
-    </p>
-    {stats ? (
-      <p className="text-sm text-ink/70">
-        {stats.charted} charted · {stats.cleanPct}% clean
-        {stats.medianMs !== null ? ` · median ${formatElapsed(stats.medianMs)}` : ''}
-      </p>
-    ) : null}
-  </section>
 );
 
 export const GamePage = () => {
@@ -149,17 +95,21 @@ export const GamePage = () => {
   const serverNowForHeader = showResult ? game.startedAt + result.elapsedMs : game.serverNow;
   const chartVisible = g.canChart && !solved;
   const locked = solved || g.charting;
-  // Task 7: mount <Tutorial /> here when `game.tutorialSeen` is false.
+  const showTutorial = !game.tutorialSeen && !solved;
 
   return (
     <main
       className={[
         'min-h-full bg-paper text-ink',
-        chartVisible ? 'pb-24 lg:pb-0' : '',
+        chartVisible ? 'pb-24 md:pb-0 sm:landscape:pb-0' : '',
       ].join(' ')}
     >
-      <div className="mx-auto flex w-full max-w-md flex-col gap-3 px-4 py-3 lg:max-w-5xl lg:flex-row lg:items-start lg:gap-8 lg:py-6">
-        <div className="flex flex-col gap-3 lg:w-[30rem] lg:shrink-0">
+      {/* Spec 4.3: landscape and desktop move the legend and clue sheet into a
+          right sidebar. Both `md:` and `sm:landscape:` carry identical values so
+          their order in the stylesheet never matters; the board column is capped
+          at the viewport height so the square board fits beside the sidebar. */}
+      <div className="mx-auto flex w-full max-w-md flex-col gap-3 px-4 py-3 md:max-w-5xl md:flex-row md:items-start md:gap-6 sm:landscape:max-w-5xl sm:landscape:flex-row sm:landscape:items-start sm:landscape:gap-6">
+        <div className="flex flex-col gap-3 md:sticky md:top-3 md:w-[min(30rem,max(12rem,calc(100dvh-6rem)))] md:shrink-0 sm:landscape:sticky sm:landscape:top-3 sm:landscape:w-[min(30rem,max(12rem,calc(100dvh-6rem)))] sm:landscape:shrink-0">
           <Header
             name={puzzle.name}
             startedAt={game.startedAt}
@@ -172,7 +122,8 @@ export const GamePage = () => {
             {DIFFICULTY_LABEL[puzzle.difficulty]} · {puzzle.landmarks.length} landmarks
           </p>
           {showResult ? (
-            <ResultPlaceholder
+            <ResultContainer
+              postId={game.postId}
               puzzle={puzzle}
               placements={state.placements}
               result={result}
@@ -190,7 +141,7 @@ export const GamePage = () => {
         </div>
 
         {showResult ? null : (
-          <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:min-w-0 lg:flex-1">
+          <aside className="flex flex-col gap-4 md:min-w-0 md:flex-1 sm:landscape:min-w-0 sm:landscape:flex-1">
             <Legend
               landmarks={puzzle.landmarks}
               placements={state.placements}
@@ -235,6 +186,7 @@ export const GamePage = () => {
           </aside>
         )}
       </div>
+      {showTutorial ? <Tutorial /> : null}
     </main>
   );
 };
