@@ -1,0 +1,83 @@
+import type { Rng } from './rng';
+
+/**
+ * Fixed word lists for seeded island names ("Thistle Reach", "Gull Hollow"). No word repeats a
+ * landmark name, so a name never reads like a clue.
+ */
+export const NAME_ADJECTIVES = [
+  'Amber',
+  'Bracken',
+  'Bramble',
+  'Briar',
+  'Cinder',
+  'Clover',
+  'Cobalt',
+  'Copper',
+  'Curlew',
+  'Driftwood',
+  'Ember',
+  'Fennel',
+  'Flint',
+  'Gannet',
+  'Gull',
+  'Hazel',
+  'Heather',
+  'Heron',
+  'Juniper',
+  'Kelp',
+  'Kestrel',
+  'Marram',
+  'Moss',
+  'Nettle',
+  'Osprey',
+  'Pebble',
+  'Plover',
+  'Puffin',
+  'Rowan',
+  'Saffron',
+  'Sedge',
+  'Sorrel',
+  'Storm',
+  'Tern',
+  'Thistle',
+  'Willow',
+  'Wren',
+  'Yarrow',
+] as const;
+
+export const NAME_NOUNS = [
+  'Atoll',
+  'Bank',
+  'Barrow',
+  'Bight',
+  'Bluff',
+  'Cay',
+  'Cove',
+  'Crag',
+  'Fold',
+  'Haven',
+  'Head',
+  'Holm',
+  'Hollow',
+  'Hook',
+  'Isle',
+  'Key',
+  'Knoll',
+  'Landing',
+  'Ness',
+  'Point',
+  'Reach',
+  'Reef',
+  'Rest',
+  'Rise',
+  'Shoal',
+  'Skerry',
+  'Sound',
+  'Spit',
+  'Strand',
+  'Tor',
+] as const;
+
+/** "<Adjective> <Noun>", two draws from `rng`. */
+export const islandName = (rng: Rng): string =>
+  `${rng.pick(NAME_ADJECTIVES)} ${rng.pick(NAME_NOUNS)}`;
