@@ -30,7 +30,12 @@ const get = async (deps: TestDeps, path: string): Promise<Res> => {
   return { status: res.status, body: await res.json() };
 };
 
-const post = async (deps: TestDeps, path: string, body?: unknown, raw?: string): Promise<Res> => {
+const post = async (
+  deps: TestDeps,
+  path: string,
+  body?: unknown,
+  raw?: string
+): Promise<Res> => {
   const res = await createApp(deps).request(path, {
     method: 'POST',
     body: raw ?? (body === undefined ? '{}' : JSON.stringify(body)),
@@ -52,7 +57,11 @@ const logOut = (deps: TestDeps): void => {
   deps.ctxState.username = undefined;
 };
 
-const solution = (): ChartRequest => ({ placements: { ...entry.solution }, history: 'PPPPPPP', corrections: 0 });
+const solution = (): ChartRequest => ({
+  placements: { ...entry.solution },
+  history: 'PPPPPPP',
+  corrections: 0,
+});
 
 const swapped = (): Placement => ({
   ...entry.solution,
@@ -72,33 +81,47 @@ describe('every /api route', () => {
     ['GET', '/api/reveal'],
   ];
 
-  it.each(routes)('%s %s is 400 invalid without a postId in context', async (method, path) => {
-    const deps = makeDeps();
-    const res = method === 'GET' ? await get(deps, path) : await post(deps, path, solution());
-    expect(res).toEqual({ status: 400, body: { error: 'invalid' } });
-  });
-
-  it.each(routes.filter(([, path]) => path !== '/api/cover' && path !== '/api/reveal'))(
-    '%s %s is 401 login when logged out',
+  it.each(routes)(
+    '%s %s is 400 invalid without a postId in context',
     async (method, path) => {
-      const { deps } = await setup();
-      logOut(deps);
-      const res = method === 'GET' ? await get(deps, path) : await post(deps, path, solution());
-      expect(res).toEqual({ status: 401, body: { error: 'login' } });
+      const deps = makeDeps();
+      const res =
+        method === 'GET'
+          ? await get(deps, path)
+          : await post(deps, path, solution());
+      expect(res).toEqual({ status: 400, body: { error: 'invalid' } });
     }
   );
+
+  it.each(
+    routes.filter(([, path]) => path !== '/api/cover' && path !== '/api/reveal')
+  )('%s %s is 401 login when logged out', async (method, path) => {
+    const { deps } = await setup();
+    logOut(deps);
+    const res =
+      method === 'GET'
+        ? await get(deps, path)
+        : await post(deps, path, solution());
+    expect(res).toEqual({ status: 401, body: { error: 'login' } });
+  });
 
   it('answers 500 server when a service throws', async () => {
     const { deps, postId } = await setup();
     await deps.redis.set(keys.puzzle(postId), '{"broken": true}');
-    expect(await get(deps, '/api/cover')).toEqual({ status: 500, body: { error: 'server' } });
+    expect(await get(deps, '/api/cover')).toEqual({
+      status: 500,
+      body: { error: 'server' },
+    });
   });
 });
 
 describe('GET /api/cover', () => {
   it('is 404 for a post without a snapshot', async () => {
     const deps = makeDeps({ ctx: { postId: 't3_missing' } });
-    expect(await get(deps, '/api/cover')).toEqual({ status: 404, body: { error: 'not-found' } });
+    expect(await get(deps, '/api/cover')).toEqual({
+      status: 404,
+      body: { error: 'not-found' },
+    });
   });
 
   it('works logged out', async () => {
@@ -124,27 +147,77 @@ describe('GET /api/cover', () => {
 
   it('reports unsolved, then in-progress, then solved with the result', async () => {
     const { deps } = await setup();
-    expect((await get(deps, '/api/cover')).body).toMatchObject({ me: { loggedIn: true, status: 'unsolved' } });
+    expect((await get(deps, '/api/cover')).body).toMatchObject({
+      me: { loggedIn: true, status: 'unsolved' },
+    });
 
     await get(deps, '/api/game');
     const progress = await get(deps, '/api/cover');
-    expect(progress.body).toMatchObject({ me: { loggedIn: true, status: 'in-progress' }, stats: { started: 1 } });
+    expect(progress.body).toMatchObject({
+      me: { loggedIn: true, status: 'in-progress' },
+      stats: { started: 1 },
+    });
     expect(progress.body).not.toHaveProperty('me.result');
 
     deps.clock.now += 80_000;
     await post(deps, '/api/chart', solution());
     const done = await get(deps, '/api/cover');
     expect(done.body).toMatchObject({
-      me: { loggedIn: true, status: 'solved', result: { elapsedMs: 80_000, rank: 1, total: 1 } },
+      me: {
+        loggedIn: true,
+        status: 'solved',
+        result: { elapsedMs: 80_000, rank: 1, total: 1 },
+      },
       stats: { started: 1, charted: 1, cleanPct: 100, medianMs: 80_000 },
     });
+  });
+
+  it('shows the streak as ended once the next island window has passed', async () => {
+    const { deps } = await setup();
+    await deps.redis.hSet(keys.streak(UID), {
+      current: '2',
+      best: '2',
+      lastDate: '2026-11-30',
+      cleanRun: '0',
+      total: '2',
+    });
+    await get(deps, '/api/game');
+    deps.clock.now += 60_000;
+    await post(deps, '/api/chart', solution());
+    const fresh = await get(deps, '/api/cover');
+    expect(fresh.body).toMatchObject({
+      me: { result: { streak: { current: 3, tier: 'navigator' } } },
+    });
+
+    // The 2026-12-02 island's window closes at 2026-12-03 12:00 UTC.
+    deps.clock.now = Date.UTC(2026, 11, 3, 12) + 1;
+    const lapsed = await get(deps, '/api/cover');
+    expect(lapsed.body).toMatchObject({
+      me: {
+        status: 'solved',
+        result: {
+          elapsedMs: 60_000,
+          streak: {
+            current: 0,
+            best: 3,
+            total: 3,
+            tier: 'deckhand',
+            counted: true,
+          },
+        },
+      },
+    });
+    expect(await deps.redis.hGet(keys.streak(UID), 'current')).toBe('3');
   });
 });
 
 describe('GET /api/game', () => {
   it('is 404 for a post without a snapshot', async () => {
     const deps = makeDeps({ ctx: { postId: 't3_missing' } });
-    expect(await get(deps, '/api/game')).toEqual({ status: 404, body: { error: 'not-found' } });
+    expect(await get(deps, '/api/game')).toEqual({
+      status: 404,
+      body: { error: 'not-found' },
+    });
   });
 
   it('starts the timer once and returns the puzzle without the solution', async () => {
@@ -154,7 +227,11 @@ describe('GET /api/game', () => {
       status: 200,
       body: {
         postId,
-        puzzle: toPuzzle({ ...entry, postedAt: FIXTURE_NOW, postId } satisfies Snapshot),
+        puzzle: toPuzzle({
+          ...entry,
+          postedAt: FIXTURE_NOW,
+          postId,
+        } satisfies Snapshot),
         placements: {},
         history: '',
         corrections: 0,
@@ -169,14 +246,21 @@ describe('GET /api/game', () => {
 
     deps.clock.now += 5_000;
     const again = await get(deps, '/api/game');
-    expect(again.body).toMatchObject({ startedAt: FIXTURE_NOW, serverNow: FIXTURE_NOW + 5_000 });
+    expect(again.body).toMatchObject({
+      startedAt: FIXTURE_NOW,
+      serverNow: FIXTURE_NOW + 5_000,
+    });
     expect(await deps.redis.hGet(keys.stats(postId), 'started')).toBe('1');
   });
 
   it('restores saved placements and the tutorial flag', async () => {
     const { deps } = await setup();
     await get(deps, '/api/game');
-    await post(deps, '/api/place', { placements: { well: { r: 2, c: 1 } }, history: 'PLP', corrections: 1 });
+    await post(deps, '/api/place', {
+      placements: { well: { r: 2, c: 1 } },
+      history: 'PLP',
+      corrections: 1,
+    });
     await post(deps, '/api/tutorial-seen');
     expect((await get(deps, '/api/game')).body).toMatchObject({
       placements: { well: { r: 2, c: 1 } },
@@ -196,7 +280,13 @@ describe('GET /api/game', () => {
     expect(res.body).toMatchObject({
       status: 'solved',
       placements: entry.solution,
-      result: { elapsedMs: 61_000, corrections: 0, history: 'PPPPPPP', rank: 1, total: 1 },
+      result: {
+        elapsedMs: 61_000,
+        corrections: 0,
+        history: 'PPPPPPP',
+        rank: 1,
+        total: 1,
+      },
     });
     expect(JSON.stringify(res.body)).not.toContain('solution');
   });
@@ -205,28 +295,55 @@ describe('GET /api/game', () => {
 describe('POST /api/place', () => {
   it('is 404 for a post without a snapshot', async () => {
     const deps = makeDeps({ ctx: { postId: 't3_missing' } });
-    expect(await post(deps, '/api/place', solution())).toEqual({ status: 404, body: { error: 'not-found' } });
+    expect(await post(deps, '/api/place', solution())).toEqual({
+      status: 404,
+      body: { error: 'not-found' },
+    });
   });
 
   it('saves a partial board', async () => {
     const { deps, postId } = await setup();
-    const res = await post(deps, '/api/place', { placements: { farm: { r: 4, c: 1 } }, history: 'P', corrections: 0 });
+    const res = await post(deps, '/api/place', {
+      placements: { farm: { r: 4, c: 1 } },
+      history: 'P',
+      corrections: 0,
+    });
     expect(res).toEqual({ status: 200, body: { ok: true } });
-    expect(await deps.redis.hGet(keys.user(postId, UID), 'placements')).toBe('{"farm":{"r":4,"c":1}}');
+    expect(await deps.redis.hGet(keys.user(postId, UID), 'placements')).toBe(
+      '{"farm":{"r":4,"c":1}}'
+    );
   });
 
   it.each<[string, unknown]>([
-    ['a landmark outside the puzzle', { placements: { mine: { r: 0, c: 2 } }, history: 'P', corrections: 0 }],
-    ['an off-grid cell', { placements: { farm: { r: 6, c: 1 } }, history: 'P', corrections: 0 }],
-    ['a non-integer cell', { placements: { farm: { r: 1.5, c: 1 } }, history: 'P', corrections: 0 }],
+    [
+      'a landmark outside the puzzle',
+      { placements: { mine: { r: 0, c: 2 } }, history: 'P', corrections: 0 },
+    ],
+    [
+      'an off-grid cell',
+      { placements: { farm: { r: 6, c: 1 } }, history: 'P', corrections: 0 },
+    ],
+    [
+      'a non-integer cell',
+      { placements: { farm: { r: 1.5, c: 1 } }, history: 'P', corrections: 0 },
+    ],
     ['a bad history', { placements: {}, history: 'PXL', corrections: 0 }],
-    ['an overlong history', { placements: {}, history: 'P'.repeat(201), corrections: 0 }],
+    [
+      'an overlong history',
+      { placements: {}, history: 'P'.repeat(201), corrections: 0 },
+    ],
     ['negative corrections', { placements: {}, history: '', corrections: -1 }],
-    ['corrections over 999', { placements: {}, history: '', corrections: 1000 }],
+    [
+      'corrections over 999',
+      { placements: {}, history: '', corrections: 1000 },
+    ],
     ['a missing placements object', { history: '', corrections: 0 }],
   ])('is 400 invalid for %s', async (_label, body) => {
     const { deps } = await setup();
-    expect(await post(deps, '/api/place', body)).toEqual({ status: 400, body: { error: 'invalid' } });
+    expect(await post(deps, '/api/place', body)).toEqual({
+      status: 400,
+      body: { error: 'invalid' },
+    });
   });
 
   it('is 400 invalid for a body that is not JSON', async () => {
@@ -241,10 +358,19 @@ describe('POST /api/place', () => {
     const { deps, postId } = await setup();
     await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
-    const res = await post(deps, '/api/place', { placements: {}, history: 'L', corrections: 9 });
+    const res = await post(deps, '/api/place', {
+      placements: {},
+      history: 'L',
+      corrections: 9,
+    });
     expect(res.status).toBe(200);
-    expect(await deps.redis.hGet(keys.user(postId, UID), 'corrections')).toBeUndefined();
-    expect((await get(deps, '/api/game')).body).toMatchObject({ corrections: 0, history: 'PPPPPPP' });
+    expect(
+      await deps.redis.hGet(keys.user(postId, UID), 'corrections')
+    ).toBeUndefined();
+    expect((await get(deps, '/api/game')).body).toMatchObject({
+      corrections: 0,
+      history: 'PPPPPPP',
+    });
   });
 
   it('cannot change what GET /api/game returns even when it races past its solved check', async () => {
@@ -262,7 +388,11 @@ describe('POST /api/place', () => {
       }
       return value;
     };
-    const stale = { placements: { lighthouse: entry.solution.lighthouse }, history: 'PPLP', corrections: 1 };
+    const stale = {
+      placements: { lighthouse: entry.solution.lighthouse },
+      history: 'PPLP',
+      corrections: 1,
+    };
     expect((await post(deps, '/api/place', stale)).status).toBe(200);
     expect(raced).toBe(true);
 
@@ -272,7 +402,13 @@ describe('POST /api/place', () => {
       placements: entry.solution,
       history: 'PPPPPPP',
       corrections: 0,
-      result: { elapsedMs: 30_000, corrections: 0, history: 'PPPPPPP', rank: 1, total: 1 },
+      result: {
+        elapsedMs: 30_000,
+        corrections: 0,
+        history: 'PPPPPPP',
+        rank: 1,
+        total: 1,
+      },
     });
   });
 });
@@ -280,14 +416,21 @@ describe('POST /api/place', () => {
 describe('POST /api/chart', () => {
   it('is 404 for a post without a snapshot', async () => {
     const deps = makeDeps({ ctx: { postId: 't3_missing' } });
-    expect(await post(deps, '/api/chart', solution())).toEqual({ status: 404, body: { error: 'not-found' } });
+    expect(await post(deps, '/api/chart', solution())).toEqual({
+      status: 404,
+      body: { error: 'not-found' },
+    });
   });
 
   it('is 200 with the result and stats, ignoring a client-reported time', async () => {
     const { deps } = await setup();
     await get(deps, '/api/game');
     deps.clock.now += 45_000;
-    const res = await post(deps, '/api/chart', { ...solution(), elapsedMs: 1, startedAt: 0 });
+    const res = await post(deps, '/api/chart', {
+      ...solution(),
+      elapsedMs: 1,
+      startedAt: 0,
+    });
     expect(res).toEqual({
       status: 200,
       body: {
@@ -316,17 +459,24 @@ describe('POST /api/chart', () => {
 
   it('is 400 invalid when the game was never opened, and 200 once it was', async () => {
     const { deps } = await setup();
-    expect(await post(deps, '/api/chart', solution())).toEqual({ status: 400, body: { error: 'invalid' } });
+    expect(await post(deps, '/api/chart', solution())).toEqual({
+      status: 400,
+      body: { error: 'invalid' },
+    });
     await get(deps, '/api/game');
     deps.clock.now += 20_000;
     const res = await post(deps, '/api/chart', solution());
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ result: { elapsedMs: 20_000, rank: 1, total: 1 } });
+    expect(res.body).toMatchObject({
+      result: { elapsedMs: 20_000, rank: 1, total: 1 },
+    });
   });
 
   it('is 409 mismatch for a complete wrong board', async () => {
     const { deps } = await setup();
-    expect(await post(deps, '/api/chart', { ...solution(), placements: swapped() })).toEqual({
+    expect(
+      await post(deps, '/api/chart', { ...solution(), placements: swapped() })
+    ).toEqual({
       status: 409,
       body: { error: 'mismatch' },
     });
@@ -336,15 +486,22 @@ describe('POST /api/chart', () => {
     const { deps } = await setup();
     const incomplete: Placement = { ...entry.solution };
     delete incomplete.farm;
-    expect(await post(deps, '/api/chart', { ...solution(), placements: incomplete })).toEqual({
+    expect(
+      await post(deps, '/api/chart', { ...solution(), placements: incomplete })
+    ).toEqual({
       status: 400,
       body: { error: 'invalid' },
     });
-    expect(await post(deps, '/api/chart', { ...solution(), corrections: 'none' })).toEqual({
+    expect(
+      await post(deps, '/api/chart', { ...solution(), corrections: 'none' })
+    ).toEqual({
       status: 400,
       body: { error: 'invalid' },
     });
-    expect(await post(deps, '/api/chart', undefined, '{')).toEqual({ status: 400, body: { error: 'invalid' } });
+    expect(await post(deps, '/api/chart', undefined, '{')).toEqual({
+      status: 400,
+      body: { error: 'invalid' },
+    });
   });
 
   it('returns the same result on a double submit', async () => {
@@ -361,7 +518,10 @@ describe('POST /api/chart', () => {
 describe('POST /api/comment', () => {
   it('is 400 invalid before the solve', async () => {
     const { deps } = await setup();
-    expect(await post(deps, '/api/comment')).toEqual({ status: 400, body: { error: 'invalid' } });
+    expect(await post(deps, '/api/comment')).toEqual({
+      status: 400,
+      body: { error: 'invalid' },
+    });
   });
 
   it('is 200 with the comment id, then 409 already', async () => {
@@ -371,13 +531,21 @@ describe('POST /api/comment', () => {
     await post(deps, '/api/chart', solution());
     const res = await post(deps, '/api/comment');
     const reply = deps.reddit.comments.at(-1);
-    expect(res).toEqual({ status: 200, body: { ok: true, commentId: reply?.id } });
+    expect(res).toEqual({
+      status: 200,
+      body: { ok: true, commentId: reply?.id },
+    });
     expect(reply).toMatchObject({
       runAs: 'USER',
       text: 'Cartographer #1 · Thistle Reach\n📍📍📍📍📍📍📍  1:15\nClean chart',
     });
-    expect(await post(deps, '/api/comment')).toEqual({ status: 409, body: { error: 'already' } });
-    expect((await get(deps, '/api/game')).body).toMatchObject({ result: { commented: true } });
+    expect(await post(deps, '/api/comment')).toEqual({
+      status: 409,
+      body: { error: 'already' },
+    });
+    expect((await get(deps, '/api/game')).body).toMatchObject({
+      result: { commented: true },
+    });
   });
 
   it('is 500 server when Reddit rejects the comment', async () => {
@@ -385,26 +553,39 @@ describe('POST /api/comment', () => {
     await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
     deps.reddit.failSubmitComment = true;
-    expect(await post(deps, '/api/comment')).toEqual({ status: 500, body: { error: 'server' } });
+    expect(await post(deps, '/api/comment')).toEqual({
+      status: 500,
+      body: { error: 'server' },
+    });
   });
 });
 
 describe('POST /api/subscribe', () => {
   it('subscribes and remembers that the prompt was seen', async () => {
     const { deps, postId } = await setup();
-    expect(await post(deps, '/api/subscribe')).toEqual({ status: 200, body: { ok: true } });
+    expect(await post(deps, '/api/subscribe')).toEqual({
+      status: 200,
+      body: { ok: true },
+    });
     expect(deps.reddit.subscribeCalls).toBe(1);
-    expect(await deps.redis.hGet(keys.user(postId, UID), 'subscribePromptSeen')).toBe('1');
+    expect(
+      await deps.redis.hGet(keys.user(postId, UID), 'subscribePromptSeen')
+    ).toBe('1');
     await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
-    expect((await get(deps, '/api/cover')).body).toMatchObject({ me: { result: { subscribePromptSeen: true } } });
+    expect((await get(deps, '/api/cover')).body).toMatchObject({
+      me: { result: { subscribePromptSeen: true } },
+    });
   });
 });
 
 describe('POST /api/tutorial-seen', () => {
   it('stores the flag on the user streak hash', async () => {
     const { deps } = await setup();
-    expect(await post(deps, '/api/tutorial-seen')).toEqual({ status: 200, body: { ok: true } });
+    expect(await post(deps, '/api/tutorial-seen')).toEqual({
+      status: 200,
+      body: { ok: true },
+    });
     expect(await deps.redis.hGet(keys.streak(UID), 'tutorialSeen')).toBe('1');
   });
 });
@@ -415,7 +596,10 @@ describe('GET /api/reveal', () => {
     await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
     logOut(deps);
-    expect(await get(deps, '/api/reveal')).toEqual({ status: 200, body: { settlers: [], more: 1 } });
+    expect(await get(deps, '/api/reveal')).toEqual({
+      status: 200,
+      body: { settlers: [], more: 1 },
+    });
   });
 
   it('places the solved caller first', async () => {
@@ -424,6 +608,9 @@ describe('GET /api/reveal', () => {
     await post(deps, '/api/chart', solution());
     const res = await get(deps, '/api/reveal');
     expect(res.status).toBe(200);
-    expect(res.body).toMatchObject({ settlers: [{ userId: UID, isMe: true, snoovatar: null }], more: 0 });
+    expect(res.body).toMatchObject({
+      settlers: [{ userId: UID, isMe: true, snoovatar: null }],
+      more: 0,
+    });
   });
 });

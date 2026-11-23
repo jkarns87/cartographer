@@ -24,7 +24,9 @@ const settlerCaption = (done: boolean, shown: number, more: number): string => {
   const total = shown + more;
   if (total === 0) return '';
   if (total === 1) return 'You are the first to settle here.';
-  return more > 0 ? `${total} settlers landed (${more} not shown)` : `${total} settlers landed`;
+  return more > 0
+    ? `${total} settlers landed (${more} not shown)`
+    : `${total} settlers landed`;
 };
 
 export type ResultScreenProps = {
@@ -75,7 +77,8 @@ export const ResultScreen = ({
 
   const practice = isPractice(puzzle);
   const posted = result.commented || commentState === 'posted';
-  const showSubscribe = !result.subscribePromptSeen || subscribeState === 'done';
+  const showSubscribe =
+    !result.subscribePromptSeen || subscribeState === 'done';
   const { streak } = result;
 
   const comment = async (): Promise<void> => {
@@ -99,8 +102,16 @@ export const ResultScreen = ({
       </h2>
 
       <div className="relative">
-        <IslandView land={puzzle.land} placements={placements} settlers={settlers} size="board" />
-        <div aria-hidden="true" className="pointer-events-none absolute top-3 right-2">
+        <IslandView
+          land={puzzle.land}
+          placements={placements}
+          settlers={settlers}
+          size="board"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-3 right-2"
+        >
           <span
             data-stamp
             className={[
@@ -128,7 +139,9 @@ export const ResultScreen = ({
         </div>
         <div className="rounded-xl border border-land bg-sand/40 p-2">
           <dt className="text-xs text-muted">Corrections</dt>
-          <dd className="text-lg font-semibold tabular-nums">{result.corrections}</dd>
+          <dd className="text-lg font-semibold tabular-nums">
+            {result.corrections}
+          </dd>
         </div>
         <div className="rounded-xl border border-land bg-sand/40 p-2">
           <dt className="text-xs text-muted">Rank</dt>
@@ -139,16 +152,25 @@ export const ResultScreen = ({
       {stats ? (
         <p className="text-center text-sm text-ink/80">{statsLine(stats)}</p>
       ) : (
-        <p aria-hidden="true" className="mx-auto h-5 w-56 rounded bg-land/50 motion-safe:animate-pulse" />
+        <p
+          aria-hidden="true"
+          className="mx-auto h-5 w-56 rounded bg-land/50 motion-safe:animate-pulse"
+        />
       )}
 
       <div className="flex flex-col items-center gap-1.5 text-center">
         {practice ? (
-          <p className="text-sm text-ink/70">Practice island. Streaks are unchanged.</p>
+          <p className="text-sm text-ink/70">
+            Practice island. Streaks are unchanged.
+          </p>
         ) : (
           <>
             <p className="text-base font-semibold">
-              {streak.current > 0 ? `${streak.current}-day streak` : 'No streak yet'}
+              {streak.current > 0
+                ? `${streak.current}-day streak`
+                : streak.best > 0
+                  ? 'Streak ended'
+                  : 'No streak yet'}
               <span className="font-normal text-muted">{` · best ${streak.best}`}</span>
             </p>
             {streak.tier || streak.steadyHand ? (
@@ -167,7 +189,8 @@ export const ResultScreen = ({
             ) : null}
             {streak.counted ? null : (
               <p className="text-xs text-muted">
-                Charted after the 24-hour window, so your streak did not move.
+                Charted after the 24-hour window, so this chart did not count
+                toward a streak.
               </p>
             )}
           </>
@@ -184,7 +207,11 @@ export const ResultScreen = ({
               void comment();
             }}
           >
-            {posted ? 'Posted' : commentState === 'busy' ? 'Posting…' : 'Post my chart'}
+            {posted
+              ? 'Posted'
+              : commentState === 'busy'
+                ? 'Posting…'
+                : 'Post my chart'}
           </button>
           <button type="button" className={SECONDARY} onClick={onShare}>
             Share
@@ -204,7 +231,10 @@ export const ResultScreen = ({
         )}
         {showSubscribe ? (
           subscribeState === 'done' ? (
-            <p role="status" className="py-3 text-center text-sm font-medium text-ink">
+            <p
+              role="status"
+              className="py-3 text-center text-sm font-medium text-ink"
+            >
               Subscribed. See you tomorrow.
             </p>
           ) : (
@@ -252,7 +282,13 @@ type ResultContainerProps = {
 };
 
 /** `ResultScreen` wired to the reveal, `/api/*`, and the Devvit share and navigation effects. */
-export const ResultContainer = ({ postId, puzzle, placements, result, stats }: ResultContainerProps) => {
+export const ResultContainer = ({
+  postId,
+  puzzle,
+  placements,
+  result,
+  stats,
+}: ResultContainerProps) => {
   const reveal = useReveal();
   const [coverStats, setCoverStats] = useState<Stats | null>(null);
 
@@ -288,7 +324,9 @@ export const ResultContainer = ({ postId, puzzle, placements, result, stats }: R
       practice: isPractice(puzzle),
     });
     // Reddit appends the post link when `post` is omitted.
-    void showShareSheet({ text }).catch(() => showToast('Sharing is not available here.'));
+    void showShareSheet({ text }).catch(() =>
+      showToast('Sharing is not available here.')
+    );
   };
 
   return (

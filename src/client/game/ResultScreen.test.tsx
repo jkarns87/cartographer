@@ -1,4 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CoverResponse, Result, Settler, Stats } from '../../shared/api';
@@ -28,7 +34,14 @@ const PUZZLE: Puzzle = {
   number: 12,
   name: 'Thistle Reach',
   difficulty: 'medium',
-  land: maskFromRows(['......', '.####.', '.####.', '.####.', '.####.', '......']),
+  land: maskFromRows([
+    '......',
+    '.####.',
+    '.####.',
+    '.####.',
+    '.####.',
+    '......',
+  ]),
   landmarks: ['lighthouse', 'windmill', 'well'],
   clues: [],
 };
@@ -58,7 +71,12 @@ const RESULT: Result = {
   subscribePromptSeen: false,
 };
 
-const STATS: Stats = { started: 60, charted: 41, cleanPct: 37, medianMs: 198_000 };
+const STATS: Stats = {
+  started: 60,
+  charted: 41,
+  cleanPct: 37,
+  medianMs: 198_000,
+};
 
 const SETTLERS: Settler[] = [
   { userId: 't2_other', snoovatar: null, cell: { r: 4, c: 4 }, isMe: false },
@@ -98,11 +116,15 @@ beforeEach(() => {
 describe('ResultScreen', () => {
   it('renders the stamp, time, corrections, rank, stats, and streak with tier and badge', () => {
     renderScreen();
-    expect(screen.getByRole('region', { name: 'Island charted' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Island charted' })
+    ).toBeInTheDocument();
     expect(screen.getByText('Charted')).toBeInTheDocument();
     expect(screen.getByText('4:12')).toBeInTheDocument();
     expect(screen.getByText('#3 of 41')).toBeInTheDocument();
-    expect(screen.getByText('41 charted · 37% clean · median 3:18')).toBeInTheDocument();
+    expect(
+      screen.getByText('41 charted · 37% clean · median 3:18')
+    ).toBeInTheDocument();
     expect(screen.getByText('7-day streak')).toBeInTheDocument();
     expect(screen.getByText('Cartographer')).toBeInTheDocument();
     expect(screen.getByText('Steady Hand ✦')).toBeInTheDocument();
@@ -166,7 +188,9 @@ describe('ResultScreen', () => {
   it('keeps Post my chart enabled and says so when posting fails', async () => {
     renderScreen({ onComment: vi.fn(() => Promise.resolve(false)) });
     fireEvent.click(screen.getByRole('button', { name: 'Post my chart' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not post your chart');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not post your chart'
+    );
     expect(screen.getByRole('button', { name: 'Post my chart' })).toBeEnabled();
   });
 
@@ -185,18 +209,30 @@ describe('ResultScreen', () => {
 
   it('offers Join once, confirms after subscribing, and hides it when the prompt was seen', async () => {
     const props = renderScreen();
-    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
     expect(props.onSubscribe).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('status')).toHaveTextContent('Subscribed');
-    expect(screen.queryByRole('button', { name: "Join for tomorrow's island" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: "Join for tomorrow's island" })
+    ).not.toBeInTheDocument();
   });
 
   it('keeps Join and shows an error line when subscribing fails', async () => {
-    const props = renderScreen({ onSubscribe: vi.fn(() => Promise.resolve(false)) });
-    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not subscribe. Try again.');
+    const props = renderScreen({
+      onSubscribe: vi.fn(() => Promise.resolve(false)),
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not subscribe. Try again.'
+    );
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    const join = screen.getByRole('button', { name: "Join for tomorrow's island" });
+    const join = screen.getByRole('button', {
+      name: "Join for tomorrow's island",
+    });
     expect(join).toBeEnabled();
 
     fireEvent.click(join);
@@ -204,26 +240,57 @@ describe('ResultScreen', () => {
   });
 
   it('treats a rejected onSubscribe as a failure instead of leaking the rejection', async () => {
-    renderScreen({ onSubscribe: vi.fn(() => Promise.reject(new Error('offline'))) });
-    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not subscribe');
-    expect(screen.getByRole('button', { name: "Join for tomorrow's island" })).toBeEnabled();
+    renderScreen({
+      onSubscribe: vi.fn(() => Promise.reject(new Error('offline'))),
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not subscribe'
+    );
+    expect(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    ).toBeEnabled();
   });
 
   it('hides Join when the subscribe prompt was already seen', () => {
     renderScreen({ result: { ...RESULT, subscribePromptSeen: true } });
-    expect(screen.queryByRole('button', { name: "Join for tomorrow's island" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: "Join for tomorrow's island" })
+    ).not.toBeInTheDocument();
   });
 
   it('shows the practice note instead of a streak on practice islands', () => {
     renderScreen({ puzzle: { ...PUZZLE, number: 0 } });
-    expect(screen.getByText('Practice island. Streaks are unchanged.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Practice island. Streaks are unchanged.')
+    ).toBeInTheDocument();
     expect(screen.queryByText('7-day streak')).not.toBeInTheDocument();
   });
 
   it('notes an uncounted solve', () => {
-    renderScreen({ result: { ...RESULT, streak: { ...RESULT.streak, counted: false } } });
+    renderScreen({
+      result: { ...RESULT, streak: { ...RESULT.streak, counted: false } },
+    });
     expect(screen.getByText(/after the 24-hour window/)).toBeInTheDocument();
+  });
+
+  it('says the streak ended when it lapsed but a best remains', () => {
+    renderScreen({
+      result: {
+        ...RESULT,
+        streak: {
+          ...RESULT.streak,
+          current: 0,
+          tier: 'deckhand',
+          counted: false,
+        },
+      },
+    });
+    expect(screen.getByText('Streak ended')).toBeInTheDocument();
+    expect(screen.getByText('· best 9')).toBeInTheDocument();
+    expect(screen.queryByText('No streak yet')).not.toBeInTheDocument();
   });
 });
 
@@ -260,15 +327,21 @@ describe('ResultContainer', () => {
 
   it('reveals settlers once and uses chart stats without fetching the cover', async () => {
     renderContainer(STATS);
-    expect(await screen.findByText('5 settlers landed (3 not shown)')).toBeInTheDocument();
+    expect(
+      await screen.findByText('5 settlers landed (3 not shown)')
+    ).toBeInTheDocument();
     expect(api.getReveal).toHaveBeenCalledTimes(1);
     expect(api.getCover).not.toHaveBeenCalled();
-    expect(screen.getByText('41 charted · 37% clean · median 3:18')).toBeInTheDocument();
+    expect(
+      screen.getByText('41 charted · 37% clean · median 3:18')
+    ).toBeInTheDocument();
   });
 
   it('fetches community stats from the cover when the chart response is absent', async () => {
     renderContainer(null);
-    expect(await screen.findByText('50 charted · 40% clean')).toBeInTheDocument();
+    expect(
+      await screen.findByText('50 charted · 40% clean')
+    ).toBeInTheDocument();
     expect(api.getCover).toHaveBeenCalledTimes(1);
   });
 
@@ -284,18 +357,26 @@ describe('ResultContainer', () => {
   it('opens the results thread by post URL', async () => {
     renderContainer(STATS);
     fireEvent.click(screen.getByRole('button', { name: 'Results thread' }));
-    expect(navigateTo).toHaveBeenCalledWith('https://www.reddit.com/comments/abc123');
+    expect(navigateTo).toHaveBeenCalledWith(
+      'https://www.reddit.com/comments/abc123'
+    );
     await waitFor(() => expect(api.getReveal).toHaveBeenCalled());
   });
 
   it('reports a subscribe ApiError as a failure and success as subscribed', async () => {
     vi.mocked(api.postSubscribe).mockResolvedValueOnce({ error: 'login' });
     renderContainer(STATS);
-    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Could not subscribe');
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Could not subscribe'
+    );
 
     vi.mocked(api.postSubscribe).mockResolvedValueOnce({ ok: true });
-    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
     expect(await screen.findByRole('status')).toHaveTextContent('Subscribed');
     expect(api.postSubscribe).toHaveBeenCalledTimes(2);
   });
@@ -304,6 +385,8 @@ describe('ResultContainer', () => {
     vi.mocked(api.postComment).mockResolvedValue({ error: 'already' });
     renderContainer(STATS);
     fireEvent.click(screen.getByRole('button', { name: 'Post my chart' }));
-    expect(await screen.findByRole('button', { name: 'Posted' })).toBeDisabled();
+    expect(
+      await screen.findByRole('button', { name: 'Posted' })
+    ).toBeDisabled();
   });
 });

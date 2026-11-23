@@ -35,16 +35,16 @@ Pool of 14: `lighthouse, windmill, harbor, fort, temple, well, cave, shipwreck, 
 
 Every clue is a typed predicate plus a text template. One shared module renders the sentence, evaluates the predicate for the client's live ticks, and verifies on the server.
 
-| Type | Shape | Holds when | Sentence |
-|---|---|---|---|
-| shore | `{type:'shore', a, dir}` | a's neighbor in `dir` is water or off-grid | The Lighthouse stands on the northern shore. |
-| inland | `{type:'inland', a}` | all four neighbors of a are in-grid land | The Temple is inland. |
-| due | `{type:'due', a, dir, b}` | same row (E/W) or same column (N/S), a strictly in `dir` of b | The Windmill is due east of the Well. |
-| somewhere | `{type:'somewhere', a, dir, b}` | a strictly in `dir` of b on that axis, other axis unconstrained | The Farm lies somewhere south of the Temple. |
-| touches | `{type:'touches', a, b, not?}` | a and b are orthogonal neighbors (negated when `not`) | The Fort touches the Windmill. / The Fort does not touch the Windmill. |
-| shares | `{type:'shares', a, axis:'row'\|'column', b, not?}` | a and b share that row or column (negated when `not`) | The Shipwreck shares a column with the Lighthouse. / ... does not share a column with ... |
-| between | `{type:'between', a, b, c}` | a, b, c on one row or one column with a strictly between b and c | The Well lies between the Mine and the Farm. |
-| extreme | `{type:'extreme', a, dir}` | no other landmark in the puzzle lies strictly in `dir` of a on that axis | No landmark stands west of the Well. |
+| Type      | Shape                                               | Holds when                                                               | Sentence                                                                                  |
+| --------- | --------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| shore     | `{type:'shore', a, dir}`                            | a's neighbor in `dir` is water or off-grid                               | The Lighthouse stands on the northern shore.                                              |
+| inland    | `{type:'inland', a}`                                | all four neighbors of a are in-grid land                                 | The Temple is inland.                                                                     |
+| due       | `{type:'due', a, dir, b}`                           | same row (E/W) or same column (N/S), a strictly in `dir` of b            | The Windmill is due east of the Well.                                                     |
+| somewhere | `{type:'somewhere', a, dir, b}`                     | a strictly in `dir` of b on that axis, other axis unconstrained          | The Farm lies somewhere south of the Temple.                                              |
+| touches   | `{type:'touches', a, b, not?}`                      | a and b are orthogonal neighbors (negated when `not`)                    | The Fort touches the Windmill. / The Fort does not touch the Windmill.                    |
+| shares    | `{type:'shares', a, axis:'row'\|'column', b, not?}` | a and b share that row or column (negated when `not`)                    | The Shipwreck shares a column with the Lighthouse. / ... does not share a column with ... |
+| between   | `{type:'between', a, b, c}`                         | a, b, c on one row or one column with a strictly between b and c         | The Well lies between the Mine and the Farm.                                              |
+| extreme   | `{type:'extreme', a, dir}`                          | no other landmark in the puzzle lies strictly in `dir` of a on that axis | No landmark stands west of the Well.                                                      |
 
 Direction words: N north, E east, S south, W west. Negatives exist only for touches and shares, capped at two per puzzle. Every clue names at most three landmarks. A sheet holds 7 to 11 clues. Between and extreme are capped at two each.
 
@@ -70,7 +70,21 @@ Seeded two-word names from fixed lists, for example "Thistle Reach", "Gull Hollo
 `src/shared/puzzle/` holds types, grid helpers, predicates, templates, and both solvers. Client imports only types, grid, predicates, and templates. Server imports those plus the schedule loader. The generator imports everything.
 
 ```ts
-export type LandmarkId = 'lighthouse' | 'windmill' | 'harbor' | 'fort' | 'temple' | 'well' | 'cave' | 'shipwreck' | 'farm' | 'watchtower' | 'camp' | 'mine' | 'ruins' | 'beacon';
+export type LandmarkId =
+  | 'lighthouse'
+  | 'windmill'
+  | 'harbor'
+  | 'fort'
+  | 'temple'
+  | 'well'
+  | 'cave'
+  | 'shipwreck'
+  | 'farm'
+  | 'watchtower'
+  | 'camp'
+  | 'mine'
+  | 'ruins'
+  | 'beacon';
 export type Dir = 'N' | 'E' | 'S' | 'W';
 export type Axis = 'row' | 'column';
 export type Cell = { r: number; c: number };
@@ -87,9 +101,25 @@ export type Clue =
   | { type: 'extreme'; a: LandmarkId; dir: Dir };
 export type Placement = Partial<Record<LandmarkId, Cell>>;
 export type ClueState = 'pending' | 'lit' | 'contradicted';
-export type Puzzle = { id: string; number: number; name: string; difficulty: Difficulty; land: LandMask; landmarks: LandmarkId[]; clues: Clue[] };
-export type ScheduleEntry = Puzzle & { date: string | null; seed: number; solution: Placement };
-export type Schedule = { version: 1; masterSeed: number; entries: ScheduleEntry[] };
+export type Puzzle = {
+  id: string;
+  number: number;
+  name: string;
+  difficulty: Difficulty;
+  land: LandMask;
+  landmarks: LandmarkId[];
+  clues: Clue[];
+};
+export type ScheduleEntry = Puzzle & {
+  date: string | null;
+  seed: number;
+  solution: Placement;
+};
+export type Schedule = {
+  version: 1;
+  masterSeed: number;
+  entries: ScheduleEntry[];
+};
 ```
 
 ## 3. Generator and schedule
@@ -194,16 +224,74 @@ Reddit-invoked under `/internal`:
 Shared response types live in `src/shared/api.ts`:
 
 ```ts
-export type Stats = { started: number; charted: number; cleanPct: number; medianMs: number | null };
+export type Stats = {
+  started: number;
+  charted: number;
+  cleanPct: number;
+  medianMs: number | null;
+};
 export type Tier = 'deckhand' | 'navigator' | 'cartographer' | 'master';
-export type StreakInfo = { current: number; best: number; cleanRun: number; total: number; tier: Tier | null; steadyHand: boolean; counted: boolean };
-export type Result = { elapsedMs: number; corrections: number; history: string; rank: number; total: number; streak: StreakInfo; commented: boolean; subscribePromptSeen: boolean };
-export type IslandSummary = { number: number; name: string; difficulty: Difficulty; land: LandMask; landmarkCount: number; date: string | null };
-export type CoverResponse = { postId: string; island: IslandSummary; stats: Stats; me: { loggedIn: boolean; status: 'unsolved' | 'in-progress' | 'solved'; result?: Result } };
-export type GameResponse = { postId: string; puzzle: Puzzle; placements: Placement; history: string; corrections: number; startedAt: number; serverNow: number; status: 'unsolved' | 'in-progress' | 'solved'; result?: Result; tutorialSeen: boolean };
-export type ChartRequest = { placements: Placement; history: string; corrections: number };
+export type StreakInfo = {
+  current: number;
+  best: number;
+  cleanRun: number;
+  total: number;
+  tier: Tier | null;
+  steadyHand: boolean;
+  counted: boolean;
+};
+export type Result = {
+  elapsedMs: number;
+  corrections: number;
+  history: string;
+  rank: number;
+  total: number;
+  streak: StreakInfo;
+  commented: boolean;
+  subscribePromptSeen: boolean;
+};
+export type IslandSummary = {
+  number: number;
+  name: string;
+  difficulty: Difficulty;
+  land: LandMask;
+  landmarkCount: number;
+  date: string | null;
+};
+export type CoverResponse = {
+  postId: string;
+  island: IslandSummary;
+  stats: Stats;
+  me: {
+    loggedIn: boolean;
+    status: 'unsolved' | 'in-progress' | 'solved';
+    result?: Result;
+  };
+};
+export type GameResponse = {
+  postId: string;
+  puzzle: Puzzle;
+  placements: Placement;
+  history: string;
+  corrections: number;
+  startedAt: number;
+  serverNow: number;
+  status: 'unsolved' | 'in-progress' | 'solved';
+  result?: Result;
+  tutorialSeen: boolean;
+};
+export type ChartRequest = {
+  placements: Placement;
+  history: string;
+  corrections: number;
+};
 export type ChartResponse = { result: Result; stats: Stats };
-export type Settler = { userId: string; snoovatar: string | null; cell: Cell; isMe: boolean };
+export type Settler = {
+  userId: string;
+  snoovatar: string | null;
+  cell: Cell;
+  isMe: boolean;
+};
 export type RevealResponse = { settlers: Settler[]; more: number };
 ```
 
@@ -213,24 +301,26 @@ Load the post's puzzle snapshot. Reject (400) unless every landmark of the puzzl
 
 ### 5.4 Redis keys
 
-| Key | Type | Purpose | TTL |
-|---|---|---|---|
-| `posted:<YYYY-MM-DD>` | string | Cron idempotency, value is post ID | none |
-| `post:<id>:puzzle` | string | JSON `ScheduleEntry` snapshot incl. solution | none |
-| `post:<id>:user:<uid>` | hash | startedAt, placements (JSON), history, corrections (the in-progress board), solvedAt, elapsedMs, finalPlacements (JSON), finalHistory, finalCorrections (the charted board, written once by chart and preferred by readers), commented, commentClaim, subscribePromptSeen | 90 days |
-| `post:<id>:times` | zset | member uid, score elapsedMs | none |
-| `post:<id>:stats` | hash | started, charted, clean, fast (count of times under 10 s, excluded from the median) | none |
-| `post:<id>:settlers` | zset | member uid, score solvedAt | none |
-| `post:<id>:results` | string | ID of the stickied results comment | none |
-| `user:<uid>:streak` | hash | current, best, lastDate, cleanRun, total, tutorialSeen | none |
-| `user:<uid>:flair` | string | last flair text this app wrote | none |
-| `snoo:<uid>` | string | snoovatar URL, empty string when none | 7 days |
-| `flair:templates` | hash | tier -> flair template ID | none |
-| `practice:next` | string | counter for the next practice island to post | none |
+| Key                    | Type   | Purpose                                                                                                                                                                                                                                                                   | TTL     |
+| ---------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `posted:<YYYY-MM-DD>`  | string | Cron idempotency, value is post ID                                                                                                                                                                                                                                        | none    |
+| `post:<id>:puzzle`     | string | JSON `ScheduleEntry` snapshot incl. solution                                                                                                                                                                                                                              | none    |
+| `post:<id>:user:<uid>` | hash   | startedAt, placements (JSON), history, corrections (the in-progress board), solvedAt, elapsedMs, finalPlacements (JSON), finalHistory, finalCorrections (the charted board, written once by chart and preferred by readers), commented, commentClaim, subscribePromptSeen | 90 days |
+| `post:<id>:times`      | zset   | member uid, score elapsedMs                                                                                                                                                                                                                                               | none    |
+| `post:<id>:stats`      | hash   | started, charted, clean, fast (count of times under 10 s, excluded from the median)                                                                                                                                                                                       | none    |
+| `post:<id>:settlers`   | zset   | member uid, score solvedAt                                                                                                                                                                                                                                                | none    |
+| `post:<id>:results`    | string | ID of the stickied results comment                                                                                                                                                                                                                                        | none    |
+| `user:<uid>:streak`    | hash   | current, best, lastDate, cleanRun, total, tutorialSeen                                                                                                                                                                                                                    | none    |
+| `user:<uid>:flair`     | string | last flair text this app wrote                                                                                                                                                                                                                                            | none    |
+| `snoo:<uid>`           | string | snoovatar URL, empty string when none                                                                                                                                                                                                                                     | 7 days  |
+| `flair:templates`      | hash   | tier -> flair template ID                                                                                                                                                                                                                                                 | none    |
+| `practice:next`        | string | counter for the next practice island to post                                                                                                                                                                                                                              | none    |
 
 ### 5.5 Streak rule
 
-A solve is counted when `solvedAt` is within 24 hours of the island's `postedAt` (stored in the snapshot). A counted solve on the day after `lastDate` (by island date) increments `current`; a counted solve on an island dated more than one day after `lastDate` resets `current` to 1; an uncounted solve leaves `current` and `lastDate` alone but still increments `total`. `best = max(best, current)`. `cleanRun` increments on a counted solve with zero corrections and resets to 0 on any counted solve with corrections. Practice islands (`date: null`) never affect streaks.
+A solve is counted when `solvedAt` is within 24 hours of the island's `postedAt` (stored in the snapshot). A counted solve on the day after `lastDate` (by island date) increments `current`; a counted solve on an island dated more than one day after `lastDate` resets `current` to 1; an uncounted solve leaves `current` and `lastDate` alone but still increments `total`. `best = max(best, current)`. `cleanRun` increments on a counted solve with zero corrections and resets to 0 on any counted solve with corrections. Practice islands (`date: null`) never affect streaks. A counted solve on an island dated on or before `lastDate` (possible only when one date is posted twice) increments `total` alone: the streak is keyed by island date and never moves backwards.
+
+The stored streak is rewritten only by solves, so it is decayed on read. Once the island after `lastDate` can no longer be charted inside its window (that island is assumed to post at 12:00 UTC, the cron hour), the streak is broken: `StreakInfo.current` reads 0 and the tier falls back to Deckhand until the next counted solve starts a new streak at 1. `best`, `cleanRun` and `total` are unaffected. Flair is written only on counted solves, so a lapsed player's flair changes on their next counted solve.
 
 Tiers: deckhand when total >= 1, navigator when current >= 3, cartographer when current >= 7, master when current >= 30; highest wins. Steady Hand is a badge when cleanRun >= 7.
 

@@ -73,7 +73,9 @@ another device. A three-step tutorial appears the first time you open a board, a
 once dismissed.
 
 **Streaks.** A solve counts toward your streak when you chart a dated island within 24 hours of
-its post. Practice islands never change streaks.
+its post. Miss an island and the streak ends: once that island's window closes, your streak reads 0
+and your tier drops back to Deckhand until your next counted solve starts a new one. Your best
+streak is kept, and your flair updates on that next solve. Practice islands never change streaks.
 
 ## Daily content
 
@@ -266,20 +268,20 @@ rebuild it.
 
 **Redis keys.** Strings, hashes and sorted sets only, so no key needs a scan.
 
-| Key                    | Type   | Purpose                                                                                                                                 | TTL                       |
-| ---------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `posted:<YYYY-MM-DD>`  | string | Cron idempotency; the value is the day's post ID                                                                                        | none                      |
-| `post:<id>:puzzle`     | string | JSON snapshot of the schedule entry, including the solution, plus `postedAt` and `postId`                                               | none                      |
+| Key                    | Type   | Purpose                                                                                                                                                                                                                                           | TTL                       |
+| ---------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `posted:<YYYY-MM-DD>`  | string | Cron idempotency; the value is the day's post ID                                                                                                                                                                                                  | none                      |
+| `post:<id>:puzzle`     | string | JSON snapshot of the schedule entry, including the solution, plus `postedAt` and `postId`                                                                                                                                                         | none                      |
 | `post:<id>:user:<uid>` | hash   | `startedAt`, in-progress `placements` (JSON), `history`, `corrections`; `solvedAt`, `elapsedMs`, and the charted `finalPlacements`, `finalHistory`, `finalCorrections` (preferred by readers); `commented`, `commentClaim`, `subscribePromptSeen` | 90 days, refreshed on use |
-| `post:<id>:times`      | zset   | Member user ID, score elapsed ms                                                                                                        | none                      |
-| `post:<id>:stats`      | hash   | `started`, `charted`, `clean`, and `fast` (stored times under 10 s, skipped by the median)                                              | none                      |
-| `post:<id>:settlers`   | zset   | Member user ID, score `solvedAt`                                                                                                        | none                      |
-| `post:<id>:results`    | string | ID of the stickied results comment                                                                                                      | none                      |
-| `user:<uid>:streak`    | hash   | `current`, `best`, `lastDate`, `cleanRun`, `total`, `tutorialSeen`                                                                      | none                      |
-| `user:<uid>:flair`     | string | The last flair text this app wrote for the user                                                                                         | none                      |
-| `snoo:<uid>`           | string | Snoovatar URL, or an empty string when the user has none                                                                                | 7 days                    |
-| `flair:templates`      | hash   | Tier to user flair template ID                                                                                                          | none                      |
-| `practice:next`        | string | Counter for the next practice island the moderator menu posts                                                                           | none                      |
+| `post:<id>:times`      | zset   | Member user ID, score elapsed ms                                                                                                                                                                                                                  | none                      |
+| `post:<id>:stats`      | hash   | `started`, `charted`, `clean`, and `fast` (stored times under 10 s, skipped by the median)                                                                                                                                                        | none                      |
+| `post:<id>:settlers`   | zset   | Member user ID, score `solvedAt`                                                                                                                                                                                                                  | none                      |
+| `post:<id>:results`    | string | ID of the stickied results comment                                                                                                                                                                                                                | none                      |
+| `user:<uid>:streak`    | hash   | `current`, `best`, `lastDate`, `cleanRun`, `total`, `tutorialSeen`                                                                                                                                                                                | none                      |
+| `user:<uid>:flair`     | string | The last flair text this app wrote for the user                                                                                                                                                                                                   | none                      |
+| `snoo:<uid>`           | string | Snoovatar URL, or an empty string when the user has none                                                                                                                                                                                          | 7 days                    |
+| `flair:templates`      | hash   | Tier to user flair template ID                                                                                                                                                                                                                    | none                      |
+| `practice:next`        | string | Counter for the next practice island the moderator menu posts                                                                                                                                                                                     | none                      |
 
 **Trust boundary.** The client never receives the solution.
 

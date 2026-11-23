@@ -1,5 +1,9 @@
 import type { ChartRequest, Result, Stats, StreakInfo } from '../../shared/api';
-import { allCluesLit, samePlacement, validatePlacement } from '../../shared/puzzle/predicates';
+import {
+  allCluesLit,
+  samePlacement,
+  validatePlacement,
+} from '../../shared/puzzle/predicates';
 import type { Deps } from '../deps';
 import { keys, USER_TTL_SECONDS } from '../keys';
 import { applyFlair } from './flair';
@@ -9,7 +13,13 @@ import { resolveSnoovatar } from './snoovatar';
 import { loadSnapshot, toPuzzle } from './snapshot';
 import type { Snapshot } from './snapshot';
 import { rankOf, readStats, recordTime } from './stats';
-import { applySolve, isCounted, readStreak, toStreakInfo, writeStreak } from './streaks';
+import {
+  applySolve,
+  isCounted,
+  readStreak,
+  toStreakInfo,
+  writeStreak,
+} from './streaks';
 import type { SolveEvent } from './streaks';
 
 export type ChartOutcome =
@@ -18,7 +28,11 @@ export type ChartOutcome =
   | { kind: 'mismatch' }
   | { kind: 'not-found' };
 
-const solveEvent = (snap: Snapshot, solvedAt: number, corrections: number): SolveEvent => ({
+const solveEvent = (
+  snap: Snapshot,
+  solvedAt: number,
+  corrections: number
+): SolveEvent => ({
   islandDate: snap.date,
   postedAt: snap.postedAt,
   solvedAt,
@@ -47,8 +61,8 @@ const assemble = async (
 
 /**
  * The stored result of a solved post, for GET routes and repeat chart calls.
- * The streak block reflects the user's streak now; `counted` is recomputed from
- * the stored solve time.
+ * The streak block reflects the user's streak now, decayed when it has lapsed;
+ * `counted` is recomputed from the stored solve time.
  */
 export const buildResult = async (
   deps: Deps,
@@ -57,8 +71,10 @@ export const buildResult = async (
   p: UserProgress,
   snap: Snapshot
 ): Promise<Result> => {
-  const counted = p.solvedAt !== null && isCounted(solveEvent(snap, p.solvedAt, p.corrections));
-  const streak = toStreakInfo(await readStreak(deps, uid), counted);
+  const counted =
+    p.solvedAt !== null &&
+    isCounted(solveEvent(snap, p.solvedAt, p.corrections));
+  const streak = toStreakInfo(await readStreak(deps, uid), counted, deps.now());
   return assemble(deps, postId, uid, p, streak);
 };
 
@@ -76,7 +92,11 @@ const defaultSleep = (ms: number): Promise<void> =>
  * re-read up to three times until it appears; after that, build from whatever
  * is stored rather than fail.
  */
-const settledProgress = async (deps: Deps, postId: string, uid: string): Promise<UserProgress> => {
+const settledProgress = async (
+  deps: Deps,
+  postId: string,
+  uid: string
+): Promise<UserProgress> => {
   const sleep = deps.sleep ?? defaultSleep;
   let p = await readProgress(deps, postId, uid);
   for (const ms of SETTLE_DELAYS_MS) {
@@ -153,7 +173,7 @@ export const chart = async (
   }
 
   const counted = isCounted(event);
-  const info = toStreakInfo(next, counted);
+  const info = toStreakInfo(next, counted, now);
   if (counted && username !== '') {
     try {
       await applyFlair(deps, uid, username, info);
