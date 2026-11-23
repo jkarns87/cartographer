@@ -6,23 +6,20 @@ export type IconName = LandmarkId | 'tent';
 type Props = { name: IconName; className?: string; title?: string };
 
 /**
- * Placeholder icon until the SVG sprite lands (Task 8 replaces this file).
- * Renders the landmark's initial inside a circle so layouts can be built now.
+ * Draws one glyph from the inline sprite, so `Sprite` must be mounted once in the same
+ * document. Size it with `className`; it takes its color from `currentColor`.
  */
 export const Icon = ({ name, className, title }: Props) => {
   const label = name === 'tent' ? 'Settler' : LANDMARK_NAMES[name];
   return (
     <svg
-      viewBox="0 0 32 32"
+      viewBox="0 0 512 512"
       className={className}
       role="img"
       aria-label={title ?? label}
       fill="currentColor"
     >
-      <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" strokeWidth="2" />
-      <text x="16" y="21" textAnchor="middle" fontSize="14" fontWeight="700">
-        {label.charAt(0)}
-      </text>
+      <use href={`#ic-${name}`} />
     </svg>
   );
 };
