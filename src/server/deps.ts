@@ -24,10 +24,12 @@ export type PostId = `t3_${string}`;
 export type CommentId = `t1_${string}`;
 
 export const isPostId = (id: string): id is PostId => id.startsWith('t3_');
-export const isCommentId = (id: string): id is CommentId => id.startsWith('t1_');
+export const isCommentId = (id: string): id is CommentId =>
+  id.startsWith('t1_');
 
 export type JsonPrimitive = boolean | null | number | string;
-export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+export type JsonValue =
+  JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
 export type JsonObject = { [key: string]: JsonValue };
 
 export type ZMember = { member: string; score: number };
@@ -63,11 +65,16 @@ export type RedisLike = {
 };
 
 export type PostLike = { id: PostId };
-export type CommentLike = { id: CommentId; distinguish(makeSticky?: boolean): Promise<void> };
+export type CommentLike = {
+  id: CommentId;
+  distinguish(makeSticky?: boolean): Promise<void>;
+};
 export type UserFlairLike = { flairText?: string | undefined };
 export type UserLike = {
   username: string;
-  getUserFlairBySubreddit(subreddit: string): Promise<UserFlairLike | undefined>;
+  getUserFlairBySubreddit(
+    subreddit: string
+  ): Promise<UserFlairLike | undefined>;
 };
 export type FlairTemplateLike = { id: string; text: string };
 /** The real `Subreddit` exposes `name` as a getter, which satisfies this structurally. */
@@ -79,9 +86,15 @@ export type SubmitCustomPostLike = {
   entry?: string;
   postData?: JsonObject;
   textFallback?: { text: string };
+  /** Reddit rejects `flairText` unless `flairId` names a post flair template. */
+  flairId?: string;
   flairText?: string;
 };
-export type SubmitCommentLike = { id: PostId | CommentId; text: string; runAs?: 'USER' | 'APP' };
+export type SubmitCommentLike = {
+  id: PostId | CommentId;
+  text: string;
+  runAs?: 'USER' | 'APP';
+};
 export type CreateFlairTemplateLike = {
   subredditName: string;
   text: string;
@@ -100,7 +113,13 @@ export type RedditLike = {
   submitCustomPost(opts: SubmitCustomPostLike): Promise<PostLike>;
   submitComment(opts: SubmitCommentLike): Promise<CommentLike>;
   getUserFlairTemplates(subredditName: string): Promise<FlairTemplateLike[]>;
-  createUserFlairTemplate(opts: CreateFlairTemplateLike): Promise<FlairTemplateLike>;
+  createUserFlairTemplate(
+    opts: CreateFlairTemplateLike
+  ): Promise<FlairTemplateLike>;
+  getPostFlairTemplates(subredditName: string): Promise<FlairTemplateLike[]>;
+  createPostFlairTemplate(
+    opts: CreateFlairTemplateLike
+  ): Promise<FlairTemplateLike>;
   setUserFlair(opts: SetUserFlairLike): Promise<void>;
   getCurrentUser(): Promise<UserLike | undefined>;
   getSnoovatarUrl(username: string): Promise<string | undefined>;
@@ -109,7 +128,9 @@ export type RedditLike = {
 };
 
 export type SettingValue = string | number | boolean | string[];
-export type SettingsLike = { get(name: string): Promise<SettingValue | undefined> };
+export type SettingsLike = {
+  get(name: string): Promise<SettingValue | undefined>;
+};
 
 export type Deps = {
   redis: RedisLike;

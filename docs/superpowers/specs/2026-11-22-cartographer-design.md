@@ -46,7 +46,7 @@ Every clue is a typed predicate plus a text template. One shared module renders 
 | between   | `{type:'between', a, b, c}`                         | a, b, c on one row or one column with a strictly between b and c         | The Well lies between the Mine and the Farm.                                              |
 | extreme   | `{type:'extreme', a, dir}`                          | no other landmark in the puzzle lies strictly in `dir` of a on that axis | No landmark stands west of the Well.                                                      |
 
-Direction words: N north, E east, S south, W west. Negatives exist only for touches and shares, capped at two per puzzle. Every clue names at most three landmarks. A sheet holds 7 to 11 clues. Between and extreme are capped at two each.
+Direction words: N north, E east, S south, W west. Negatives exist only for touches and shares, capped at two per puzzle. Every clue names at most three landmarks. A sheet holds 7 to 11 clues. Between and extreme are capped at two each. No landmark gets two shore clues in opposite directions: both can hold on a one-cell-wide strip of land, but the pair reads as a contradiction (playtest, 2026-11-23).
 
 ### 2.4 Clue states on a partial placement
 
@@ -314,6 +314,7 @@ Load the post's puzzle snapshot. Reject (400) unless every landmark of the puzzl
 | `user:<uid>:flair`     | string | last flair text this app wrote                                                                                                                                                                                                                                            | none    |
 | `snoo:<uid>`           | string | snoovatar URL, empty string when none                                                                                                                                                                                                                                     | 7 days  |
 | `flair:templates`      | hash   | tier -> flair template ID                                                                                                                                                                                                                                                 | none    |
+| `flair:post`           | string | "Daily Island" post flair template ID                                                                                                                                                                                                                                     | none    |
 | `practice:next`        | string | counter for the next practice island to post                                                                                                                                                                                                                              | none    |
 
 ### 5.5 Streak rule
@@ -326,11 +327,11 @@ Tiers: deckhand when total >= 1, navigator when current >= 3, cartographer when 
 
 ### 5.6 Flair
 
-On install and upgrade, ensure four user flair templates exist (Deckhand, Navigator, Cartographer, Master Cartographer) via `reddit.createUserFlairTemplate`, storing IDs in `flair:templates`. After a counted solve, when the subreddit setting `flairEnabled` is true: read the user's current flair with `user.getUserFlairBySubreddit`; only write when it is empty or equals the last text this app wrote (`user:<uid>:flair`). Text format: `Navigator · 5d`, with a trailing ` ✦` when Steady Hand. Write with `reddit.setUserFlair({ subredditName, username, flairTemplateId, text })`.
+On install and upgrade, ensure four user flair templates exist (Deckhand, Navigator, Cartographer, Master Cartographer) via `reddit.createUserFlairTemplate`, storing IDs in `flair:templates`, and ensure a "Daily Island" post flair template via `reddit.createPostFlairTemplate`, storing its ID in `flair:post`. After a counted solve, when the subreddit setting `flairEnabled` is true: read the user's current flair with `user.getUserFlairBySubreddit`; only write when it is empty or equals the last text this app wrote (`user:<uid>:flair`). Text format: `Navigator · 5d`, with a trailing ` ✦` when Steady Hand. Write with `reddit.setUserFlair({ subredditName, username, flairTemplateId, text })`.
 
 ### 5.7 Posting
 
-`reddit.submitCustomPost({ subredditName, title, entry: 'default', postData, textFallback: { text }, flairText: 'Daily Island' })` where title is `Cartographer #<number> · <name> · <Difficulty>`, plus ` · Expedition` for a 9-landmark island (section 2.5) (practice: `Cartographer practice · <name>`), `postData = { number, name, difficulty, land, landmarkCount, date }`, and the fallback text explains the post needs the Reddit app. `flairText` is attempted; if the call fails because of flair, retry once without it. After posting: store snapshot with `postedAt`, set `posted:<date>`, then `reddit.submitComment({ id: post.id, text: RESULTS_HEADER, runAs: 'APP' })` and `comment.distinguish(true)`, storing the comment ID. `RESULTS_HEADER` = "Results thread. Finish the island and tap Post my chart in the game to add yours."
+`reddit.submitCustomPost({ subredditName, title, entry: 'default', postData, textFallback: { text }, flairId, flairText: 'Daily Island' })` where title is `Cartographer #<number> · <name> · <Difficulty>`, plus ` · Expedition` for a 9-landmark island (section 2.5) (practice: `Cartographer practice · <name>`), `postData = { number, name, difficulty, land, landmarkCount, date }`, and the fallback text explains the post needs the Reddit app. Reddit rejects `flairText` without a `flairId`, so `flairId` is the template ID from `flair:post` (ensured on demand); when no template can be ensured the post is submitted without flair, and if a flaired submit still fails it is retried once without. After posting: store snapshot with `postedAt`, set `posted:<date>`, then `reddit.submitComment({ id: post.id, text: RESULTS_HEADER, runAs: 'APP' })` and `comment.distinguish(true)`, storing the comment ID. `RESULTS_HEADER` = "Results thread. Finish the island and tap Post my chart in the game to add yours."
 
 ### 5.8 Post my chart
 
@@ -382,5 +383,5 @@ Submission needs: Devpost text, app listing URL (after `devvit upload`), README.
 
 1. Cron time zone (assumed UTC).
 2. Whether snoovatar image URLs render inside the sandboxed webview. Fallback: initials badges from the sprite.
-3. Whether `flairText` on `submitCustomPost` succeeds when the subreddit has no matching post flair template. Fallback: omit it.
+3. Resolved 2026-11-23: Reddit rejects `flairText` without a `flairId` (`Can't set flair_text without a flair_id`). The app now ensures a "Daily Island" post flair template and submits with its ID.
 4. Whether `runAs: 'USER'` comments require the asUser permission to be granted at install. Expected yes.

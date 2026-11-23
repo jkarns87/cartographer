@@ -65,7 +65,11 @@ export class FakeRedis implements RedisLike {
     return this.strings.get(key);
   }
 
-  async set(key: string, value: string, options?: SetOptionsLike): Promise<string> {
+  async set(
+    key: string,
+    value: string,
+    options?: SetOptionsLike
+  ): Promise<string> {
     if (options?.nx && this.strings.has(key)) return '';
     if (options?.xx && !this.strings.has(key)) return '';
     this.strings.set(key, value);
@@ -99,7 +103,10 @@ export class FakeRedis implements RedisLike {
     return this.hashes.get(key)?.get(field);
   }
 
-  async hSet(key: string, fieldValues: Record<string, string>): Promise<number> {
+  async hSet(
+    key: string,
+    fieldValues: Record<string, string>
+  ): Promise<number> {
     const h = this.hash(key);
     let added = 0;
     for (const [field, value] of Object.entries(fieldValues)) {
@@ -166,7 +173,8 @@ export class FakeRedis implements RedisLike {
   ): Promise<ZMember[]> {
     const by = options?.by ?? 'rank';
     const reverse = options?.reverse === true;
-    if (by === 'lex') throw new Error('FakeRedis: zRange by lex is not supported');
+    if (by === 'lex')
+      throw new Error('FakeRedis: zRange by lex is not supported');
     if (options?.limit && by !== 'score') {
       throw new Error(
         `zRange parsing error: 'limit' only allowed when 'options.by' is 'lex' or 'score'`
@@ -186,7 +194,9 @@ export class FakeRedis implements RedisLike {
     }
     const lower = scoreBound(reverse ? stop : start);
     const upper = scoreBound(reverse ? start : stop);
-    const matched = all.filter((m) => atLeast(m.score, lower) && atMost(m.score, upper));
+    const matched = all.filter(
+      (m) => atLeast(m.score, lower) && atMost(m.score, upper)
+    );
     const offset = options?.limit?.offset ?? 0;
     const count = options?.limit?.count ?? ZRANGE_DEFAULT_COUNT;
     return matched.slice(offset, count < 0 ? undefined : offset + count);
@@ -213,7 +223,8 @@ const scoreBound = (v: number | string): ScoreBound => {
   if (raw === '-inf') return { value: -Infinity, exclusive };
   if (raw === '+inf' || raw === 'inf') return { value: Infinity, exclusive };
   const n = Number(raw);
-  if (raw === '' || !Number.isFinite(n)) throw new Error(`FakeRedis: bad score bound ${v}`);
+  if (raw === '' || !Number.isFinite(n))
+    throw new Error(`FakeRedis: bad score bound ${v}`);
   return { value: n, exclusive };
 };
 
@@ -238,6 +249,7 @@ export class FakeReddit implements RedditLike {
   posts: Array<SubmitCustomPostLike & { id: PostId }> = [];
   comments: FakeComment[] = [];
   flairTemplates: FlairTemplateLike[] = [];
+  postFlairTemplates: FlairTemplateLike[] = [];
   setFlairs: SetUserFlairLike[] = [];
   /** Current user flair text by username, as the subreddit would report it. */
   userFlair: Record<string, string | undefined> = {};
@@ -264,9 +276,14 @@ export class FakeReddit implements RedditLike {
 
   async submitCustomPost(opts: SubmitCustomPostLike): Promise<PostLike> {
     this.record('submitCustomPost', [opts]);
-    if (this.failSubmitPost) throw new Error('FakeReddit: submitCustomPost failed');
+    if (this.failSubmitPost)
+      throw new Error('FakeReddit: submitCustomPost failed');
     if (this.rejectFlairText && opts.flairText !== undefined) {
       throw new Error('FakeReddit: flair not allowed');
+    }
+    // Reddit's real rule, observed in playtest on 2026-11-23.
+    if (opts.flairText !== undefined && opts.flairId === undefined) {
+      throw new Error("FakeReddit: Can't set flair_text without a flair_id");
     }
     const post = { ...opts, id: postId(this.nextId++) };
     this.posts.push(post);
@@ -275,7 +292,8 @@ export class FakeReddit implements RedditLike {
 
   async submitComment(opts: SubmitCommentLike): Promise<CommentLike> {
     this.record('submitComment', [opts]);
-    if (this.failSubmitComment) throw new Error('FakeReddit: submitComment failed');
+    if (this.failSubmitComment)
+      throw new Error('FakeReddit: submitComment failed');
     const comment: FakeComment = {
       id: commentId(this.nextId++),
       parentId: opts.id,
@@ -295,15 +313,38 @@ export class FakeReddit implements RedditLike {
     };
   }
 
-  async getUserFlairTemplates(subredditName: string): Promise<FlairTemplateLike[]> {
+  async getUserFlairTemplates(
+    subredditName: string
+  ): Promise<FlairTemplateLike[]> {
     this.record('getUserFlairTemplates', [subredditName]);
     return [...this.flairTemplates];
   }
 
-  async createUserFlairTemplate(opts: CreateFlairTemplateLike): Promise<FlairTemplateLike> {
+  async createUserFlairTemplate(
+    opts: CreateFlairTemplateLike
+  ): Promise<FlairTemplateLike> {
     this.record('createUserFlairTemplate', [opts]);
     const template = { id: `tpl_${this.nextId++}`, text: opts.text };
     this.flairTemplates.push(template);
+    return template;
+  }
+
+  async getPostFlairTemplates(
+    subredditName: string
+  ): Promise<FlairTemplateLike[]> {
+    this.record('getPostFlairTemplates', [subredditName]);
+    return [...this.postFlairTemplates];
+  }
+
+  async createPostFlairTemplate(
+    opts: CreateFlairTemplateLike
+  ): Promise<FlairTemplateLike> {
+    this.record('createPostFlairTemplate', [opts]);
+    const template = {
+      id: `pf_${this.postFlairTemplates.length + 1}`,
+      text: opts.text,
+    };
+    this.postFlairTemplates.push(template);
     return template;
   }
 

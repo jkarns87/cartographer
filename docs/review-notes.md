@@ -72,3 +72,13 @@ and so earn Deckhand. Now `applySolve` returns the previous state untouched for 
 and `chart` skips the streak write entirely, so a practice solve leaves the `user:<uid>:streak`
 hash exactly as it was and awards no tier. Per-post community stats, rank and settlers on a
 practice post are unchanged; they describe that post, not the player's record.
+
+## Playtest finding 2026-11-23: opposite shore clues read as a contradiction
+
+Practice-01 told the player the beacon stands on the eastern shore and on the western shore. Both
+were true (a one-cell-wide tip has water on both sides) and the island was unique, but the pair
+reads as nonsense. The generator now treats two shore clues on one landmark in opposite directions
+as a cap violation (`isOppositeShorePair` in `tools/gen/build.ts`), both when ordering and fixing
+clues and in `capProblems`, which `gen:verify` also runs over the committed files. Regenerated:
+66 of 180 dated islands and 9 of 20 practice islands changed clues, and the name chain shifted.
+Nothing dated had been posted yet. Perpendicular pairs (north and east shore, a corner) are kept.

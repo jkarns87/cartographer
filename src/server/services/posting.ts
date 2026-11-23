@@ -1,7 +1,11 @@
-import { DIFFICULTY_LABEL, EXPEDITION_LANDMARKS } from '../../shared/puzzle/types';
+import {
+  DIFFICULTY_LABEL,
+  EXPEDITION_LANDMARKS,
+} from '../../shared/puzzle/types';
 import type { ScheduleEntry } from '../../shared/puzzle/types';
 import type { Deps, PostId, PostLike, SubmitCustomPostLike } from '../deps';
 import { keys } from '../keys';
+import { POST_FLAIR_TEXT, ensurePostFlairTemplate } from './flair';
 import { entryForDate, practiceEntry, utcDate } from './schedule';
 import { saveSnapshot, toPostData } from './snapshot';
 import { resolveSubredditName } from './subreddit';
@@ -10,10 +14,12 @@ export const RESULTS_HEADER =
   'Results thread. Finish the island and tap Post my chart in the game to add yours.';
 export const FALLBACK_TEXT =
   'Cartographer is a daily island deduction game. Open this post in the Reddit app or on new Reddit to play.';
-export const POST_FLAIR_TEXT = 'Daily Island';
+export { POST_FLAIR_TEXT };
 
 /** Spec 2.5: the Sunday 9-landmark dated islands are labeled Expedition. */
-export const isExpedition = (entry: Pick<ScheduleEntry, 'date' | 'landmarks'>): boolean =>
+export const isExpedition = (
+  entry: Pick<ScheduleEntry, 'date' | 'landmarks'>
+): boolean =>
   entry.date !== null && entry.landmarks.length === EXPEDITION_LANDMARKS;
 
 export const postTitle = (entry: ScheduleEntry): string =>
@@ -26,10 +32,14 @@ export const postUrl = (subredditName: string, postId: string): string =>
   `https://www.reddit.com/r/${subredditName}/comments/${postId.replace(/^t3_/, '')}`;
 
 /**
- * Submits the custom post (retrying once without `flairText` if the flaired
+ * Submits the custom post with the "Daily Island" flair template when one can be
+ * ensured (plain otherwise, retrying once without flair if the flaired
  * submit throws) and snapshots the entry under the new post ID. Spec 5.7 step 1.
  */
-export const submitIsland = async (deps: Deps, entry: ScheduleEntry): Promise<{ postId: PostId }> => {
+export const submitIsland = async (
+  deps: Deps,
+  entry: ScheduleEntry
+): Promise<{ postId: PostId }> => {
   const subredditName = await resolveSubredditName(deps);
   const base: SubmitCustomPostLike = {
     subredditName,
@@ -38,12 +48,32 @@ export const submitIsland = async (deps: Deps, entry: ScheduleEntry): Promise<{ 
     postData: toPostData(entry),
     textFallback: { text: FALLBACK_TEXT },
   };
-  let post: PostLike;
+  let flairId: string | undefined;
   try {
-    post = await deps.reddit.submitCustomPost({ ...base, flairText: POST_FLAIR_TEXT });
+    flairId = await ensurePostFlairTemplate(deps, subredditName);
   } catch (err) {
-    console.warn(`submitIsland: submit with flair failed for ${entry.id}, retrying without`, err);
+    console.warn(
+      `submitIsland: no post flair template for ${entry.id}, posting without flair`,
+      err
+    );
+  }
+  let post: PostLike;
+  if (flairId === undefined) {
     post = await deps.reddit.submitCustomPost(base);
+  } else {
+    try {
+      post = await deps.reddit.submitCustomPost({
+        ...base,
+        flairId,
+        flairText: POST_FLAIR_TEXT,
+      });
+    } catch (err) {
+      console.warn(
+        `submitIsland: submit with flair failed for ${entry.id}, retrying without`,
+        err
+      );
+      post = await deps.reddit.submitCustomPost(base);
+    }
   }
   await saveSnapshot(deps, { ...entry, postedAt: deps.now(), postId: post.id });
   return { postId: post.id };
@@ -53,7 +83,10 @@ export const submitIsland = async (deps: Deps, entry: ScheduleEntry): Promise<{ 
  * Posts and stickies the app's results comment and stores its ID. Failures are
  * logged and swallowed; the post is already live. Spec 5.7 last step.
  */
-export const pinResults = async (deps: Deps, postId: PostId): Promise<string | undefined> => {
+export const pinResults = async (
+  deps: Deps,
+  postId: PostId
+): Promise<string | undefined> => {
   try {
     const comment = await deps.reddit.submitComment({
       id: postId,
@@ -69,10 +102,16 @@ export const pinResults = async (deps: Deps, postId: PostId): Promise<string | u
   }
 };
 
-export type PostIslandResult = { postId: string; commentId: string | undefined };
+export type PostIslandResult = {
+  postId: string;
+  commentId: string | undefined;
+};
 
 /** Undated posting (practice): submit, snapshot, then pin the results comment. */
-export const postIsland = async (deps: Deps, entry: ScheduleEntry): Promise<PostIslandResult> => {
+export const postIsland = async (
+  deps: Deps,
+  entry: ScheduleEntry
+): Promise<PostIslandResult> => {
   const { postId } = await submitIsland(deps, entry);
   const commentId = await pinResults(deps, postId);
   return { postId, commentId };
@@ -94,7 +133,8 @@ export const postToday = async (deps: Deps): Promise<PostTodayResult> => {
   const date = utcDate(deps.now());
   const marker = keys.posted(date);
   const existing = await deps.redis.get(marker);
-  if (existing !== undefined) return { status: 'already', postId: existing, date };
+  if (existing !== undefined)
+    return { status: 'already', postId: existing, date };
 
   const entry = entryForDate(deps.schedule, date);
   if (!entry) {

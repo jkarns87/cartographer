@@ -11,6 +11,8 @@ export const keys = {
   flair: (uid: string) => `user:${uid}:flair`,
   snoo: (uid: string) => `snoo:${uid}`,
   flairTemplates: () => 'flair:templates',
+  /** ID of the "Daily Island" post flair template. */
+  postFlair: () => 'flair:post',
   /** Counter for the next practice island to post. */
   practiceNext: () => 'practice:next',
 };

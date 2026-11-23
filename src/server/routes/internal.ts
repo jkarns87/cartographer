@@ -1,15 +1,23 @@
 import { Hono } from 'hono';
 import type { TriggerResponse, UiResponse } from '@devvit/web/shared';
 import type { Deps } from '../deps';
-import { ensureFlairTemplates } from '../services/flair';
+import {
+  ensureFlairTemplates,
+  ensurePostFlairTemplate,
+} from '../services/flair';
 import { postPractice, postToday, postUrl } from '../services/posting';
 import { deletePostKeys } from '../services/snapshot';
 import { resolveSubredditName } from '../services/subreddit';
 
-type CronResponse = { status: 'posted' | 'already' | 'missing' | 'error'; postId?: string; date: string };
+type CronResponse = {
+  status: 'posted' | 'already' | 'missing' | 'error';
+  postId?: string;
+  date: string;
+};
 
 const bodyPostId = (body: unknown): string | undefined => {
-  if (typeof body !== 'object' || body === null || !('postId' in body)) return undefined;
+  if (typeof body !== 'object' || body === null || !('postId' in body))
+    return undefined;
   return typeof body.postId === 'string' ? body.postId : undefined;
 };
 
@@ -27,7 +35,10 @@ export const createInternalRoutes = (deps: Deps): Hono => {
       return c.json<CronResponse>(result, 200);
     } catch (err) {
       console.error('cron/daily failed', err);
-      return c.json<CronResponse>({ status: 'error', date: utcDateOf(deps) }, 500);
+      return c.json<CronResponse>(
+        { status: 'error', date: utcDateOf(deps) },
+        500
+      );
     }
   });
 
@@ -37,27 +48,47 @@ export const createInternalRoutes = (deps: Deps): Hono => {
       switch (result.status) {
         case 'posted':
           return c.json<UiResponse>(
-            { navigateTo: postUrl(await resolveSubredditName(deps), result.postId ?? '') },
+            {
+              navigateTo: postUrl(
+                await resolveSubredditName(deps),
+                result.postId ?? ''
+              ),
+            },
             200
           );
         case 'already':
-          return c.json<UiResponse>({ showToast: `Today's island (${result.date}) is already posted.` }, 200);
+          return c.json<UiResponse>(
+            { showToast: `Today's island (${result.date}) is already posted.` },
+            200
+          );
         case 'missing':
-          return c.json<UiResponse>({ showToast: `No island is scheduled for ${result.date}.` }, 200);
+          return c.json<UiResponse>(
+            { showToast: `No island is scheduled for ${result.date}.` },
+            200
+          );
       }
     } catch (err) {
       console.error('menu/post-today failed', err);
-      return c.json<UiResponse>({ showToast: 'Posting failed. Check the app logs.' }, 200);
+      return c.json<UiResponse>(
+        { showToast: 'Posting failed. Check the app logs.' },
+        200
+      );
     }
   });
 
   internal.post('/menu/post-practice', async (c) => {
     try {
       const { postId } = await postPractice(deps);
-      return c.json<UiResponse>({ navigateTo: postUrl(await resolveSubredditName(deps), postId) }, 200);
+      return c.json<UiResponse>(
+        { navigateTo: postUrl(await resolveSubredditName(deps), postId) },
+        200
+      );
     } catch (err) {
       console.error('menu/post-practice failed', err);
-      return c.json<UiResponse>({ showToast: 'Posting a practice island failed. Check the app logs.' }, 200);
+      return c.json<UiResponse>(
+        { showToast: 'Posting a practice island failed. Check the app logs.' },
+        200
+      );
     }
   });
 
@@ -68,10 +99,20 @@ export const createInternalRoutes = (deps: Deps): Hono => {
       // Flair setup is retried lazily by applyFlair; never block the install.
       console.error('ensureFlairTemplates failed', err);
     }
+    try {
+      await ensurePostFlairTemplate(deps);
+    } catch (err) {
+      // Posting falls back to no flair while the template is missing.
+      console.error('ensurePostFlairTemplate failed', err);
+    }
     return {};
   };
-  internal.post('/triggers/on-app-install', async (c) => c.json<TriggerResponse>(await onInstallOrUpgrade(), 200));
-  internal.post('/triggers/on-app-upgrade', async (c) => c.json<TriggerResponse>(await onInstallOrUpgrade(), 200));
+  internal.post('/triggers/on-app-install', async (c) =>
+    c.json<TriggerResponse>(await onInstallOrUpgrade(), 200)
+  );
+  internal.post('/triggers/on-app-upgrade', async (c) =>
+    c.json<TriggerResponse>(await onInstallOrUpgrade(), 200)
+  );
 
   internal.post('/triggers/on-post-delete', async (c) => {
     let body: unknown;
@@ -96,4 +137,5 @@ export const createInternalRoutes = (deps: Deps): Hono => {
   return internal;
 };
 
-const utcDateOf = (deps: Deps): string => new Date(deps.now()).toISOString().slice(0, 10);
+const utcDateOf = (deps: Deps): string =>
+  new Date(deps.now()).toISOString().slice(0, 10);

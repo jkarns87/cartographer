@@ -161,7 +161,7 @@ already live.
 **The daily post.** A scheduled task posts the day's island as a custom post titled like
 `Cartographer #12 · Thistle Reach · Medium` (practice islands: `Cartographer practice · <name>`;
 Sunday's 9-landmark islands end in ` · Expedition`, and the cover and game header tag them too),
-with "Daily Island" post flair when the subreddit accepts it. The inline cover paints from the
+with "Daily Island" post flair from a template the app creates. The inline cover paints from the
 post's own data (number, name, difficulty, landmark count and the island's silhouette) without
 waiting on the network, then loads community numbers. No two islands share a silhouette, so the
 daily post never looks like a repost in the feed.
@@ -363,7 +363,8 @@ tools/brand/         subreddit icon and banner generator (outputs in docs/brand/
 
 **Install.** Installing or upgrading the app creates four user flair templates (Deckhand,
 Navigator, Cartographer, Master Cartographer), reusing any template that already has that exact
-text, and stores their IDs. If that step fails, the install still succeeds and the templates are
+text, and stores their IDs, plus a "Daily Island" post flair template for the daily posts. If that
+step fails, the install still succeeds and the templates are
 created on the first flair write.
 
 **Menu items.** Both live in the subreddit menu and are visible to moderators only.
@@ -400,8 +401,9 @@ only when the user's current flair is empty or is the text the app wrote last.
 makes the post time 7 am Eastern. TODO(joey): record the time zone observed in the first playtest.
 Posting is idempotent per UTC date: the `posted:<date>` marker is written only after the post
 succeeds, so the 12:15 run posts if the 12:00 run failed and does nothing if it succeeded. Each
-post gets "Daily Island" post flair when the subreddit accepts it; if the flaired submit fails, the
-app retries once without flair. The schedule runs out after 2027-05-29; after that the cron logs an
+post gets "Daily Island" post flair through a template the app creates on install, since Reddit
+refuses flair text without a template ID; if the template is missing or the flaired submit fails,
+the post goes up without flair. The schedule runs out after 2027-05-29; after that the cron logs an
 error and posts nothing until the schedule is extended with `npm run gen`.
 
 **Deleting a post.** The post-delete trigger removes the post's snapshot, times, stats, settlers

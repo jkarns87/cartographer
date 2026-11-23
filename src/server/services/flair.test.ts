@@ -3,7 +3,15 @@ import type { StreakInfo } from '../../shared/api';
 import { makeDeps } from '../fakes';
 import { keys } from '../keys';
 import { TIER_LABEL } from '../../shared/tiers';
-import { TIER_COLOR, TIERS, applyFlair, ensureFlairTemplates, flairTextFor } from './flair';
+import {
+  POST_FLAIR_TEXT,
+  TIER_COLOR,
+  TIERS,
+  applyFlair,
+  ensureFlairTemplates,
+  ensurePostFlairTemplate,
+  flairTextFor,
+} from './flair';
 
 const info = (over: Partial<StreakInfo> = {}): StreakInfo => ({
   current: 3,
@@ -23,7 +31,10 @@ describe('flairTextFor', () => {
     [{ steadyHand: true }, 'Navigator · 3d ✦'],
     [{ tier: 'deckhand', current: 1 }, 'Deckhand · 1d'],
     [{ tier: 'cartographer', current: 7 }, 'Cartographer · 7d'],
-    [{ tier: 'master', current: 30, steadyHand: true }, 'Master Cartographer · 30d ✦'],
+    [
+      { tier: 'master', current: 30, steadyHand: true },
+      'Master Cartographer · 30d ✦',
+    ],
   ])('%o -> %s', (over, expected) => {
     expect(flairTextFor(info(over))).toBe(expected);
   });
@@ -63,23 +74,62 @@ describe('ensureFlairTemplates', () => {
 
   it('fills in only the tiers missing from redis', async () => {
     const deps = makeDeps();
-    await deps.redis.hSet(keys.flairTemplates(), { deckhand: 'd1', master: 'm1' });
+    await deps.redis.hSet(keys.flairTemplates(), {
+      deckhand: 'd1',
+      master: 'm1',
+    });
     const templates = await ensureFlairTemplates(deps);
     expect(templates.deckhand).toBe('d1');
     expect(templates.master).toBe('m1');
-    expect(deps.reddit.callsTo('createUserFlairTemplate').map((c) => c.args[0])).toMatchObject([
-      { text: 'Navigator' },
-      { text: 'Cartographer' },
-    ]);
+    expect(
+      deps.reddit.callsTo('createUserFlairTemplate').map((c) => c.args[0])
+    ).toMatchObject([{ text: 'Navigator' }, { text: 'Cartographer' }]);
   });
 
   it('resolves the subreddit from Reddit when the context header is missing', async () => {
     const deps = makeDeps({ ctx: { subredditName: undefined } });
     await ensureFlairTemplates(deps);
-    expect(deps.reddit.callsTo('getUserFlairTemplates')[0]?.args).toEqual(['testsub']);
-    expect(deps.reddit.callsTo('createUserFlairTemplate').map((c) => c.args[0])).toMatchObject(
-      TIERS.map(() => ({ subredditName: 'testsub' }))
-    );
+    expect(deps.reddit.callsTo('getUserFlairTemplates')[0]?.args).toEqual([
+      'testsub',
+    ]);
+    expect(
+      deps.reddit.callsTo('createUserFlairTemplate').map((c) => c.args[0])
+    ).toMatchObject(TIERS.map(() => ({ subredditName: 'testsub' })));
+  });
+});
+
+describe('ensurePostFlairTemplate', () => {
+  it('creates the Daily Island template once and stores its id', async () => {
+    const deps = makeDeps();
+    expect(await ensurePostFlairTemplate(deps)).toBe('pf_1');
+    expect(await ensurePostFlairTemplate(deps)).toBe('pf_1');
+    expect(deps.reddit.callsTo('createPostFlairTemplate')).toHaveLength(1);
+    expect(
+      deps.reddit.callsTo('createPostFlairTemplate')[0]?.args[0]
+    ).toMatchObject({
+      subredditName: 'cartographer_test',
+      text: POST_FLAIR_TEXT,
+      textColor: 'light',
+      allowUserEdits: false,
+    });
+    expect(await deps.redis.get(keys.postFlair())).toBe('pf_1');
+  });
+
+  it('adopts a Daily Island template that already exists in the subreddit', async () => {
+    const deps = makeDeps();
+    deps.reddit.postFlairTemplates.push({
+      id: 'pf_existing',
+      text: POST_FLAIR_TEXT,
+    });
+    expect(await ensurePostFlairTemplate(deps)).toBe('pf_existing');
+    expect(deps.reddit.callsTo('createPostFlairTemplate')).toHaveLength(0);
+  });
+
+  it('does not touch Reddit once the id is stored', async () => {
+    const deps = makeDeps();
+    await deps.redis.set(keys.postFlair(), 'pf_stored');
+    expect(await ensurePostFlairTemplate(deps)).toBe('pf_stored');
+    expect(deps.reddit.calls).toHaveLength(0);
   });
 });
 
@@ -110,8 +160,13 @@ describe('applyFlair', () => {
   it('overwrites flair that equals the last text this app wrote', async () => {
     const deps = makeDeps();
     expect(await applyFlair(deps, 't2_u1', 'tester', info())).toBe('set');
-    expect(await applyFlair(deps, 't2_u1', 'tester', info({ current: 4 }))).toBe('set');
-    expect(deps.reddit.setFlairs.map((f) => f.text)).toEqual(['Navigator · 3d', 'Navigator · 4d']);
+    expect(
+      await applyFlair(deps, 't2_u1', 'tester', info({ current: 4 }))
+    ).toBe('set');
+    expect(deps.reddit.setFlairs.map((f) => f.text)).toEqual([
+      'Navigator · 3d',
+      'Navigator · 4d',
+    ]);
     expect(await deps.redis.get(keys.flair('t2_u1'))).toBe('Navigator · 4d');
   });
 
@@ -119,7 +174,9 @@ describe('applyFlair', () => {
     const deps = makeDeps();
     await applyFlair(deps, 't2_u1', 'tester', info());
     deps.reddit.userFlair.tester = 'Something else';
-    expect(await applyFlair(deps, 't2_u1', 'tester', info({ current: 4 }))).toBe('skipped');
+    expect(
+      await applyFlair(deps, 't2_u1', 'tester', info({ current: 4 }))
+    ).toBe('skipped');
     expect(deps.reddit.setFlairs).toHaveLength(1);
   });
 
@@ -136,7 +193,9 @@ describe('applyFlair', () => {
 
   it('skips when there is no tier yet', async () => {
     const deps = makeDeps();
-    expect(await applyFlair(deps, 't2_u1', 'tester', info({ tier: null }))).toBe('skipped');
+    expect(
+      await applyFlair(deps, 't2_u1', 'tester', info({ tier: null }))
+    ).toBe('skipped');
     expect(deps.reddit.calls).toHaveLength(0);
   });
 
@@ -150,7 +209,10 @@ describe('applyFlair', () => {
   it('resolves the subreddit from Reddit when the context header is missing', async () => {
     const deps = makeDeps({ ctx: { subredditName: undefined } });
     expect(await applyFlair(deps, 't2_u1', 'tester', info())).toBe('set');
-    expect(deps.reddit.callsTo('getUserFlairBySubreddit')[0]?.args).toEqual(['tester', 'testsub']);
+    expect(deps.reddit.callsTo('getUserFlairBySubreddit')[0]?.args).toEqual([
+      'tester',
+      'testsub',
+    ]);
     expect(deps.reddit.setFlairs[0]?.subredditName).toBe('testsub');
   });
 });
