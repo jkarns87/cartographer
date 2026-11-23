@@ -149,6 +149,14 @@ export class FakeRedis implements RedisLike {
     return this.zsets.get(key)?.get(member);
   }
 
+  /**
+   * Mirrors `@devvit/redis` RedisClient.js `zRange` (lines 366-392): `limit`
+   * is only legal with `by: 'score' | 'lex'` (throws otherwise); score and lex
+   * queries default to `offset 0, count 1000` (so results cap at 1,000) while
+   * rank queries are uncapped; `start`/`stop` are passed to Redis unchanged
+   * with the REV flag, so with `reverse` and `by: 'score'` `start` is the
+   * maximum and `stop` the minimum. Lex ranges are not supported here.
+   */
   async zRange(
     key: string,
     start: number | string,
@@ -156,41 +164,62 @@ export class FakeRedis implements RedisLike {
     options?: ZRangeOptionsLike
   ): Promise<ZMember[]> {
     const by = options?.by ?? 'rank';
-    let all = this.sorted(key);
-    if (options?.reverse) all = all.reverse();
-    let out: ZMember[];
-    if (by === 'rank') {
-      const n = all.length;
-      const lo = rankIndex(start, n);
-      const hi = Math.min(rankIndex(stop, n), n - 1);
-      out = lo >= n || lo > hi ? [] : all.slice(lo, hi + 1);
-    } else if (by === 'score') {
-      const lo = scoreBound(start);
-      const hi = scoreBound(stop);
-      out = all.filter((m) => m.score >= lo && m.score <= hi);
-    } else {
-      throw new Error('FakeRedis: zRange by lex is not supported');
+    const reverse = options?.reverse === true;
+    if (by === 'lex') throw new Error('FakeRedis: zRange by lex is not supported');
+    if (options?.limit && by !== 'score') {
+      throw new Error(
+        `zRange parsing error: 'limit' only allowed when 'options.by' is 'lex' or 'score'`
+      );
     }
-    if (options?.limit) out = out.slice(options.limit.offset, options.limit.offset + options.limit.count);
-    return out;
+    const ordered = this.sorted(key);
+    const all = reverse ? [...ordered].reverse() : ordered;
+    if (by === 'rank') {
+      // Redis index rules: negatives count from the end, start clamps to 0 only
+      // after the comparison, start past stop or past the end yields [], stop
+      // clamps to the last element. With REV the indices address the reversed set.
+      const n = all.length;
+      const lo = Math.max(0, rankIndex(start, n));
+      const hi = rankIndex(stop, n);
+      if (lo > hi || lo >= n) return [];
+      return all.slice(lo, Math.min(hi, n - 1) + 1);
+    }
+    const lower = scoreBound(reverse ? stop : start);
+    const upper = scoreBound(reverse ? start : stop);
+    const matched = all.filter((m) => atLeast(m.score, lower) && atMost(m.score, upper));
+    const offset = options?.limit?.offset ?? 0;
+    const count = options?.limit?.count ?? ZRANGE_DEFAULT_COUNT;
+    return matched.slice(offset, count < 0 ? undefined : offset + count);
   }
 }
 
-/** Redis rank semantics: negative counts from the end, clamped at 0; past the end is caller's problem. */
+/** RedisClient.js line 368: score and lex queries send `count: 1000` unless a limit is given. */
+export const ZRANGE_DEFAULT_COUNT = 1000;
+
+/** Converts a Redis rank index: negatives count from the end. No clamping here. */
 const rankIndex = (v: number | string, n: number): number => {
   const i = typeof v === 'number' ? v : Number(v);
-  if (!Number.isFinite(i)) throw new Error(`FakeRedis: bad rank ${v}`);
-  return Math.max(0, i < 0 ? n + i : i);
+  if (!Number.isInteger(i)) throw new Error(`FakeRedis: bad rank ${v}`);
+  return i < 0 ? n + i : i;
 };
 
-const scoreBound = (v: number | string): number => {
-  if (typeof v === 'number') return v;
-  if (v === '-inf') return -Infinity;
-  if (v === '+inf' || v === 'inf') return Infinity;
-  const n = Number(v);
-  if (!Number.isFinite(n)) throw new Error(`FakeRedis: bad score bound ${v}`);
-  return n;
+type ScoreBound = { value: number; exclusive: boolean };
+
+/** Parses a Redis score bound: number, '-inf', '+inf', or an exclusive '(' prefix. */
+const scoreBound = (v: number | string): ScoreBound => {
+  if (typeof v === 'number') return { value: v, exclusive: false };
+  const exclusive = v.startsWith('(');
+  const raw = exclusive ? v.slice(1) : v;
+  if (raw === '-inf') return { value: -Infinity, exclusive };
+  if (raw === '+inf' || raw === 'inf') return { value: Infinity, exclusive };
+  const n = Number(raw);
+  if (raw === '' || !Number.isFinite(n)) throw new Error(`FakeRedis: bad score bound ${v}`);
+  return { value: n, exclusive };
 };
+
+const atLeast = (score: number, b: ScoreBound): boolean =>
+  b.exclusive ? score > b.value : score >= b.value;
+const atMost = (score: number, b: ScoreBound): boolean =>
+  b.exclusive ? score < b.value : score <= b.value;
 
 export type FakeCall = { method: string; args: unknown[] };
 export type FakeComment = {

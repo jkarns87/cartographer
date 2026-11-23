@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FakeReddit, FakeRedis, FakeSettings, makeDeps } from './fakes';
+import { FakeReddit, FakeRedis, FakeSettings, ZRANGE_DEFAULT_COUNT, makeDeps } from './fakes';
 
 describe('FakeRedis', () => {
   it('handles strings, nx/xx, del and exists', async () => {
@@ -68,15 +68,73 @@ describe('FakeRedis', () => {
       { member: 'b', score: 2 },
       { member: 'a', score: 5 },
     ]);
-    expect(await r.zRange('z', '-inf', '+inf', { by: 'score', reverse: true })).toEqual([
+    expect(await r.zRange('z', '(2', '+inf', { by: 'score' })).toEqual([{ member: 'a', score: 5 }]);
+    expect(await r.zRange('none', 0, -1)).toEqual([]);
+  });
+
+  it('applies Redis index rules for rank ranges', async () => {
+    const r = new FakeRedis();
+    await r.zAdd('z', { member: 'c', score: 1 }, { member: 'b', score: 2 }, { member: 'a', score: 5 });
+    // stop before start after negative conversion -> [] (Redis compares before clamping)
+    expect(await r.zRange('z', 0, -10)).toEqual([]);
+    expect(await r.zRange('z', 1, 0)).toEqual([]);
+    // start before the beginning clamps to 0, stop past the end clamps to the last element
+    expect(await r.zRange('z', -10, -1)).toEqual([
+      { member: 'c', score: 1 },
+      { member: 'b', score: 2 },
+      { member: 'a', score: 5 },
+    ]);
+    expect(await r.zRange('z', 1, 99)).toEqual([
+      { member: 'b', score: 2 },
+      { member: 'a', score: 5 },
+    ]);
+    // REV with rank addresses the reversed set
+    expect(await r.zRange('z', 0, 0, { by: 'rank', reverse: true })).toEqual([{ member: 'a', score: 5 }]);
+    expect(await r.zRange('z', 0, -1, { reverse: true, by: 'rank' })).toEqual([
       { member: 'a', score: 5 },
       { member: 'b', score: 2 },
       { member: 'c', score: 1 },
     ]);
-    expect(await r.zRange('z', 0, -1, { by: 'rank', limit: { offset: 1, count: 1 } })).toEqual([
+  });
+
+  it('rejects limit unless by is score or lex, like RedisClient.js', async () => {
+    const r = new FakeRedis();
+    await r.zAdd('z', { member: 'c', score: 1 }, { member: 'b', score: 2 }, { member: 'a', score: 5 });
+    await expect(r.zRange('z', 0, -1, { by: 'rank', limit: { offset: 1, count: 1 } })).rejects.toThrow(
+      /'limit' only allowed when 'options.by' is 'lex' or 'score'/
+    );
+    expect(await r.zRange('z', '-inf', '+inf', { by: 'score', limit: { offset: 1, count: 1 } })).toEqual([
       { member: 'b', score: 2 },
     ]);
-    expect(await r.zRange('none', 0, -1)).toEqual([]);
+  });
+
+  it('treats start as the maximum for reversed score ranges', async () => {
+    const r = new FakeRedis();
+    await r.zAdd('z', { member: 'c', score: 1 }, { member: 'b', score: 2 }, { member: 'a', score: 5 });
+    // start/stop go to Redis unchanged with REV, so a min..max pair matches nothing
+    expect(await r.zRange('z', '-inf', '+inf', { by: 'score', reverse: true })).toEqual([]);
+    expect(await r.zRange('z', '+inf', '-inf', { by: 'score', reverse: true })).toEqual([
+      { member: 'a', score: 5 },
+      { member: 'b', score: 2 },
+      { member: 'c', score: 1 },
+    ]);
+    expect(await r.zRange('z', 4, 2, { by: 'score', reverse: true })).toEqual([{ member: 'b', score: 2 }]);
+  });
+
+  it('caps score ranges at 1,000 results unless a limit is given, and never caps rank ranges', async () => {
+    const r = new FakeRedis();
+    const members = Array.from({ length: ZRANGE_DEFAULT_COUNT + 5 }, (_, i) => ({
+      member: `m${String(i).padStart(4, '0')}`,
+      score: i,
+    }));
+    await r.zAdd('big', ...members);
+    expect(await r.zCard('big')).toBe(ZRANGE_DEFAULT_COUNT + 5);
+    expect(await r.zRange('big', '-inf', '+inf', { by: 'score' })).toHaveLength(ZRANGE_DEFAULT_COUNT);
+    expect(
+      await r.zRange('big', '-inf', '+inf', { by: 'score', limit: { offset: 0, count: 2000 } })
+    ).toHaveLength(ZRANGE_DEFAULT_COUNT + 5);
+    expect(await r.zRange('big', 0, -1)).toHaveLength(ZRANGE_DEFAULT_COUNT + 5);
+    expect(await r.zRange('big', 0, -1, { by: 'rank' })).toHaveLength(ZRANGE_DEFAULT_COUNT + 5);
   });
 
   it('records ttls only for existing keys', async () => {

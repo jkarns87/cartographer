@@ -6,11 +6,13 @@ import {
   FALLBACK_TEXT,
   POST_FLAIR_TEXT,
   RESULTS_HEADER,
+  pinResults,
   postIsland,
   postPractice,
   postTitle,
   postToday,
   postUrl,
+  submitIsland,
 } from './posting';
 import { loadSnapshot, toPostData } from './snapshot';
 
@@ -111,13 +113,39 @@ describe('postToday', () => {
     expect(console.warn).toHaveBeenCalled();
   });
 
-  it('still succeeds when the results comment fails', async () => {
+  it('still succeeds and keeps the day marker when the results comment fails', async () => {
     const deps = makeDeps();
     deps.reddit.failSubmitComment = true;
     expect(await postToday(deps)).toEqual({ status: 'posted', postId: 't3_1', date: '2026-12-01' });
     expect(await deps.redis.exists(keys.results('t3_1'))).toBe(0);
+    expect(deps.reddit.comments).toHaveLength(0);
     expect(await deps.redis.get(keys.posted('2026-12-01'))).toBe('t3_1');
+    expect(await loadSnapshot(deps, 't3_1')).toMatchObject({ postId: 't3_1' });
     expect(console.error).toHaveBeenCalled();
+
+    // The retry task sees the marker and does not post a second island.
+    deps.reddit.failSubmitComment = false;
+    deps.clock.now += 15 * 60_000;
+    expect(await postToday(deps)).toEqual({ status: 'already', postId: 't3_1', date: '2026-12-01' });
+    expect(deps.reddit.posts).toHaveLength(1);
+  });
+
+  it('writes the snapshot and day marker before the results comment is submitted', async () => {
+    const deps = makeDeps();
+    const original = deps.reddit.submitComment.bind(deps.reddit);
+    let markerAtComment: string | undefined;
+    let snapshotAtComment = false;
+    deps.reddit.submitComment = async (opts) => {
+      markerAtComment = await deps.redis.get(keys.posted('2026-12-01'));
+      snapshotAtComment = (await loadSnapshot(deps, 't3_1')) !== undefined;
+      return original(opts);
+    };
+
+    expect(await postToday(deps)).toEqual({ status: 'posted', postId: 't3_1', date: '2026-12-01' });
+    expect(markerAtComment).toBe('t3_1');
+    expect(snapshotAtComment).toBe(true);
+    expect(deps.reddit.comments).toHaveLength(1);
+    expect(await deps.redis.get(keys.results('t3_1'))).toBe(deps.reddit.comments[0]?.id);
   });
 
   it('posts the second day on the next date', async () => {
@@ -126,6 +154,38 @@ describe('postToday', () => {
     deps.clock.now += DAY;
     expect(await postToday(deps)).toEqual({ status: 'posted', postId: 't3_3', date: '2026-12-02' });
     expect(deps.reddit.posts[1]?.title).toBe('Cartographer #2 · Gull Hollow · Medium');
+  });
+});
+
+describe('submitIsland / pinResults', () => {
+  it('submitIsland snapshots without touching markers or comments', async () => {
+    const deps = makeDeps();
+    expect(await submitIsland(deps, first)).toEqual({ postId: 't3_1' });
+    expect(await loadSnapshot(deps, 't3_1')).toEqual({ ...first, postedAt: deps.clock.now, postId: 't3_1' });
+    expect(deps.reddit.comments).toHaveLength(0);
+    expect(await deps.redis.exists(keys.posted('2026-12-01'), keys.results('t3_1'))).toBe(0);
+  });
+
+  it('pinResults stickies the app comment and stores its id', async () => {
+    const deps = makeDeps();
+    const { postId } = await submitIsland(deps, first);
+    expect(await pinResults(deps, postId)).toBe('t1_2');
+    expect(deps.reddit.comments[0]).toMatchObject({
+      parentId: 't3_1',
+      text: RESULTS_HEADER,
+      runAs: 'APP',
+      sticky: true,
+    });
+    expect(await deps.redis.get(keys.results('t3_1'))).toBe('t1_2');
+  });
+
+  it('pinResults swallows comment failures', async () => {
+    const deps = makeDeps();
+    const { postId } = await submitIsland(deps, first);
+    deps.reddit.failSubmitComment = true;
+    expect(await pinResults(deps, postId)).toBeUndefined();
+    expect(await deps.redis.exists(keys.results('t3_1'))).toBe(0);
+    expect(console.error).toHaveBeenCalled();
   });
 });
 

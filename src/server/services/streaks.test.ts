@@ -100,6 +100,18 @@ describe('applySolve', () => {
       event(),
       { current: 2, best: 12, lastDate: '2026-12-01', cleanRun: 1, total: 21 },
     ],
+    [
+      'a malformed lastDate is treated as no previous date instead of freezing the streak',
+      { current: 4, best: 4, lastDate: 'garbage', cleanRun: 2, total: 4 },
+      event(),
+      { current: 1, best: 4, lastDate: '2026-12-01', cleanRun: 3, total: 5 },
+    ],
+    [
+      'a partially malformed lastDate (wrong shape) is also repaired',
+      { current: 4, best: 4, lastDate: '2026-12-1', cleanRun: 0, total: 4 },
+      event({ corrections: 1 }),
+      { current: 1, best: 4, lastDate: '2026-12-01', cleanRun: 0, total: 5 },
+    ],
   ])('%s', (_name, prev, e, expected) => {
     expect(applySolve(prev, e)).toEqual(expected);
   });

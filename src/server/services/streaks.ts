@@ -44,10 +44,13 @@ const dayNumber = (date: string): number => {
 export const applySolve = (prev: StreakState, e: SolveEvent): StreakState => {
   const total = prev.total + 1;
   if (e.islandDate === null || !isCounted(e)) return { ...prev, total };
-  if (prev.lastDate !== null) {
-    const gap = dayNumber(e.islandDate) - dayNumber(prev.lastDate);
+  // A malformed stored lastDate (NaN day) is treated as no previous date, so a
+  // bad value can never freeze the streak; the next write repairs it.
+  const prevDay = prev.lastDate === null ? Number.NaN : dayNumber(prev.lastDate);
+  if (!Number.isNaN(prevDay)) {
+    const gap = dayNumber(e.islandDate) - prevDay;
     // Same island, or an older island solved late through a delayed post: never move backwards.
-    if (!(gap > 0)) return { ...prev, total };
+    if (Number.isNaN(gap) || gap <= 0) return { ...prev, total };
     const current = gap === 1 ? prev.current + 1 : 1;
     return {
       current,

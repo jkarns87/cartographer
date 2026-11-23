@@ -1,6 +1,6 @@
 import { DIFFICULTY_LABEL } from '../../shared/puzzle/types';
 import type { ScheduleEntry } from '../../shared/puzzle/types';
-import type { Deps, PostLike, SubmitCustomPostLike } from '../deps';
+import type { Deps, PostId, PostLike, SubmitCustomPostLike } from '../deps';
 import { keys } from '../keys';
 import { entryForDate, practiceEntry, utcDate } from './schedule';
 import { saveSnapshot, toPostData } from './snapshot';
@@ -19,10 +19,11 @@ export const postTitle = (entry: ScheduleEntry): string =>
 export const postUrl = (subredditName: string, postId: string): string =>
   `https://www.reddit.com/r/${subredditName}/comments/${postId.replace(/^t3_/, '')}`;
 
-export type PostIslandResult = { postId: string; commentId: string | undefined };
-
-/** Submits the custom post, snapshots the entry, then tries to pin the results comment. */
-export const postIsland = async (deps: Deps, entry: ScheduleEntry): Promise<PostIslandResult> => {
+/**
+ * Submits the custom post (retrying once without `flairText` if the flaired
+ * submit throws) and snapshots the entry under the new post ID. Spec 5.7 step 1.
+ */
+export const submitIsland = async (deps: Deps, entry: ScheduleEntry): Promise<{ postId: PostId }> => {
   const { subredditName } = deps.ctx();
   const base: SubmitCustomPostLike = {
     subredditName,
@@ -35,26 +36,40 @@ export const postIsland = async (deps: Deps, entry: ScheduleEntry): Promise<Post
   try {
     post = await deps.reddit.submitCustomPost({ ...base, flairText: POST_FLAIR_TEXT });
   } catch (err) {
-    console.warn(`postIsland: submit with flair failed for ${entry.id}, retrying without`, err);
+    console.warn(`submitIsland: submit with flair failed for ${entry.id}, retrying without`, err);
     post = await deps.reddit.submitCustomPost(base);
   }
-
   await saveSnapshot(deps, { ...entry, postedAt: deps.now(), postId: post.id });
+  return { postId: post.id };
+};
 
-  let commentId: string | undefined;
+/**
+ * Posts and stickies the app's results comment and stores its ID. Failures are
+ * logged and swallowed; the post is already live. Spec 5.7 last step.
+ */
+export const pinResults = async (deps: Deps, postId: PostId): Promise<string | undefined> => {
   try {
     const comment = await deps.reddit.submitComment({
-      id: post.id,
+      id: postId,
       text: RESULTS_HEADER,
       runAs: 'APP',
     });
     await comment.distinguish(true);
-    await deps.redis.set(keys.results(post.id), comment.id);
-    commentId = comment.id;
+    await deps.redis.set(keys.results(postId), comment.id);
+    return comment.id;
   } catch (err) {
-    console.error(`postIsland: results comment failed for ${post.id}`, err);
+    console.error(`pinResults: results comment failed for ${postId}`, err);
+    return undefined;
   }
-  return { postId: post.id, commentId };
+};
+
+export type PostIslandResult = { postId: string; commentId: string | undefined };
+
+/** Undated posting (practice): submit, snapshot, then pin the results comment. */
+export const postIsland = async (deps: Deps, entry: ScheduleEntry): Promise<PostIslandResult> => {
+  const { postId } = await submitIsland(deps, entry);
+  const commentId = await pinResults(deps, postId);
+  return { postId, commentId };
 };
 
 export type PostTodayResult = {
@@ -63,7 +78,12 @@ export type PostTodayResult = {
   date: string;
 };
 
-/** Cron and menu entry point. Idempotent per UTC day; the marker is written only after success. */
+/**
+ * Cron and menu entry point. Idempotent per UTC day. Order per spec 5.7:
+ * submit, snapshot, write `posted:<date>`, then pin the results comment, so a
+ * request that dies after the submit can never let the retry post a second
+ * island for the day. The marker is never written when the submit fails.
+ */
 export const postToday = async (deps: Deps): Promise<PostTodayResult> => {
   const date = utcDate(deps.now());
   const marker = keys.posted(date);
@@ -76,8 +96,9 @@ export const postToday = async (deps: Deps): Promise<PostTodayResult> => {
     return { status: 'missing', date };
   }
 
-  const { postId } = await postIsland(deps, entry);
+  const { postId } = await submitIsland(deps, entry);
   await deps.redis.set(marker, postId);
+  await pinResults(deps, postId);
   return { status: 'posted', postId, date };
 };
 
