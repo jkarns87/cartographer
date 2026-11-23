@@ -356,6 +356,7 @@ src/server/          Hono app, deps and fakes, routes/, services/, puzzles/*.jso
 src/client/          splash.tsx (cover entry), game.tsx (board entry), cover/, game/, icons/
 tools/gen/           generator, review and verify
 tools/icons/         icon extraction and sprite builder
+tools/brand/         subreddit icon and banner generator (outputs in docs/brand/)
 ```
 
 ## Moderator guide
@@ -372,6 +373,12 @@ created on the first flair write.
 - "Cartographer: post a practice island" posts the next island from the 20-island practice pool,
   cycling through it, and opens it. Practice islands never count toward streaks, totals, tiers or
   flair.
+
+**Community appearance.** `docs/brand/icon-1024.png` is the community icon (Reddit crops it to a
+circle; the compass sits inside the crop) and `banner-1920x384.png` the banner, with
+`banner-1600x480.png` as the taller variant if the mod tools ask for one. The same icon is wired
+into `devvit.json` as `marketingAssets.icon` for the app listing. Regenerate everything with
+`python3 tools/brand/build.py`; the SVGs next to the PNGs are the sources.
 
 **Setting.** "Award user flair for streaks" (`flairEnabled`, on by default). When it is off, the
 app never writes user flair. When it is on, the app writes flair only after a counted solve, and

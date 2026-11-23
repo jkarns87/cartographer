@@ -33,3 +33,13 @@ glyph is recolored at render time with `fill="currentColor"`. No shapes were edi
 Source files are named as they appear in the game-icons.net SVG archive
 (`icons/000000/transparent/1x1/<author>/<name>.svg`). How the set was built is documented
 in `tools/icons/README.md`.
+
+## Brand assets
+
+The subreddit icon and banners in `docs/brand/` (built by `tools/brand/build.py`) reuse four of
+the glyphs above unchanged apart from color and scale: Lighthouse, Fort (`castle`), Windmill and
+Temple (`greek-temple`), all by Delapouite, CC BY 3.0. Everything else in those images (the
+island, grid, compass, clue sheet and type) is original to this project. A credit line for the
+subreddit sidebar or wiki:
+
+> Landmark icons by Delapouite via game-icons.net, CC BY 3.0.

@@ -4,6 +4,9 @@
   "dev": {
     "subreddit": "cartographer_dev"
   },
+  "marketingAssets": {
+    "icon": "docs/brand/icon-1024.png"
+  },
   "post": {
     "dir": "dist/client",
     "entrypoints": {
