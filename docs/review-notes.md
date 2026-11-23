@@ -43,3 +43,11 @@ Final whole-branch review, fix wave of 2026-11-23. Item numbers follow the revie
 - in-flight lock for concurrent cron and menu
 - confirm `devvit upload` does not ship dist/server/index.cjs.map
 - screenshots docs/screenshots/cover.png and board.png to capture during playtest
+
+## Residual notes from the fix-wave re-review (2026-11-23, all minor, parked)
+
+- `src/server/routes/internal.ts` post-today handler resolves the subreddit name after `postToday` has already posted; if the header is missing and `getCurrentSubreddit` throws, the moderator sees "Posting failed" although the post is live (a retry answers "already"). Resolve the name once before posting.
+- `src/client/game/GamePage.tsx` `CHART_ERROR_TEXT.invalid` wording also covers the missing-`startedAt` 400, which the normal client flow cannot reach.
+- `src/server/services/flair.ts` has a double blank line where `TIER_LABEL` was removed (prettier is not in the gate).
+- Double-submit residual by design: if the winning chart's Redis writes take longer than the loser's three short waits, the loser returns a derived result (correct time, possibly stale streak or rank 0) that the next GET corrects.
+- A future test combining `vi.useFakeTimers()` with a losing concurrent chart must advance timers, because the fake `sleep` resolves through `setTimeout(0)`.
