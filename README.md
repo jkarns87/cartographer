@@ -14,7 +14,7 @@ TODO(joey): capture `docs/screenshots/cover.png` (the inline cover in the feed, 
 `docs/screenshots/board.png` (the expanded board with a few clues lit).
 
 - Play: TODO(joey): link to the demo post in the public test subreddit (under 200 members)
-- App listing: TODO(joey): confirm `https://developers.reddit.com/apps/cartographer-isle` after `devvit upload`
+- App listing: https://developers.reddit.com/apps/cartographer-isle
 - Video (under one minute): TODO(joey): link
 - Source: https://github.com/jkarns87/cartographer
 
@@ -331,10 +331,10 @@ post a practice island".
 | `npm run deploy`     | Type check, lint, then `devvit upload` (a private upload, not a publish)              |
 | `npm run launch`     | Disabled on purpose. The app is not published before judging ends on 2026-12-17.      |
 
-**Tests.** 796 Vitest tests in 35 files: 345 for the shared puzzle module (table-driven tests per
+**Tests.** 807 Vitest tests in 35 files: 345 for the shared puzzle module (table-driven tests per
 clue type, sentence templates, solver fixtures with known solution and round counts, and a
-randomized cross-check of the two solvers), 305 for the server (every service and route), 87 for
-the client (the reducer, components, the game hook and the cover), 52 for the generator (including
+randomized cross-check of the two solvers), 311 for the server (every service and route), 90 for
+the client (the reducer, components, the game hook and the cover), 54 for the generator (including
 a property test over 100 seeds for each landmark count and verification of the committed files),
 and 7 for the icon pipeline.
 

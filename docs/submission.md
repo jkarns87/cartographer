@@ -5,10 +5,27 @@ Draft text for the Reddit Game of the Day 2026 submission form. Submissions clos
 and `devvit playtest` only.
 
 - Demo post: TODO(joey): link to the post in the public test subreddit (under 200 members)
-- App listing: TODO(joey): confirm `https://developers.reddit.com/apps/cartographer-isle` after `devvit upload`
+- App listing: https://developers.reddit.com/apps/cartographer-isle
 - Video: TODO(joey): link (under one minute)
 - Repository: https://github.com/jkarns87/cartographer
 - README: https://github.com/jkarns87/cartographer/blob/main/README.md
+
+## Form fields
+
+Devpost's form takes these, in this order. "About the project" accepts Markdown; paste the
+sections from Tagline through Judging criteria below into it.
+
+| Field | Value |
+| --- | --- |
+| Project name | Cartographer |
+| Tagline | A daily island to chart: read the surveyor's notes, place the landmarks, light every clue. |
+| Thumbnail | `docs/brand/icon-1024.png` (Devpost crops gallery cards to 3:2; the island stays centered) |
+| Image gallery | `docs/brand/banner-1600x480.png`, then `docs/screenshots/cover.png` and `docs/screenshots/board.png` |
+| Try it out links | demo post, app listing, https://github.com/jkarns87/cartographer |
+| Video demo link | the under-one-minute video (optional) |
+| Built with | typescript, react, tailwindcss, hono, redis, vite, vitest, devvit, reddit |
+| Ported game | No. Cartographer is new; it is not a port and uses no existing IP. |
+| Developer Platform feedback survey | optional; qualifies for the Feedback award |
 
 ## Tagline
 
@@ -102,9 +119,8 @@ appear on it.
   user under one stickied app comment, a fixed template, no free text, nothing gated on it.
 - Clue states use shape and color, every cell has a screen-reader label, tap targets are at least
   44 px, and dark mode and reduced motion are supported.
-- 796 automated tests cover the puzzle rules, both solvers, the generator, every server service
-  and route, and the client's reducer and components. TODO(joey): update the count from the README
-  if it changes before submitting.
+- 807 automated tests cover the puzzle rules, both solvers, the generator, every server service
+  and route, and the client's reducer and components.
 
 ## What we learned
 
@@ -145,7 +161,7 @@ island around you.
 
 **Polish.** The app is built for publishing: the inline cover stays small and tap-only, the board
 fits a phone in portrait and moves the clues to a sidebar in landscape and on desktop, and dark mode
-and reduced motion are handled. Every service has tests (755 in all), the server
+and reduced motion are handled. Every service has tests (807 in all), the server
 verifies every solve, the cron is idempotent with a retry 15 minutes later, and Reddit-side failures
 are logged without breaking the game. Icons are open-licensed and credited, and there are no
 third-party requests at runtime.
@@ -177,7 +193,7 @@ captions for the bracketed text.
 | 7   | 0:28 - 0:35 | 7 s    | Speed-ramp the last placements. Every clue lights and Chart it slides up. Tap it.                                                        |
 | 8   | 0:35 - 0:44 | 9 s    | Result screen: the Charted stamp, time, rank, then the snoovatars settling onto the island, yours first. [Everyone who charted it today] |
 | 9   | 0:44 - 0:51 | 7 s    | Tap Post my chart, then Results thread. The card appears as a reply under the stickied comment.                                          |
-| 10  | 0:51 - 0:57 | 6 s    | Close on a username with `Navigator · 3d` flair in the thread. [Cartographer · TODO(joey): subreddit name]                               |
+| 10  | 0:51 - 0:57 | 6 s    | Close on a username with `Navigator · 3d` flair in the thread. [Cartographer · r/cartographer_dev]                               |
 
 TODO(joey): before recording, prepare a test account with a three-day streak for shot 10 and a few
 other solvers so shot 8 shows several snoovatars.
