@@ -82,3 +82,12 @@ as a cap violation (`isOppositeShorePair` in `tools/gen/build.ts`), both when or
 clues and in `capProblems`, which `gen:verify` also runs over the committed files. Regenerated:
 66 of 180 dated islands and 9 of 20 practice islands changed clues, and the name chain shifted.
 Nothing dated had been posted yet. Perpendicular pairs (north and east shore, a corner) are kept.
+
+## Playtest finding 2026-11-23: user actions need the player's consent
+
+The first Post my chart failed server-side with `failed to mint edge context: refresh token does
+not exist`. Reddit holds no user-scoped token until the player consents, and `asUser` in
+devvit.json only declares the scopes. `@devvit/web/client` exposes `canRunAsUser(event)`
+(experimental): given the trusted click it shows Reddit's consent prompt when needed and resolves
+to whether the scopes are granted. Post my chart and Join now await it before calling the server;
+a refusal shows an explanation and keeps the button enabled. Spec open item 4 is resolved.

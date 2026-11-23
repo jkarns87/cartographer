@@ -14,6 +14,7 @@ import { ResultContainer, ResultScreen } from './ResultScreen';
 import type { ResultScreenProps } from './ResultScreen';
 
 vi.mock('@devvit/web/client', () => ({
+  canRunAsUser: vi.fn(() => Promise.resolve(true)),
   navigateTo: vi.fn(),
   showShareSheet: vi.fn(() => Promise.resolve()),
   showToast: vi.fn(),
@@ -26,7 +27,8 @@ vi.mock('./api', () => ({
   postSubscribe: vi.fn(),
 }));
 
-const { navigateTo, showShareSheet } = await import('@devvit/web/client');
+const { canRunAsUser, navigateTo, showShareSheet } =
+  await import('@devvit/web/client');
 const api = await import('./api');
 
 const PUZZLE: Puzzle = {
@@ -110,6 +112,7 @@ const renderScreen = (overrides: Partial<ResultScreenProps> = {}) => {
 };
 
 beforeEach(() => {
+  vi.mocked(canRunAsUser).mockResolvedValue(true);
   vi.clearAllMocks();
 });
 
@@ -172,7 +175,7 @@ describe('ResultScreen', () => {
     expect(button).toBeEnabled();
 
     fireEvent.click(button);
-    expect(props.onComment).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(props.onComment).toHaveBeenCalledTimes(1));
     expect(screen.getByRole('button', { name: 'Posting…' })).toBeDisabled();
 
     await act(async () => {
@@ -194,6 +197,44 @@ describe('ResultScreen', () => {
     expect(screen.getByRole('button', { name: 'Post my chart' })).toBeEnabled();
   });
 
+  it('hands the trusted click to the permission check before posting', async () => {
+    const props = renderScreen({
+      onComment: vi.fn(() => Promise.resolve(true)),
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Post my chart' }));
+    await waitFor(() => expect(props.onComment).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(canRunAsUser)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(canRunAsUser).mock.calls[0]?.[0]).toBeInstanceOf(Event);
+  });
+
+  it('stops before posting and explains when Reddit permission is refused', async () => {
+    vi.mocked(canRunAsUser).mockResolvedValueOnce(false);
+    const props = renderScreen({
+      onComment: vi.fn(() => Promise.resolve(true)),
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Post my chart' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'needs your permission'
+    );
+    expect(props.onComment).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Post my chart' })).toBeEnabled();
+  });
+
+  it('stops Join and explains when Reddit permission is refused', async () => {
+    vi.mocked(canRunAsUser).mockResolvedValueOnce(false);
+    const props = renderScreen();
+    fireEvent.click(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'needs your permission'
+    );
+    expect(props.onSubscribe).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole('button', { name: "Join for tomorrow's island" })
+    ).toBeEnabled();
+  });
+
   it('starts as Posted when the result says the chart was already commented', () => {
     renderScreen({ result: { ...RESULT, commented: true } });
     expect(screen.getByRole('button', { name: 'Posted' })).toBeDisabled();
@@ -212,7 +253,7 @@ describe('ResultScreen', () => {
     fireEvent.click(
       screen.getByRole('button', { name: "Join for tomorrow's island" })
     );
-    expect(props.onSubscribe).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(props.onSubscribe).toHaveBeenCalledTimes(1));
     expect(await screen.findByRole('status')).toHaveTextContent('Subscribed');
     expect(
       screen.queryByRole('button', { name: "Join for tomorrow's island" })
@@ -236,7 +277,7 @@ describe('ResultScreen', () => {
     expect(join).toBeEnabled();
 
     fireEvent.click(join);
-    expect(props.onSubscribe).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(props.onSubscribe).toHaveBeenCalledTimes(2));
   });
 
   it('treats a rejected onSubscribe as a failure instead of leaking the rejection', async () => {

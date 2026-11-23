@@ -218,10 +218,12 @@ and your streak are the same whether you use those buttons or not. Post my chart
 are separate buttons, and no button does two things. The server allows one reply per player per
 island, guarded by an atomic claim in Redis so a double tap cannot post twice.
 
-Note for testers: while an app is unpublished, Devvit runs `runAs: 'USER'` actions from the app
-account unless the app owner takes the action. Post my chart replies made during judging may
-therefore appear under the app's name rather than yours. TODO(joey): confirm the identity observed
-in playtest and update this note.
+Post my chart and Join act as you on Reddit, so Reddit asks for your permission the first time:
+the button hands its click to Devvit's `canRunAsUser` check, which shows Reddit's consent prompt
+when needed. If you decline, the game says so and leaves the button enabled; nothing else
+changes. Seen in playtest on 2026-11-23: without that consent Reddit rejects the comment with
+"refresh token does not exist". TODO(joey): confirm the account the reply appears under once
+consent is granted.
 
 ## Architecture
 

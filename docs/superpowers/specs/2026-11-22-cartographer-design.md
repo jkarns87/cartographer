@@ -335,7 +335,7 @@ On install and upgrade, ensure four user flair templates exist (Deckhand, Naviga
 
 ### 5.8 Post my chart
 
-Server builds the fixed body and calls `reddit.submitComment({ id: resultsCommentId, text, runAs: 'USER' })`, then sets `commented = 1`. Body:
+Server builds the fixed body and calls `reddit.submitComment({ id: resultsCommentId, text, runAs: 'USER' })`, then sets `commented = 1`. The client first awaits `canRunAsUser(event)` from `@devvit/web/client` on the button's trusted click, which shows Reddit's consent prompt when the player has not yet allowed the app to comment as them; a refusal stops the request client-side with an explanation and leaves the button enabled. Body:
 
 ```
 Cartographer #12 · Thistle Reach
@@ -351,7 +351,7 @@ At chart time, resolve `reddit.getSnoovatarUrl(username)` and cache in `snoo:<ui
 
 ### 5.10 Share and subscribe
 
-`showShareSheet({ text })` with the same card text as the comment plus the post URL. Subscribe calls `reddit.subscribeToCurrentSubreddit()`; the prompt is shown once per user (`subscribePromptSeen` field).
+`showShareSheet({ text })` with the same card text as the comment plus the post URL. Subscribe calls `reddit.subscribeToCurrentSubreddit()`; the prompt is shown once per user (`subscribePromptSeen` field). Join goes through the same `canRunAsUser` check first.
 
 ### 5.11 Settings and permissions
 
@@ -384,4 +384,4 @@ Submission needs: Devpost text, app listing URL (after `devvit upload`), README.
 1. Cron time zone (assumed UTC).
 2. Whether snoovatar image URLs render inside the sandboxed webview. Fallback: initials badges from the sprite.
 3. Resolved 2026-11-23: Reddit rejects `flairText` without a `flairId` (`Can't set flair_text without a flair_id`). The app now ensures a "Daily Island" post flair template and submits with its ID.
-4. Whether `runAs: 'USER'` comments require the asUser permission to be granted at install. Expected yes.
+4. Resolved 2026-11-23: the `asUser` config alone is not enough. Without the player's consent Reddit rejects the comment with `refresh token does not exist`; the client calls `canRunAsUser(event)` on the trusted click so Reddit can ask, and stops when refused.

@@ -1,4 +1,10 @@
-import { navigateTo, showShareSheet, showToast } from '@devvit/web/client';
+import {
+  canRunAsUser,
+  navigateTo,
+  showShareSheet,
+  showToast,
+} from '@devvit/web/client';
+import type { MouseEvent } from 'react';
 import { useEffect, useId, useState } from 'react';
 
 import type { Result, Settler, Stats } from '../../shared/api';
@@ -46,8 +52,8 @@ export type ResultScreenProps = {
   onResults: () => void;
 };
 
-type CommentState = 'idle' | 'busy' | 'posted' | 'failed';
-type SubscribeState = 'idle' | 'busy' | 'done' | 'failed';
+type CommentState = 'idle' | 'busy' | 'posted' | 'failed' | 'consent';
+type SubscribeState = 'idle' | 'busy' | 'done' | 'failed' | 'consent';
 
 const PRIMARY =
   'flex h-12 items-center justify-center rounded-xl bg-lit px-4 text-base font-semibold text-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lit disabled:bg-lit/55 disabled:shadow-none';
@@ -81,16 +87,28 @@ export const ResultScreen = ({
     !result.subscribePromptSeen || subscribeState === 'done';
   const { streak } = result;
 
-  const comment = async (): Promise<void> => {
+  // Both buttons act as the player on Reddit, which needs the player's consent.
+  // `canRunAsUser` shows Reddit's prompt when needed and must get the trusted click.
+  const comment = async (e: MouseEvent<HTMLButtonElement>): Promise<void> => {
     if (posted || commentState === 'busy') return;
     setCommentState('busy');
+    const allowed = await canRunAsUser(e.nativeEvent).catch(() => false);
+    if (!allowed) {
+      setCommentState('consent');
+      return;
+    }
     const ok = await onComment().catch(() => false);
     setCommentState(ok ? 'posted' : 'failed');
   };
 
-  const subscribe = async (): Promise<void> => {
+  const subscribe = async (e: MouseEvent<HTMLButtonElement>): Promise<void> => {
     if (subscribeState === 'busy' || subscribeState === 'done') return;
     setSubscribeState('busy');
+    const allowed = await canRunAsUser(e.nativeEvent).catch(() => false);
+    if (!allowed) {
+      setSubscribeState('consent');
+      return;
+    }
     const ok = await onSubscribe().catch(() => false);
     setSubscribeState(ok ? 'done' : 'failed');
   };
@@ -203,8 +221,8 @@ export const ResultScreen = ({
             type="button"
             className={PRIMARY}
             disabled={posted || commentState === 'busy'}
-            onClick={() => {
-              void comment();
+            onClick={(e) => {
+              void comment(e);
             }}
           >
             {posted
@@ -217,12 +235,14 @@ export const ResultScreen = ({
             Share
           </button>
         </div>
-        {commentState === 'failed' ? (
+        {commentState === 'failed' || commentState === 'consent' ? (
           <p
             role="alert"
             className="rounded-lg border border-warn/60 bg-warn/10 px-3 py-2 text-center text-sm text-ink"
           >
-            Could not post your chart. Try again.
+            {commentState === 'consent'
+              ? 'Posting needs your permission for Cartographer to comment as you. Tap Post my chart again and allow it.'
+              : 'Could not post your chart. Try again.'}
           </p>
         ) : (
           <p className="text-center text-xs text-muted">
@@ -243,18 +263,20 @@ export const ResultScreen = ({
                 type="button"
                 className={SECONDARY}
                 disabled={subscribeState === 'busy'}
-                onClick={() => {
-                  void subscribe();
+                onClick={(e) => {
+                  void subscribe(e);
                 }}
               >
                 Join for tomorrow&apos;s island
               </button>
-              {subscribeState === 'failed' ? (
+              {subscribeState === 'failed' || subscribeState === 'consent' ? (
                 <p
                   role="alert"
                   className="rounded-lg border border-warn/60 bg-warn/10 px-3 py-2 text-center text-sm text-ink"
                 >
-                  Could not subscribe. Try again.
+                  {subscribeState === 'consent'
+                    ? 'Joining needs your permission. Tap the button again and allow it.'
+                    : 'Could not subscribe. Try again.'}
                 </p>
               ) : null}
             </>
