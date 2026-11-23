@@ -1,0 +1,79 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "cartographer-daily",
+  "post": {
+    "dir": "dist/client",
+    "entrypoints": {
+      "default": {
+        "entry": "splash.html",
+        "height": "regular"
+      },
+      "game": {
+        "entry": "game.html"
+      }
+    }
+  },
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.cjs"
+  },
+  "permissions": {
+    "redis": true,
+    "reddit": {
+      "enable": true,
+      "scope": "user",
+      "asUser": [
+        "SUBMIT_COMMENT",
+        "SUBSCRIBE_TO_SUBREDDIT"
+      ]
+    }
+  },
+  "scheduler": {
+    "tasks": {
+      "daily": {
+        "endpoint": "/internal/cron/daily",
+        "cron": "0 12 * * *"
+      },
+      "daily-retry": {
+        "endpoint": "/internal/cron/daily",
+        "cron": "15 12 * * *"
+      }
+    }
+  },
+  "triggers": {
+    "onAppInstall": "/internal/triggers/on-app-install",
+    "onAppUpgrade": "/internal/triggers/on-app-upgrade",
+    "onPostDelete": "/internal/triggers/on-post-delete"
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "Cartographer: post today's island",
+        "description": "Posts the scheduled island for today's UTC date",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-today"
+      },
+      {
+        "label": "Cartographer: post a practice island",
+        "description": "Posts an undated island from the practice pool",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-practice"
+      }
+    ]
+  },
+  "settings": {
+    "subreddit": {
+      "flairEnabled": {
+        "type": "boolean",
+        "label": "Award user flair for streaks",
+        "defaultValue": true
+      }
+    }
+  },
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build"
+  }
+}
