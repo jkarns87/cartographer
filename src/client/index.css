@@ -1,1 +1,107 @@
 @import 'tailwindcss';
+
+/* Cartographer palette. Utilities reference these as var(--color-*), so the
+   dark overrides below take effect without separate dark: classes. */
+@theme {
+  --color-water: #7fb3d5;
+  --color-water-deep: #5b93ba;
+  --color-sand: #f1e3c3;
+  --color-land: #d8c39a;
+  --color-ink: #2b2a28;
+  --color-lit: #2e8b57;
+  --color-warn: #d98e04;
+  --color-paper: #fbf7ee;
+
+  --animate-shake: shake 300ms ease-in-out 1;
+  --animate-pulse-mark: pulse-mark 600ms ease-in-out 2;
+  --animate-settle: settle 320ms ease-out both;
+  --animate-settle-me: settle-me 320ms ease-out both;
+
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20% {
+      transform: translateX(-3px);
+    }
+    40% {
+      transform: translateX(3px);
+    }
+    60% {
+      transform: translateX(-2px);
+    }
+    80% {
+      transform: translateX(2px);
+    }
+  }
+
+  @keyframes pulse-mark {
+    0%,
+    100% {
+      transform: scale(1);
+      filter: none;
+    }
+    50% {
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 4px var(--color-warn));
+    }
+  }
+
+  @keyframes settle {
+    from {
+      transform: translate(-50%, calc(-50% - 24px));
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, -50%);
+      opacity: 1;
+    }
+  }
+
+  @keyframes settle-me {
+    from {
+      transform: translate(-50%, calc(-50% - 28px));
+      opacity: 0;
+    }
+    to {
+      transform: translate(-50%, -50%);
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-sand: #cdb889;
+    --color-ink: #f3efe6;
+    --color-paper: #1b2733;
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow-x: hidden;
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
