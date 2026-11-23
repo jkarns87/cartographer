@@ -148,4 +148,20 @@ describe('postChart', () => {
     deps.reddit.failSubmitComment = false;
     expect((await postChart(deps, postId, UID)).kind).toBe('ok');
   });
+
+  it('rethrows the Reddit error when releasing the claim also fails', async () => {
+    const deps = makeDeps();
+    const postId = await solved(deps);
+    deps.reddit.failSubmitComment = true;
+    const realIncr = deps.redis.hIncrBy.bind(deps.redis);
+    deps.redis.hIncrBy = async (key, field, value) => {
+      if (value < 0) throw new Error('redis down');
+      return realIncr(key, field, value);
+    };
+    await expect(postChart(deps, postId, UID)).rejects.toThrow('FakeReddit: submitComment failed');
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('release'),
+      expect.objectContaining({ message: 'redis down' })
+    );
+  });
 });

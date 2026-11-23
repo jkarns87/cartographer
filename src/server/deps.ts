@@ -12,7 +12,12 @@ export type Ctx = {
   userId: string | undefined;
   username: string | undefined;
   postId: string | undefined;
-  subredditName: string;
+  /**
+   * From the optional `devvit-subreddit-name` header, which scheduler
+   * invocations may omit. Read it through `resolveSubredditName`
+   * (services/subreddit.ts), never directly.
+   */
+  subredditName: string | undefined;
 };
 
 export type PostId = `t3_${string}`;
@@ -65,6 +70,8 @@ export type UserLike = {
   getUserFlairBySubreddit(subreddit: string): Promise<UserFlairLike | undefined>;
 };
 export type FlairTemplateLike = { id: string; text: string };
+/** The real `Subreddit` exposes `name` as a getter, which satisfies this structurally. */
+export type SubredditLike = { name: string };
 
 export type SubmitCustomPostLike = {
   subredditName: string;
@@ -98,6 +105,7 @@ export type RedditLike = {
   getCurrentUser(): Promise<UserLike | undefined>;
   getSnoovatarUrl(username: string): Promise<string | undefined>;
   subscribeToCurrentSubreddit(): Promise<void>;
+  getCurrentSubreddit(): Promise<SubredditLike>;
 };
 
 export type SettingValue = string | number | boolean | string[];
@@ -113,6 +121,8 @@ export type Deps = {
   ctx: () => Ctx;
   schedule: Schedule;
   practice: Schedule;
+  /** Waits `ms` milliseconds. Optional; services default to `setTimeout`. Tests pass a fake. */
+  sleep?: (ms: number) => Promise<void>;
 };
 
 /** Hono environment: `createApp` stores `deps` on the request context for route handlers. */

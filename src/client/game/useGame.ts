@@ -136,13 +136,13 @@ export const useGame = (): UseGame => {
     });
     if ('error' in res) {
       setChartError(res.error);
-      // The solve already exists server-side: reload to pick up the stored result.
-      if (res.error === 'already') reload();
     } else {
+      // A repeat chart (another device, a double tap) also lands here: the
+      // server answers 200 with the stored result, never 409 'already'.
       setChartResult(res);
     }
     setCharting(false);
-  }, [game, charting, flush, state, reload]);
+  }, [game, charting, flush, state]);
 
   const clearChartError = useCallback(() => setChartError(null), []);
 

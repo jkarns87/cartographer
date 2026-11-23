@@ -16,6 +16,7 @@ import type {
   SetUserFlairLike,
   SubmitCommentLike,
   SubmitCustomPostLike,
+  SubredditLike,
   UserLike,
   ZMember,
   ZRangeOptionsLike,
@@ -242,6 +243,8 @@ export class FakeReddit implements RedditLike {
   userFlair: Record<string, string | undefined> = {};
   snoovatars: Record<string, string> = {};
   currentUsername: string | undefined = 'tester';
+  /** What `getCurrentSubreddit` reports (used when the context header is missing). */
+  currentSubredditName = 'testsub';
   subscribeCalls = 0;
   /** While true every `submitCustomPost` rejects (simulates a Reddit outage). */
   failSubmitPost = false;
@@ -332,6 +335,11 @@ export class FakeReddit implements RedditLike {
     this.record('subscribeToCurrentSubreddit', []);
     this.subscribeCalls++;
   }
+
+  async getCurrentSubreddit(): Promise<SubredditLike> {
+    this.record('getCurrentSubreddit', []);
+    return { name: this.currentSubredditName };
+  }
 }
 
 const postId = (n: number): PostId => `t3_${n.toString(36)}`;
@@ -357,6 +365,8 @@ export type TestDeps = Omit<Deps, 'redis' | 'reddit' | 'settings'> & {
   clock: { now: number };
   /** Mutable identity; `deps.ctx()` returns this object. */
   ctxState: Ctx;
+  /** Every `deps.sleep(ms)` request, in order. */
+  sleeps: number[];
 };
 
 export type DepsOverrides = {
@@ -381,6 +391,7 @@ export const makeDeps = (overrides: DepsOverrides = {}): TestDeps => {
   };
   const reddit = new FakeReddit();
   reddit.currentUsername = ctxState.username;
+  const sleeps: number[] = [];
   return {
     redis: new FakeRedis(),
     reddit,
@@ -389,7 +400,14 @@ export const makeDeps = (overrides: DepsOverrides = {}): TestDeps => {
     ctx: () => ctxState,
     schedule: overrides.schedule ?? FIXTURE_SCHEDULE,
     practice: overrides.practice ?? FIXTURE_PRACTICE,
+    // Records the request and yields one macrotask instead of waiting, so a
+    // concurrent request running on the in-memory fakes can finish meanwhile.
+    sleep: (ms: number) => {
+      sleeps.push(ms);
+      return new Promise<void>((resolve) => setTimeout(resolve, 0));
+    },
     clock,
     ctxState,
+    sleeps,
   };
 };

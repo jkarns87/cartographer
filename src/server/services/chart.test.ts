@@ -3,12 +3,13 @@ import type { ChartRequest } from '../../shared/api';
 import type { Placement, ScheduleEntry } from '../../shared/puzzle/types';
 import { FIXTURE_NOW, makeDeps } from '../fakes';
 import type { TestDeps } from '../fakes';
-import { keys, SNOO_TTL_SECONDS } from '../keys';
+import { keys, SNOO_TTL_SECONDS, USER_TTL_SECONDS } from '../keys';
 import { FIXTURE_PRACTICE, FIXTURE_SCHEDULE } from '../puzzles/fixture';
 import { buildResult, chart } from './chart';
 import { postIsland } from './posting';
 import { ensureStarted, readProgress } from './progress';
 import { loadSnapshot } from './snapshot';
+import { readStats } from './stats';
 import { readStreak, writeStreak } from './streaks';
 
 const DAY = 24 * 3600 * 1000;
@@ -84,10 +85,11 @@ describe('chart', () => {
       startedAt: String(FIXTURE_NOW),
       solvedAt: String(FIXTURE_NOW + 95_000),
       elapsedMs: '95000',
-      corrections: '0',
-      history: 'PPPPPPP',
-      placements: JSON.stringify(dated.solution),
+      finalCorrections: '0',
+      finalHistory: 'PPPPPPP',
+      finalPlacements: JSON.stringify(dated.solution),
     });
+    expect(deps.redis.ttls.get(userKey)).toBe(USER_TTL_SECONDS);
     expect(await deps.redis.zScore(keys.times(postId), UID)).toBe(95_000);
     expect(await deps.redis.zScore(keys.settlers(postId), UID)).toBe(FIXTURE_NOW + 95_000);
     expect(await deps.redis.get(keys.snoo(UID))).toBe('https://i.redd.it/me.png');
@@ -122,15 +124,76 @@ describe('chart', () => {
     expect(out.stats).toEqual({ started: 1, charted: 1, cleanPct: 0, medianMs: 30_000 });
   });
 
-  it('starts the timer at chart time when the game was never opened', async () => {
+  it('rejects a chart for a game that was never opened as invalid, without side effects', async () => {
     const deps = makeDeps();
     const postId = await post(deps);
+    expect(await chart(deps, postId, UID, NAME, solve())).toEqual({ kind: 'invalid' });
+    expect(await deps.redis.exists(keys.user(postId, UID))).toBe(0);
+    expect(await deps.redis.zCard(keys.times(postId))).toBe(0);
+    expect(await deps.redis.zCard(keys.settlers(postId))).toBe(0);
+    expect(await deps.redis.hGetAll(keys.stats(postId))).toEqual({});
+    expect(await readStreak(deps, UID)).toMatchObject({ total: 0 });
+    expect(deps.reddit.callsTo('getSnoovatarUrl')).toHaveLength(0);
+  });
+
+  it('records the time from the game open when the game was opened first', async () => {
+    const deps = makeDeps();
+    const postId = await post(deps);
+    await ensureStarted(deps, postId, UID);
+    deps.clock.now += 12_000;
     const out = await chart(deps, postId, UID, NAME, solve());
     expect(out.kind).toBe('ok');
     if (out.kind !== 'ok') return;
-    expect(out.result.elapsedMs).toBe(0);
-    expect(out.stats.started).toBe(1);
-    expect(out.stats.medianMs).toBeNull();
+    expect(out.result).toMatchObject({ elapsedMs: 12_000, rank: 1, total: 1 });
+    expect(out.stats).toEqual({ started: 1, charted: 1, cleanPct: 100, medianMs: 12_000 });
+  });
+
+  it('writes the solve, stats, settler and streak before any Reddit call', async () => {
+    const deps = makeDeps();
+    const postId = await post(deps);
+    await ensureStarted(deps, postId, UID);
+    deps.clock.now += 40_000;
+    const log: string[] = [];
+    const atLookup: unknown[] = [];
+    deps.reddit.getSnoovatarUrl = async () => {
+      log.push('snoovatar');
+      atLookup.push({
+        streakTotal: (await readStreak(deps, UID)).total,
+        charted: (await readStats(deps, postId)).charted,
+        timed: await deps.redis.zScore(keys.times(postId), UID),
+        settled: await deps.redis.zScore(keys.settlers(postId), UID),
+        elapsedMs: (await readProgress(deps, postId, UID)).elapsedMs,
+      });
+      return undefined;
+    };
+    const realGetUser = deps.reddit.getCurrentUser.bind(deps.reddit);
+    deps.reddit.getCurrentUser = async () => {
+      log.push('flair');
+      return realGetUser();
+    };
+
+    const out = await chart(deps, postId, UID, NAME, solve());
+    expect(out.kind).toBe('ok');
+    expect(log).toEqual(['snoovatar', 'flair']);
+    expect(atLookup).toEqual([
+      { streakTotal: 1, charted: 1, timed: 40_000, settled: FIXTURE_NOW + 40_000, elapsedMs: 40_000 },
+    ]);
+  });
+
+  it('keeps the streak of a claimed solve even when the snoovatar lookup never answers', async () => {
+    const deps = makeDeps();
+    const postId = await post(deps);
+    await ensureStarted(deps, postId, UID);
+    deps.clock.now += 25_000;
+    deps.reddit.getSnoovatarUrl = () => new Promise<string | undefined>(() => {});
+
+    void chart(deps, postId, UID, NAME, solve());
+    await vi.waitFor(async () => {
+      expect(await readStreak(deps, UID)).toMatchObject({ current: 1, total: 1, lastDate: '2026-12-01' });
+    });
+    expect(await readProgress(deps, postId, UID)).toMatchObject({ elapsedMs: 25_000, corrections: 0 });
+    expect(await deps.redis.zScore(keys.times(postId), UID)).toBe(25_000);
+    expect(deps.reddit.setFlairs).toHaveLength(0);
   });
 
   it('returns not-found for a post without a snapshot', async () => {
@@ -186,6 +249,41 @@ describe('chart', () => {
     expect((await readStreak(deps, UID)).total).toBe(1);
     expect(deps.reddit.setFlairs).toHaveLength(1);
     expect(deps.reddit.callsTo('getSnoovatarUrl')).toHaveLength(1);
+  });
+
+  it('gives two concurrent submits the same complete result', async () => {
+    const deps = makeDeps();
+    const postId = await post(deps);
+    await ensureStarted(deps, postId, UID);
+    deps.clock.now += 42_000;
+    const [a, b] = await Promise.all([
+      chart(deps, postId, UID, NAME, solve()),
+      chart(deps, postId, UID, NAME, solve(dated, { corrections: 3, history: 'PLPLPPPPPPP' })),
+    ]);
+    if (a.kind !== 'ok' || b.kind !== 'ok') throw new Error('expected ok');
+    expect(a.result.rank).toBeGreaterThanOrEqual(1);
+    expect(b.result.rank).toBeGreaterThanOrEqual(1);
+    expect(b.result.elapsedMs).toBe(a.result.elapsedMs);
+    expect(b.result).toEqual(a.result);
+    expect(b.result).toMatchObject({ elapsedMs: 42_000, corrections: 0, history: 'PPPPPPP', rank: 1, total: 1 });
+    expect(b.result.streak).toMatchObject({ current: 1, total: 1, counted: true });
+    // The losing request saw the claim before the winner finished, and waited.
+    expect(deps.sleeps.length).toBeGreaterThan(0);
+    expect(await deps.redis.zCard(keys.times(postId))).toBe(1);
+    expect((await readStreak(deps, UID)).total).toBe(1);
+  });
+
+  it('builds the result anyway after three waits when the winner never finishes', async () => {
+    const deps = makeDeps();
+    const postId = await post(deps);
+    await ensureStarted(deps, postId, UID);
+    // A claim with nothing else written: the winning request died after hSetNX.
+    await deps.redis.hSet(keys.user(postId, UID), { solvedAt: String(FIXTURE_NOW + 9_000) });
+    const out = await chart(deps, postId, UID, NAME, solve());
+    expect(out.kind).toBe('ok');
+    if (out.kind !== 'ok') return;
+    expect(deps.sleeps).toHaveLength(3);
+    expect(out.result.elapsedMs).toBe(9_000);
   });
 
   it('skips flair and leaves current alone for a solve more than 24 hours after posting', async () => {

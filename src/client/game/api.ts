@@ -14,14 +14,17 @@ import type {
  * solution; the server returns `GameResponse.puzzle` without it.
  */
 
-const ERROR_CODES: readonly ApiError['error'][] = [
-  'login',
-  'mismatch',
-  'invalid',
-  'already',
-  'not-found',
-  'server',
-];
+/** Every `ApiError` code; `satisfies` fails the build when one is added or removed. */
+const KNOWN_ERRORS = {
+  login: true,
+  mismatch: true,
+  invalid: true,
+  already: true,
+  'not-found': true,
+  server: true,
+} satisfies Record<ApiError['error'], true>;
+
+const ERROR_CODES: readonly string[] = Object.keys(KNOWN_ERRORS);
 
 const isApiError = (value: unknown): value is ApiError =>
   typeof value === 'object' &&

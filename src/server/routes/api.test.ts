@@ -239,10 +239,41 @@ describe('POST /api/place', () => {
 
   it('is ignored after the solve', async () => {
     const { deps, postId } = await setup();
+    await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
     const res = await post(deps, '/api/place', { placements: {}, history: 'L', corrections: 9 });
     expect(res.status).toBe(200);
-    expect(await deps.redis.hGet(keys.user(postId, UID), 'corrections')).toBe('0');
+    expect(await deps.redis.hGet(keys.user(postId, UID), 'corrections')).toBeUndefined();
+    expect((await get(deps, '/api/game')).body).toMatchObject({ corrections: 0, history: 'PPPPPPP' });
+  });
+
+  it('cannot change what GET /api/game returns even when it races past its solved check', async () => {
+    const { deps } = await setup();
+    await get(deps, '/api/game');
+    deps.clock.now += 30_000;
+    const realHGet = deps.redis.hGet.bind(deps.redis);
+    let raced = false;
+    deps.redis.hGet = async (key, field) => {
+      const value = await realHGet(key, field);
+      if (field === 'solvedAt' && !raced) {
+        raced = true;
+        // The chart lands between the /place solved check and its write.
+        expect((await post(deps, '/api/chart', solution())).status).toBe(200);
+      }
+      return value;
+    };
+    const stale = { placements: { lighthouse: entry.solution.lighthouse }, history: 'PPLP', corrections: 1 };
+    expect((await post(deps, '/api/place', stale)).status).toBe(200);
+    expect(raced).toBe(true);
+
+    const res = await get(deps, '/api/game');
+    expect(res.body).toMatchObject({
+      status: 'solved',
+      placements: entry.solution,
+      history: 'PPPPPPP',
+      corrections: 0,
+      result: { elapsedMs: 30_000, corrections: 0, history: 'PPPPPPP', rank: 1, total: 1 },
+    });
   });
 });
 
@@ -281,6 +312,16 @@ describe('POST /api/chart', () => {
         stats: { started: 1, charted: 1, cleanPct: 100, medianMs: 45_000 },
       },
     });
+  });
+
+  it('is 400 invalid when the game was never opened, and 200 once it was', async () => {
+    const { deps } = await setup();
+    expect(await post(deps, '/api/chart', solution())).toEqual({ status: 400, body: { error: 'invalid' } });
+    await get(deps, '/api/game');
+    deps.clock.now += 20_000;
+    const res = await post(deps, '/api/chart', solution());
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ result: { elapsedMs: 20_000, rank: 1, total: 1 } });
   });
 
   it('is 409 mismatch for a complete wrong board', async () => {
@@ -341,6 +382,7 @@ describe('POST /api/comment', () => {
 
   it('is 500 server when Reddit rejects the comment', async () => {
     const { deps } = await setup();
+    await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
     deps.reddit.failSubmitComment = true;
     expect(await post(deps, '/api/comment')).toEqual({ status: 500, body: { error: 'server' } });
@@ -353,6 +395,7 @@ describe('POST /api/subscribe', () => {
     expect(await post(deps, '/api/subscribe')).toEqual({ status: 200, body: { ok: true } });
     expect(deps.reddit.subscribeCalls).toBe(1);
     expect(await deps.redis.hGet(keys.user(postId, UID), 'subscribePromptSeen')).toBe('1');
+    await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
     expect((await get(deps, '/api/cover')).body).toMatchObject({ me: { result: { subscribePromptSeen: true } } });
   });
@@ -369,6 +412,7 @@ describe('POST /api/tutorial-seen', () => {
 describe('GET /api/reveal', () => {
   it('works logged out, returning only the count', async () => {
     const { deps } = await setup();
+    await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
     logOut(deps);
     expect(await get(deps, '/api/reveal')).toEqual({ status: 200, body: { settlers: [], more: 1 } });
@@ -376,6 +420,7 @@ describe('GET /api/reveal', () => {
 
   it('places the solved caller first', async () => {
     const { deps } = await setup();
+    await get(deps, '/api/game');
     await post(deps, '/api/chart', solution());
     const res = await get(deps, '/api/reveal');
     expect(res.status).toBe(200);

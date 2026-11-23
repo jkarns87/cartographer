@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -73,6 +73,16 @@ describe('theme tokens', () => {
     for (const { fg, bg, what } of pairs(resolve)) {
       expect(contrast(fg, bg), `${what}: ${fg} on ${bg}`).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it('never dims secondary text with text-ink/60 (3.9:1 on paper); text-muted is the token', () => {
+    const root = join(import.meta.dirname, '..');
+    const sources = readdirSync(root, { recursive: true, encoding: 'utf8' }).filter(
+      (f) => f.endsWith('.tsx') && !f.endsWith('.test.tsx')
+    );
+    expect(sources.length).toBeGreaterThan(10);
+    const offenders = sources.filter((f) => readFileSync(join(root, f), 'utf8').includes('text-ink/60'));
+    expect(offenders).toEqual([]);
   });
 });
 

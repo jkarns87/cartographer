@@ -1,9 +1,10 @@
-import { DIFFICULTY_LABEL } from '../../shared/puzzle/types';
+import { DIFFICULTY_LABEL, EXPEDITION_LANDMARKS } from '../../shared/puzzle/types';
 import type { ScheduleEntry } from '../../shared/puzzle/types';
 import type { Deps, PostId, PostLike, SubmitCustomPostLike } from '../deps';
 import { keys } from '../keys';
 import { entryForDate, practiceEntry, utcDate } from './schedule';
 import { saveSnapshot, toPostData } from './snapshot';
+import { resolveSubredditName } from './subreddit';
 
 export const RESULTS_HEADER =
   'Results thread. Finish the island and tap Post my chart in the game to add yours.';
@@ -11,10 +12,15 @@ export const FALLBACK_TEXT =
   'Cartographer is a daily island deduction game. Open this post in the Reddit app or on new Reddit to play.';
 export const POST_FLAIR_TEXT = 'Daily Island';
 
+/** Spec 2.5: the Sunday 9-landmark dated islands are labeled Expedition. */
+export const isExpedition = (entry: Pick<ScheduleEntry, 'date' | 'landmarks'>): boolean =>
+  entry.date !== null && entry.landmarks.length === EXPEDITION_LANDMARKS;
+
 export const postTitle = (entry: ScheduleEntry): string =>
   entry.date === null
     ? `Cartographer practice · ${entry.name}`
-    : `Cartographer #${entry.number} · ${entry.name} · ${DIFFICULTY_LABEL[entry.difficulty]}`;
+    : `Cartographer #${entry.number} · ${entry.name} · ${DIFFICULTY_LABEL[entry.difficulty]}` +
+      (isExpedition(entry) ? ' · Expedition' : '');
 
 export const postUrl = (subredditName: string, postId: string): string =>
   `https://www.reddit.com/r/${subredditName}/comments/${postId.replace(/^t3_/, '')}`;
@@ -24,7 +30,7 @@ export const postUrl = (subredditName: string, postId: string): string =>
  * submit throws) and snapshots the entry under the new post ID. Spec 5.7 step 1.
  */
 export const submitIsland = async (deps: Deps, entry: ScheduleEntry): Promise<{ postId: PostId }> => {
-  const { subredditName } = deps.ctx();
+  const subredditName = await resolveSubredditName(deps);
   const base: SubmitCustomPostLike = {
     subredditName,
     title: postTitle(entry),

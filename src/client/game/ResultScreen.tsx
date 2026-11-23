@@ -1,27 +1,20 @@
 import { navigateTo, showShareSheet, showToast } from '@devvit/web/client';
 import { useEffect, useId, useState } from 'react';
 
-import type { Result, Settler, Stats, Tier } from '../../shared/api';
-import { chartCardText } from '../../shared/card';
+import type { Result, Settler, Stats } from '../../shared/api';
+import { cardTime, chartCardText } from '../../shared/card';
 import type { Placement, Puzzle } from '../../shared/puzzle/types';
+import { TIER_LABEL } from '../../shared/tiers';
 import { getCover, postComment, postSubscribe } from './api';
 import { IslandView } from './components/IslandView';
-import { formatElapsed } from './format';
 import { useReveal } from './useReveal';
-
-const TIER_LABEL: Record<Tier, string> = {
-  deckhand: 'Deckhand',
-  navigator: 'Navigator',
-  cartographer: 'Cartographer',
-  master: 'Master Cartographer',
-};
 
 /** Dated islands are numbered from 1; practice islands are 0. */
 const isPractice = (puzzle: Puzzle): boolean => puzzle.number <= 0;
 
 const statsLine = (stats: Stats): string =>
   `${stats.charted} charted · ${stats.cleanPct}% clean` +
-  (stats.medianMs !== null ? ` · median ${formatElapsed(stats.medianMs)}` : '');
+  (stats.medianMs !== null ? ` · median ${cardTime(stats.medianMs)}` : '');
 
 const resultsThreadUrl = (postId: string): string =>
   `https://www.reddit.com/comments/${postId.replace(/^t3_/, '')}`;
@@ -122,23 +115,23 @@ export const ResultScreen = ({
         </div>
       </div>
 
-      <p aria-live="polite" className="min-h-4 text-center text-xs text-ink/60">
+      <p aria-live="polite" className="min-h-4 text-center text-xs text-muted">
         {settlerCaption(revealDone, settlers.length, more)}
       </p>
 
       <dl className="grid grid-cols-3 gap-2 text-center">
         <div className="rounded-xl border border-land bg-sand/40 p-2">
-          <dt className="text-xs text-ink/60">Time</dt>
+          <dt className="text-xs text-muted">Time</dt>
           <dd className="font-mono text-lg font-semibold tabular-nums">
-            {formatElapsed(result.elapsedMs)}
+            {cardTime(result.elapsedMs)}
           </dd>
         </div>
         <div className="rounded-xl border border-land bg-sand/40 p-2">
-          <dt className="text-xs text-ink/60">Corrections</dt>
+          <dt className="text-xs text-muted">Corrections</dt>
           <dd className="text-lg font-semibold tabular-nums">{result.corrections}</dd>
         </div>
         <div className="rounded-xl border border-land bg-sand/40 p-2">
-          <dt className="text-xs text-ink/60">Rank</dt>
+          <dt className="text-xs text-muted">Rank</dt>
           <dd className="text-lg font-semibold tabular-nums">{`#${result.rank} of ${result.total}`}</dd>
         </div>
       </dl>
@@ -156,7 +149,7 @@ export const ResultScreen = ({
           <>
             <p className="text-base font-semibold">
               {streak.current > 0 ? `${streak.current}-day streak` : 'No streak yet'}
-              <span className="font-normal text-ink/60">{` · best ${streak.best}`}</span>
+              <span className="font-normal text-muted">{` · best ${streak.best}`}</span>
             </p>
             {streak.tier || streak.steadyHand ? (
               <div className="flex flex-wrap justify-center gap-2">
@@ -173,7 +166,7 @@ export const ResultScreen = ({
               </div>
             ) : null}
             {streak.counted ? null : (
-              <p className="text-xs text-ink/60">
+              <p className="text-xs text-muted">
                 Charted after the 24-hour window, so your streak did not move.
               </p>
             )}
@@ -205,7 +198,7 @@ export const ResultScreen = ({
             Could not post your chart. Try again.
           </p>
         ) : (
-          <p className="text-center text-xs text-ink/60">
+          <p className="text-center text-xs text-muted">
             Post my chart replies to the results thread with your pins and time.
           </p>
         )}

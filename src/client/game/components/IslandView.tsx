@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import type { Settler } from '../../../shared/api';
 import { cellAt, isLand, landmarkAt, sameCell } from '../../../shared/puzzle/grid';
 import { LANDMARK_NAMES, SIZE } from '../../../shared/puzzle/types';
@@ -26,6 +28,26 @@ const SETTLER_OFFSETS = [
   { left: '24%', top: '28%' },
   { left: '76%', top: '72%' },
 ] as const;
+
+/**
+ * A settler's snoovatar, falling back to the tent glyph when there is none or
+ * the image fails to load (expired CDN URL, blocked host). Loaded eagerly: the
+ * reveal is short and lazy images inside the animated board can stay blank.
+ */
+const SettlerAvatar = ({ settler }: { settler: Settler }) => {
+  const [broken, setBroken] = useState(false);
+  if (broken || !settler.snoovatar) {
+    return <Icon name="tent" className="h-full w-full p-0.5" title={settler.isMe ? 'You' : ''} />;
+  }
+  return (
+    <img
+      src={settler.snoovatar}
+      alt={settler.isMe ? 'Your avatar' : ''}
+      className="h-full w-full object-cover object-top"
+      onError={() => setBroken(true)}
+    />
+  );
+};
 
 const cellLabel = (cell: Cell, land: boolean, occupant: LandmarkId | undefined): string => {
   const where = `row ${cell.r + 1} column ${cell.c + 1}`;
@@ -120,16 +142,7 @@ export const IslandView = ({
                     style={style}
                     title={settler.isMe ? 'You' : undefined}
                   >
-                    {settler.snoovatar ? (
-                      <img
-                        src={settler.snoovatar}
-                        alt={settler.isMe ? 'Your avatar' : ''}
-                        className="h-full w-full object-cover object-top"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <Icon name="tent" className="h-full w-full p-0.5" title={settler.isMe ? 'You' : ''} />
-                    )}
+                    <SettlerAvatar settler={settler} />
                   </span>
                 );
               })}

@@ -71,6 +71,24 @@ describe('POST /internal/cron/daily', () => {
     const res = await createApp(deps).request('/internal/cron/daily', { method: 'POST' });
     expect(res.status).toBe(200);
   });
+
+  it('still posts when the scheduler omits the subreddit-name header', async () => {
+    const deps = makeDeps();
+    deps.ctxState.subredditName = undefined;
+    const res = await post(deps, '/internal/cron/daily');
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ status: 'posted', postId: 't3_1', date: '2026-12-01' });
+    expect(deps.reddit.posts[0]?.subredditName).toBe('testsub');
+    expect(deps.reddit.callsTo('getCurrentSubreddit')).toHaveLength(1);
+  });
+
+  it('uses the subreddit-name header without asking Reddit when it is present', async () => {
+    const deps = makeDeps();
+    const res = await post(deps, '/internal/cron/daily');
+    expect(res.status).toBe(200);
+    expect(deps.reddit.posts[0]?.subredditName).toBe('cartographer_test');
+    expect(deps.reddit.callsTo('getCurrentSubreddit')).toHaveLength(0);
+  });
 });
 
 describe('POST /internal/menu/post-today', () => {
@@ -102,12 +120,20 @@ describe('POST /internal/menu/post-today', () => {
     expect(await res.json()).toMatchObject({ showToast: expect.stringContaining('2026-12-09') });
   });
 
-  it('toasts with 400 when posting fails', async () => {
+  it('toasts with 200 when posting fails (menu responses must be a 2xx UiResponse)', async () => {
     const deps = makeDeps();
     deps.reddit.failSubmitPost = true;
     const res = await post(deps, '/internal/menu/post-today', menuBody);
-    expect(res.status).toBe(400);
-    expect(await res.json()).toMatchObject({ showToast: expect.any(String) });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ showToast: expect.any(String) });
+  });
+
+  it('navigates using the resolved subreddit when the header is missing', async () => {
+    const deps = makeDeps();
+    deps.ctxState.subredditName = undefined;
+    const res = await post(deps, '/internal/menu/post-today', menuBody);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ navigateTo: 'https://www.reddit.com/r/testsub/comments/1' });
   });
 });
 
@@ -122,11 +148,19 @@ describe('POST /internal/menu/post-practice', () => {
     expect(deps.reddit.posts[0]?.title).toBe('Cartographer practice · Ember Shoal');
   });
 
-  it('toasts with 400 when the pool is empty', async () => {
+  it('toasts with 200 when the pool is empty', async () => {
     const deps = makeDeps({ practice: { version: 1, masterSeed: 0, entries: [] } });
     const res = await post(deps, '/internal/menu/post-practice', { location: 'subreddit', targetId: 't5_abc' });
-    expect(res.status).toBe(400);
-    expect(await res.json()).toMatchObject({ showToast: expect.any(String) });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ showToast: expect.any(String) });
+  });
+
+  it('navigates using the resolved subreddit when the header is missing', async () => {
+    const deps = makeDeps({ ctx: { subredditName: undefined } });
+    const res = await post(deps, '/internal/menu/post-practice', { location: 'subreddit', targetId: 't5_abc' });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ navigateTo: 'https://www.reddit.com/r/testsub/comments/1' });
+    expect(deps.reddit.posts[0]?.subredditName).toBe('testsub');
   });
 });
 

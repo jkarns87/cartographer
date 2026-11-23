@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { formatElapsed } from '../format';
+import { cardTime } from '../../../shared/card';
 
 type Props = {
   name: string;
@@ -39,8 +39,8 @@ export const Header = ({ name, startedAt, serverNow, corrections, solved }: Prop
       <dl className="flex shrink-0 items-baseline gap-4 text-sm tabular-nums text-ink/80">
         <div className="flex items-baseline gap-1">
           <dt className="sr-only">Time</dt>
-          <dd aria-label={`Time ${formatElapsed(shown)}`} className="font-mono text-base text-ink">
-            {formatElapsed(shown)}
+          <dd aria-label={`Time ${cardTime(shown)}`} className="font-mono text-base text-ink">
+            {cardTime(shown)}
           </dd>
         </div>
         <div className="flex items-baseline gap-1">

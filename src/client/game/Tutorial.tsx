@@ -79,7 +79,7 @@ export const Tutorial = () => {
             <Icon name={current.icon} className="h-8 w-8" title="" />
           </span>
           <div className="min-w-0">
-            <p className="text-xs font-medium tracking-wide text-ink/60 uppercase">
+            <p className="text-xs font-medium tracking-wide text-muted uppercase">
               Step {step + 1} of {STEPS.length}
             </p>
             <h2 id={titleId} className="text-lg font-semibold">

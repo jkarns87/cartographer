@@ -39,6 +39,24 @@ export const F = {
   subscribePromptSeen: 'subscribePromptSeen',
 } satisfies Record<keyof UserProgress, string>;
 
+/**
+ * The solve's authoritative board, written once by `chart` right after it
+ * claims the solve, and never by `savePlacements`.
+ *
+ * Why: `savePlacements` checks `solvedAt` and then writes, which is not atomic.
+ * A `/place` that passes the check just before a chart claims the solve can
+ * land its in-progress `placements`/`history`/`corrections` after the chart.
+ * Instead of trying to make that write atomic, the chart stores its values in
+ * these separate fields and `readProgress` prefers them whenever present, so a
+ * late in-progress write can only change fields that readers ignore once the
+ * solve is final. The plain fields stay the in-progress board.
+ */
+export const FINAL = {
+  placements: 'finalPlacements',
+  history: 'finalHistory',
+  corrections: 'finalCorrections',
+} as const;
+
 export const HISTORY_RE = /^[PL]{0,200}$/;
 export const MAX_CORRECTIONS = 999;
 
@@ -114,19 +132,27 @@ const num = (v: string | undefined): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+/**
+ * Parsed user hash. The `FINAL` fields written by `chart` win over the
+ * in-progress fields, so a solved board reads back exactly as it was charted.
+ */
 export const readProgress = async (deps: Deps, postId: string, uid: string): Promise<UserProgress> => {
   const h = await deps.redis.hGetAll(keys.user(postId, uid));
   return {
     startedAt: num(h[F.startedAt]),
-    placements: parseStoredPlacements(h[F.placements]),
-    history: h[F.history] ?? '',
-    corrections: num(h[F.corrections]) ?? 0,
+    placements: parseStoredPlacements(h[FINAL.placements] ?? h[F.placements]),
+    history: h[FINAL.history] ?? h[F.history] ?? '',
+    corrections: num(h[FINAL.corrections] ?? h[F.corrections]) ?? 0,
     solvedAt: num(h[F.solvedAt]),
     elapsedMs: num(h[F.elapsedMs]),
     commented: h[F.commented] === '1',
     subscribePromptSeen: h[F.subscribePromptSeen] === '1',
   };
 };
+
+/** The stored `startedAt`, or null when the user never opened the game (no GET /api/game). */
+export const readStartedAt = async (deps: Deps, postId: string, uid: string): Promise<number | null> =>
+  num(await deps.redis.hGet(keys.user(postId, uid), F.startedAt));
 
 /**
  * Starts the user's timer on first contact with the post (spec 4.5). Atomic via
@@ -145,7 +171,11 @@ export const ensureStarted = async (deps: Deps, postId: string, uid: string): Pr
   return num(await deps.redis.hGet(key, F.startedAt)) ?? now;
 };
 
-/** Soft save of the in-progress board. Ignored once the user has solved. */
+/**
+ * Soft save of the in-progress board. Ignored once the user has solved. The
+ * check-then-write is not atomic; a write that slips past a concurrent chart is
+ * harmless because readers prefer the chart's `FINAL` fields (see `FINAL`).
+ */
 export const savePlacements = async (
   deps: Deps,
   postId: string,
@@ -170,8 +200,8 @@ export const statusOf = (p: UserProgress): PlayStatus => {
 
 /**
  * Server-measured solve time. Prefers the stored `elapsedMs`; falls back to
- * `solvedAt - startedAt` for the instant between claiming a solve and writing
- * its fields (a concurrent double submit can observe that window).
+ * `solvedAt - startedAt` (the same value) for the window between claiming a
+ * solve and `chart` writing `elapsedMs`, which it does last.
  */
 export const elapsedOf = (p: UserProgress): number => {
   if (p.elapsedMs !== null) return p.elapsedMs;

@@ -1,15 +1,11 @@
 import type { StreakInfo, Tier } from '../../shared/api';
+import { TIER_LABEL } from '../../shared/tiers';
 import type { Deps } from '../deps';
 import { keys } from '../keys';
+import { resolveSubredditName } from './subreddit';
 
 export const TIERS: readonly Tier[] = ['deckhand', 'navigator', 'cartographer', 'master'];
 
-export const TIER_LABEL: Record<Tier, string> = {
-  deckhand: 'Deckhand',
-  navigator: 'Navigator',
-  cartographer: 'Cartographer',
-  master: 'Master Cartographer',
-};
 
 export const TIER_COLOR: Record<Tier, string> = {
   deckhand: '#C8B49A',
@@ -40,7 +36,7 @@ export const ensureFlairTemplates = async (deps: Deps): Promise<Record<Tier, str
   const missing = TIERS.filter((tier) => !stored[tier]);
   if (missing.length === 0) return byTier((tier) => stored[tier] ?? '');
 
-  const { subredditName } = deps.ctx();
+  const subredditName = await resolveSubredditName(deps);
   const existing = await deps.reddit.getUserFlairTemplates(subredditName);
   const ids: Record<string, string> = { ...stored };
   for (const tier of missing) {
@@ -80,7 +76,7 @@ export const applyFlair = async (
   const text = flairTextFor(info);
   if (text === null || info.tier === null) return 'skipped';
 
-  const { subredditName } = deps.ctx();
+  const subredditName = await resolveSubredditName(deps);
   const user = await deps.reddit.getCurrentUser();
   if (!user) return 'skipped';
   const current = (await user.getUserFlairBySubreddit(subredditName))?.flairText ?? '';

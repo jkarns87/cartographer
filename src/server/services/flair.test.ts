@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { StreakInfo } from '../../shared/api';
 import { makeDeps } from '../fakes';
 import { keys } from '../keys';
-import { TIER_COLOR, TIER_LABEL, TIERS, applyFlair, ensureFlairTemplates, flairTextFor } from './flair';
+import { TIER_LABEL } from '../../shared/tiers';
+import { TIER_COLOR, TIERS, applyFlair, ensureFlairTemplates, flairTextFor } from './flair';
 
 const info = (over: Partial<StreakInfo> = {}): StreakInfo => ({
   current: 3,
@@ -71,6 +72,15 @@ describe('ensureFlairTemplates', () => {
       { text: 'Cartographer' },
     ]);
   });
+
+  it('resolves the subreddit from Reddit when the context header is missing', async () => {
+    const deps = makeDeps({ ctx: { subredditName: undefined } });
+    await ensureFlairTemplates(deps);
+    expect(deps.reddit.callsTo('getUserFlairTemplates')[0]?.args).toEqual(['testsub']);
+    expect(deps.reddit.callsTo('createUserFlairTemplate').map((c) => c.args[0])).toMatchObject(
+      TIERS.map(() => ({ subredditName: 'testsub' }))
+    );
+  });
 });
 
 describe('applyFlair', () => {
@@ -135,5 +145,12 @@ describe('applyFlair', () => {
     deps.reddit.currentUsername = undefined;
     expect(await applyFlair(deps, 't2_u1', 'tester', info())).toBe('skipped');
     expect(deps.reddit.setFlairs).toHaveLength(0);
+  });
+
+  it('resolves the subreddit from Reddit when the context header is missing', async () => {
+    const deps = makeDeps({ ctx: { subredditName: undefined } });
+    expect(await applyFlair(deps, 't2_u1', 'tester', info())).toBe('set');
+    expect(deps.reddit.callsTo('getUserFlairBySubreddit')[0]?.args).toEqual(['tester', 'testsub']);
+    expect(deps.reddit.setFlairs[0]?.subredditName).toBe('testsub');
   });
 });

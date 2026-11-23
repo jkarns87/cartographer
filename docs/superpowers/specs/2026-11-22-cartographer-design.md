@@ -29,7 +29,7 @@ Cartographer is a daily deduction game for Reddit, built on Devvit Web for the R
 
 ### 2.2 Landmarks
 
-Pool of 14: `lighthouse, windmill, harbor, fort, temple, well, cave, shipwreck, farm, watchtower, camp, mine, ruins, beacon`. Display names are the capitalized words (Lighthouse, Windmill, Harbor, Fort, Temple, Well, Cave, Shipwreck, Farm, Watchtower, Camp, Mine, Ruins, Beacon). Each puzzle draws 7 to 9. Each occupies exactly one land cell, one landmark per cell. The remaining land stays empty. The legend lists only the day's draw.
+Pool of 14: `lighthouse, windmill, harbor, fort, temple, well, cave, shipwreck, farm, watchtower, camp, mine, ruins, beacon`. Display names are the capitalized words (Lighthouse, Windmill, Harbor, Fort, Temple, Well, Cave, Shipwreck, Farm, Watchtower, Camp, Mine, Ruin, Beacon; the id `ruins` stays plural but the display name is singular so clue sentences read "The Ruin stands..."). Each puzzle draws 7 to 9. Each occupies exactly one land cell, one landmark per cell. The remaining land stays empty. The legend lists only the day's draw.
 
 ### 2.3 Clue grammar
 
@@ -59,7 +59,7 @@ All landmarks placed and every clue `lit` is equivalent to the unique solution.
 
 ### 2.5 Difficulty
 
-Graded by the human solver (section 3.2), not by clue count. Weekly ramp by UTC weekday: Monday to Wednesday 7 landmarks, Thursday to Saturday 8, Sunday 9 labeled "Expedition". Difficulty labels: `easy`, `medium`, `hard`.
+Graded by the human solver (section 3.2), not by clue count. Weekly ramp by UTC weekday: Monday to Wednesday 7 landmarks, Thursday to Saturday 8, Sunday 9 labeled "Expedition": a dated 9-landmark island gets ` · Expedition` appended to its post title, and the cover and the game header meta line show an Expedition tag (practice islands never do). Difficulty labels: `easy`, `medium`, `hard`.
 
 ### 2.6 Names
 
@@ -101,7 +101,7 @@ export type Schedule = { version: 1; masterSeed: number; entries: ScheduleEntry[
 ### 3.2 Two solvers
 
 - Uniqueness solver: backtracking over landmarks, most-constrained-first, forward checking with clue predicates on partial placements (a `contradicted` clue prunes). Stops at the second solution. Node cap 200,000, beyond which the puzzle is rejected.
-- Human solver: a candidate set of land cells per landmark. Applies only propagation until fixpoint: unary filtering (shore, inland); pairwise support elimination for due, somewhere, touches, shares, their negations, and for extreme decomposed into "x is not strictly in dir of a" for every other x; ternary support for between; all-different via naked singles. Never guesses. Output: solved or stuck, plus the number of propagation passes. Difficulty: easy when passes <= 3, medium 4 to 6, hard >= 7 (calibrated after the day-5 spike; keep thresholds in one constant).
+- Human solver: a candidate set of land cells per landmark. Applies only propagation until fixpoint: unary filtering (shore, inland); pairwise support elimination for due, somewhere, touches, shares, their negations, and for extreme decomposed into "x is not strictly in dir of a" for every other x; ternary support for between; all-different via naked singles. Never guesses. Output: solved or stuck, plus the number of propagation rounds (every removal in a round is computed from the candidate sets as they stood when the round began and applied together at its end, so the count is the depth of the deduction chain and independent of clue order). Difficulty: easy when rounds <= 6 (`easyMax`), medium 7 to 10 (`mediumMax`), hard >= 11, all in the one constant `DIFFICULTY_THRESHOLDS` (calibrated 2026-11-23 on the 200 generated islands).
 
 ### 3.3 Pipeline per island
 
@@ -197,7 +197,7 @@ Shared response types live in `src/shared/api.ts`:
 export type Stats = { started: number; charted: number; cleanPct: number; medianMs: number | null };
 export type Tier = 'deckhand' | 'navigator' | 'cartographer' | 'master';
 export type StreakInfo = { current: number; best: number; cleanRun: number; total: number; tier: Tier | null; steadyHand: boolean; counted: boolean };
-export type Result = { elapsedMs: number; corrections: number; history: string; rank: number; total: number; streak: StreakInfo; commented: boolean; subscribedPromptSeen: boolean };
+export type Result = { elapsedMs: number; corrections: number; history: string; rank: number; total: number; streak: StreakInfo; commented: boolean; subscribePromptSeen: boolean };
 export type IslandSummary = { number: number; name: string; difficulty: Difficulty; land: LandMask; landmarkCount: number; date: string | null };
 export type CoverResponse = { postId: string; island: IslandSummary; stats: Stats; me: { loggedIn: boolean; status: 'unsolved' | 'in-progress' | 'solved'; result?: Result } };
 export type GameResponse = { postId: string; puzzle: Puzzle; placements: Placement; history: string; corrections: number; startedAt: number; serverNow: number; status: 'unsolved' | 'in-progress' | 'solved'; result?: Result; tutorialSeen: boolean };
@@ -209,7 +209,7 @@ export type RevealResponse = { settlers: Settler[]; more: number };
 
 ### 5.3 Chart verification
 
-Load the post's puzzle snapshot. Reject (400) unless every landmark of the puzzle is placed on a distinct in-grid land cell. Compare to the solution and recompute every clue predicate; a mismatch returns 409. Claim the solve with `hSetNX(userKey, 'solvedAt', now)`; if it returns 0 the solve already exists and the stored result is returned unchanged. Elapsed = now - startedAt (server values). Then: `hIncrBy stats charted` (and `clean` when corrections is 0), `zAdd times`, `zAdd settlers`, update streak, apply flair, return result. Flair and comment failures are logged and never fail the response. Solve times under 10 s are stored but excluded from the median.
+Load the post's puzzle snapshot. Reject (400) unless every landmark of the puzzle is placed on a distinct in-grid land cell. Compare to the solution and recompute every clue predicate; a mismatch returns 409. Claim the solve with `hSetNX(userKey, 'solvedAt', now)`; if it returns 0 the solve already exists and the stored result is returned unchanged. A user with no `startedAt` (never opened the game with `GET /api/game`) is rejected with 400 before the claim. Elapsed = now - startedAt (server values). Then: `hIncrBy stats charted` (and `clean` when corrections is 0), `zAdd times`, `zAdd settlers`, update streak, apply flair, return result. Flair and comment failures are logged and never fail the response. Solve times under 10 s are stored but excluded from the median.
 
 ### 5.4 Redis keys
 
@@ -217,15 +217,16 @@ Load the post's puzzle snapshot. Reject (400) unless every landmark of the puzzl
 |---|---|---|---|
 | `posted:<YYYY-MM-DD>` | string | Cron idempotency, value is post ID | none |
 | `post:<id>:puzzle` | string | JSON `ScheduleEntry` snapshot incl. solution | none |
-| `post:<id>:user:<uid>` | hash | startedAt, placements (JSON), history, corrections, solvedAt, elapsedMs, commented, subPrompt | 90 days |
+| `post:<id>:user:<uid>` | hash | startedAt, placements (JSON), history, corrections (the in-progress board), solvedAt, elapsedMs, finalPlacements (JSON), finalHistory, finalCorrections (the charted board, written once by chart and preferred by readers), commented, commentClaim, subscribePromptSeen | 90 days |
 | `post:<id>:times` | zset | member uid, score elapsedMs | none |
-| `post:<id>:stats` | hash | started, charted, clean | none |
+| `post:<id>:stats` | hash | started, charted, clean, fast (count of times under 10 s, excluded from the median) | none |
 | `post:<id>:settlers` | zset | member uid, score solvedAt | none |
 | `post:<id>:results` | string | ID of the stickied results comment | none |
 | `user:<uid>:streak` | hash | current, best, lastDate, cleanRun, total, tutorialSeen | none |
 | `user:<uid>:flair` | string | last flair text this app wrote | none |
 | `snoo:<uid>` | string | snoovatar URL, empty string when none | 7 days |
 | `flair:templates` | hash | tier -> flair template ID | none |
+| `practice:next` | string | counter for the next practice island to post | none |
 
 ### 5.5 Streak rule
 
@@ -239,7 +240,7 @@ On install and upgrade, ensure four user flair templates exist (Deckhand, Naviga
 
 ### 5.7 Posting
 
-`reddit.submitCustomPost({ subredditName, title, entry: 'default', postData, textFallback: { text }, flairText: 'Daily Island' })` where title is `Cartographer #<number> · <name> · <Difficulty>` (practice: `Cartographer practice · <name>`), `postData = { number, name, difficulty, land, landmarkCount, date }`, and the fallback text explains the post needs the Reddit app. `flairText` is attempted; if the call fails because of flair, retry once without it. After posting: store snapshot with `postedAt`, set `posted:<date>`, then `reddit.submitComment({ id: post.id, text: RESULTS_HEADER, runAs: 'APP' })` and `comment.distinguish(true)`, storing the comment ID. `RESULTS_HEADER` = "Results thread. Finish the island and tap Post my chart in the game to add yours."
+`reddit.submitCustomPost({ subredditName, title, entry: 'default', postData, textFallback: { text }, flairText: 'Daily Island' })` where title is `Cartographer #<number> · <name> · <Difficulty>`, plus ` · Expedition` for a 9-landmark island (section 2.5) (practice: `Cartographer practice · <name>`), `postData = { number, name, difficulty, land, landmarkCount, date }`, and the fallback text explains the post needs the Reddit app. `flairText` is attempted; if the call fails because of flair, retry once without it. After posting: store snapshot with `postedAt`, set `posted:<date>`, then `reddit.submitComment({ id: post.id, text: RESULTS_HEADER, runAs: 'APP' })` and `comment.distinguish(true)`, storing the comment ID. `RESULTS_HEADER` = "Results thread. Finish the island and tap Post my chart in the game to add yours."
 
 ### 5.8 Post my chart
 
@@ -259,7 +260,7 @@ At chart time, resolve `reddit.getSnoovatarUrl(username)` and cache in `snoo:<ui
 
 ### 5.10 Share and subscribe
 
-`showShareSheet({ text })` with the same card text as the comment plus the post URL. Subscribe calls `reddit.subscribeToCurrentSubreddit()`; the prompt is shown once per user (`subPrompt` field).
+`showShareSheet({ text })` with the same card text as the comment plus the post URL. Subscribe calls `reddit.subscribeToCurrentSubreddit()`; the prompt is shown once per user (`subscribePromptSeen` field).
 
 ### 5.11 Settings and permissions
 

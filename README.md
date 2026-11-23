@@ -86,7 +86,11 @@ master seed and writes two files that ship inside the server bundle:
 - `src/server/puzzles/practice.json`: 20 undated practice islands (number 0) for playtests and the
   moderator's "post a practice island" menu item.
 
-Both files contain solutions, so they live on the server only.
+Both files contain solutions. At runtime they are read only by the server and never sent to the
+client: every response goes through `toPuzzle`, which drops the solution. They are not secret in
+the repository, though: the repo is public and the generator is deterministic, so anyone can read
+or rebuild the schedule. A production deployment after judging can regenerate both files from a
+private master seed (`npm run gen -- --seed <private>`) and keep that seed out of the repo.
 
 **How an island is built** (`tools/gen/build.ts`). A seeded PRNG (mulberry32) drives every choice,
 so the same seed always produces the same schedule.
@@ -152,7 +156,8 @@ already live.
 ## Reddit features
 
 **The daily post.** A scheduled task posts the day's island as a custom post titled like
-`Cartographer #12 · Thistle Reach · Medium` (practice islands: `Cartographer practice · <name>`),
+`Cartographer #12 · Thistle Reach · Medium` (practice islands: `Cartographer practice · <name>`;
+Sunday's 9-landmark islands end in ` · Expedition`, and the cover and game header tag them too),
 with "Daily Island" post flair when the subreddit accepts it. The inline cover paints from the
 post's own data (number, name, difficulty, landmark count and the island's silhouette) without
 waiting on the network, then loads community numbers. No two islands share a silhouette, so the
@@ -221,9 +226,9 @@ in playtest and update this note.
 holds cell math and the geometry tests (shore, inland, due, between). `puzzle/predicates.ts`
 evaluates a clue on a full or partial placement (`evaluateClue` returns pending, lit or
 contradicted) and validates placements. `puzzle/templates.ts` renders each clue as a sentence.
-`puzzle/solver.ts` holds both solvers. `api.ts` holds the request and response types, and
-`card.ts` builds the Post my chart card, used by the server's comment and the client's share sheet
-alike. One implementation of each rule serves the client's live clue states, the server's
+`puzzle/solver.ts` holds both solvers. `api.ts` holds the request and response types, `tiers.ts`
+the streak tier names, and `card.ts` builds the Post my chart card (and its `m:ss` time format),
+used by the server's comment and the client's share sheet alike. One implementation of each rule serves the client's live clue states, the server's
 verification and the generator.
 
 **Generator (`tools/gen`).** Plain TypeScript run with `tsx` on a developer machine. It imports
@@ -231,14 +236,16 @@ the shared module directly, writes the two JSON files, and never runs inside Dev
 
 **Server (`src/server`).** One Hono app on `@devvit/web/server`, built to a single CommonJS file,
 `dist/server/index.cjs`. `createApp(deps)` in `app.ts` takes a `Deps` object (`redis`, `reddit`,
-`settings`, `now`, `ctx`, `schedule`, `practice`) typed as minimal structural interfaces in
+`settings`, `now`, `ctx`, `schedule`, `practice`, and an optional `sleep`) typed as minimal structural interfaces in
 `deps.ts`; `index.ts` wires in the real Devvit clients. Client routes live under `/api`
 (`routes/api.ts`): `GET /api/cover`, `GET /api/game`, `POST /api/place`, `POST /api/chart`,
 `POST /api/comment`, `POST /api/subscribe`, `POST /api/tutorial-seen` and `GET /api/reveal`.
 Reddit-invoked routes live under `/internal` (`routes/internal.ts`): the daily cron, two moderator
 menu actions, and the install, upgrade and post-delete triggers. Logic sits in `services/`
-(posting, snapshot, progress, chart, stats, streaks, flair, comments, snoovatar, schedule). User
-and post identity come only from the Devvit context on the server, never from the client.
+(posting, snapshot, progress, chart, stats, streaks, flair, comments, snoovatar, schedule,
+subreddit). User and post identity come only from the Devvit context on the server, never from the
+client. The subreddit name header is optional (scheduler calls may omit it), so services read it
+through `resolveSubredditName`, which falls back to `reddit.getCurrentSubreddit()`.
 
 **Client (`src/client`).** React 19 and Tailwind 4, with no UI library. `devvit.json` declares two
 entry points. `splash.html` is the inline cover (`default`, height `regular`), kept small so it
@@ -263,7 +270,7 @@ rebuild it.
 | ---------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | `posted:<YYYY-MM-DD>`  | string | Cron idempotency; the value is the day's post ID                                                                                        | none                      |
 | `post:<id>:puzzle`     | string | JSON snapshot of the schedule entry, including the solution, plus `postedAt` and `postId`                                               | none                      |
-| `post:<id>:user:<uid>` | hash   | `startedAt`, `placements` (JSON), `history`, `corrections`, `solvedAt`, `elapsedMs`, `commented`, `commentClaim`, `subscribePromptSeen` | 90 days, refreshed on use |
+| `post:<id>:user:<uid>` | hash   | `startedAt`, in-progress `placements` (JSON), `history`, `corrections`; `solvedAt`, `elapsedMs`, and the charted `finalPlacements`, `finalHistory`, `finalCorrections` (preferred by readers); `commented`, `commentClaim`, `subscribePromptSeen` | 90 days, refreshed on use |
 | `post:<id>:times`      | zset   | Member user ID, score elapsed ms                                                                                                        | none                      |
 | `post:<id>:stats`      | hash   | `started`, `charted`, `clean`, and `fast` (stored times under 10 s, skipped by the median)                                              | none                      |
 | `post:<id>:settlers`   | zset   | Member user ID, score `solvedAt`                                                                                                        | none                      |
@@ -281,8 +288,9 @@ rebuild it.
   land mask, landmark count and date.
 - `POST /api/chart` is the only path that marks a solve. The server rejects a chart (400) unless
   every landmark sits on its own land cell, then compares it to the snapshot's solution and
-  recomputes every clue (409 on a mismatch). `hSetNX` on `solvedAt` makes the solve happen once per
-  player per post; a repeat returns the stored result.
+  recomputes every clue (409 on a mismatch). A chart from a player who never opened the game (no
+  `startedAt`) is rejected (400), so a bare request cannot record a 0 ms time. `hSetNX` on
+  `solvedAt` makes the solve happen once per player per post; a repeat returns the stored result.
 - Solve time is measured by the server. `startedAt` is claimed with `hSetNX` on the first
   `GET /api/game`, and the elapsed time is the server clock at chart time minus that. Corrections
   and the place and lift history are client-reported soft stats, checked for shape (at most 200

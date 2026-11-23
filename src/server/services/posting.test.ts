@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { LandmarkId } from '../../shared/puzzle/types';
 import { makeDeps } from '../fakes';
 import { keys } from '../keys';
 import { FIXTURE_PRACTICE, FIXTURE_SCHEDULE } from '../puzzles/fixture';
@@ -33,6 +34,25 @@ describe('postTitle / postUrl', () => {
   it('formats dated and practice titles', () => {
     expect(postTitle(first)).toBe('Cartographer #1 · Thistle Reach · Easy');
     expect(postTitle(practice)).toBe('Cartographer practice · Ember Shoal');
+  });
+
+  it('labels a dated 9-landmark island as an Expedition (spec 2.5)', () => {
+    const nine: LandmarkId[] = [
+      'lighthouse',
+      'windmill',
+      'harbor',
+      'fort',
+      'temple',
+      'well',
+      'farm',
+      'cave',
+      'mine',
+    ];
+    expect(postTitle({ ...first, landmarks: nine, difficulty: 'hard' })).toBe(
+      'Cartographer #1 · Thistle Reach · Hard · Expedition'
+    );
+    expect(postTitle({ ...practice, landmarks: nine })).toBe('Cartographer practice · Ember Shoal');
+    expect(postTitle({ ...first, landmarks: nine.slice(0, 8) })).toBe('Cartographer #1 · Thistle Reach · Easy');
   });
 
   it('builds the post URL without the thing prefix', () => {
@@ -158,6 +178,13 @@ describe('postToday', () => {
 });
 
 describe('submitIsland / pinResults', () => {
+  it('submitIsland resolves the subreddit from Reddit when the context header is missing', async () => {
+    const deps = makeDeps({ ctx: { subredditName: undefined } });
+    await submitIsland(deps, first);
+    expect(deps.reddit.posts[0]?.subredditName).toBe('testsub');
+    expect(deps.reddit.callsTo('getCurrentSubreddit')).toHaveLength(1);
+  });
+
   it('submitIsland snapshots without touching markers or comments', async () => {
     const deps = makeDeps();
     expect(await submitIsland(deps, first)).toEqual({ postId: 't3_1' });

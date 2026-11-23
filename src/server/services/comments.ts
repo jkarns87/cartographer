@@ -58,7 +58,12 @@ export const postChart = async (deps: Deps, postId: string, uid: string): Promis
     const comment = await deps.reddit.submitComment({ id: resultsId, text, runAs: 'USER' });
     commentId = comment.id;
   } catch (err) {
-    await release();
+    // A failed release must not replace the Reddit error the caller needs to see.
+    try {
+      await release();
+    } catch (releaseErr) {
+      console.error(`postChart: claim release failed for ${uid}`, releaseErr);
+    }
     throw err;
   }
   // The claim stays held from here on, so even a failed flag write cannot lead to a second reply.

@@ -32,7 +32,7 @@ export const LANDMARK_NAMES: Record<LandmarkId, string> = {
   watchtower: 'Watchtower',
   camp: 'Camp',
   mine: 'Mine',
-  ruins: 'Ruins',
+  ruins: 'Ruin',
   beacon: 'Beacon',
 };
 
@@ -52,6 +52,9 @@ export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   medium: 'Medium',
   hard: 'Hard',
 };
+
+/** Spec 2.5: a dated island with this many landmarks (the Sunday draw) is labeled Expedition. */
+export const EXPEDITION_LANDMARKS = 9;
 
 export type Clue =
   | { type: 'shore'; a: LandmarkId; dir: Dir }

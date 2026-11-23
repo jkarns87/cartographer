@@ -4,6 +4,7 @@ import type { Deps } from '../deps';
 import { ensureFlairTemplates } from '../services/flair';
 import { postPractice, postToday, postUrl } from '../services/posting';
 import { deletePostKeys } from '../services/snapshot';
+import { resolveSubredditName } from '../services/subreddit';
 
 type CronResponse = { status: 'posted' | 'already' | 'missing' | 'error'; postId?: string; date: string };
 
@@ -12,7 +13,11 @@ const bodyPostId = (body: unknown): string | undefined => {
   return typeof body.postId === 'string' ? body.postId : undefined;
 };
 
-/** Reddit-invoked endpoints: scheduler, moderator menu, and triggers. All receive and return JSON. */
+/**
+ * Reddit-invoked endpoints: scheduler, moderator menu, and triggers. All receive and return JSON.
+ * Menu endpoints always answer 200 with a `UiResponse` (Devvit's menu protocol expects a 2xx);
+ * failures are reported as a toast. The cron answers 500 on an uncaught posting error.
+ */
 export const createInternalRoutes = (deps: Deps): Hono => {
   const internal = new Hono();
 
@@ -32,7 +37,7 @@ export const createInternalRoutes = (deps: Deps): Hono => {
       switch (result.status) {
         case 'posted':
           return c.json<UiResponse>(
-            { navigateTo: postUrl(deps.ctx().subredditName, result.postId ?? '') },
+            { navigateTo: postUrl(await resolveSubredditName(deps), result.postId ?? '') },
             200
           );
         case 'already':
@@ -42,17 +47,17 @@ export const createInternalRoutes = (deps: Deps): Hono => {
       }
     } catch (err) {
       console.error('menu/post-today failed', err);
-      return c.json<UiResponse>({ showToast: 'Posting failed. Check the app logs.' }, 400);
+      return c.json<UiResponse>({ showToast: 'Posting failed. Check the app logs.' }, 200);
     }
   });
 
   internal.post('/menu/post-practice', async (c) => {
     try {
       const { postId } = await postPractice(deps);
-      return c.json<UiResponse>({ navigateTo: postUrl(deps.ctx().subredditName, postId) }, 200);
+      return c.json<UiResponse>({ navigateTo: postUrl(await resolveSubredditName(deps), postId) }, 200);
     } catch (err) {
       console.error('menu/post-practice failed', err);
-      return c.json<UiResponse>({ showToast: 'Posting a practice island failed. Check the app logs.' }, 400);
+      return c.json<UiResponse>({ showToast: 'Posting a practice island failed. Check the app logs.' }, 200);
     }
   });
 

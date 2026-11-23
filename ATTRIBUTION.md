@@ -26,7 +26,7 @@ glyph is recolored at render time with `fill="currentColor"`. No shapes were edi
 | Watchtower       | `delapouite/watchtower.svg`    | Delapouite | https://game-icons.net/1x1/delapouite/watchtower.html    |
 | Camp             | `delapouite/camping-tent.svg`  | Delapouite | https://game-icons.net/1x1/delapouite/camping-tent.html  |
 | Mine             | `delapouite/mine-wagon.svg`    | Delapouite | https://game-icons.net/1x1/delapouite/mine-wagon.html    |
-| Ruins            | `delapouite/ancient-ruins.svg` | Delapouite | https://game-icons.net/1x1/delapouite/ancient-ruins.html |
+| Ruin             | `delapouite/ancient-ruins.svg` | Delapouite | https://game-icons.net/1x1/delapouite/ancient-ruins.html |
 | Beacon           | `lorc/fire-bowl.svg`           | Lorc       | https://game-icons.net/1x1/lorc/fire-bowl.html           |
 | Settler (`tent`) | `delapouite/tipi.svg`          | Delapouite | https://game-icons.net/1x1/delapouite/tipi.html          |
 

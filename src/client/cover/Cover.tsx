@@ -2,10 +2,10 @@ import { context, requestExpandedMode } from '@devvit/web/client';
 import { useEffect, useState } from 'react';
 
 import type { CoverResponse, IslandPostData, Settler, Stats } from '../../shared/api';
-import { DIFFICULTY_LABEL } from '../../shared/puzzle/types';
+import { cardTime } from '../../shared/card';
+import { DIFFICULTY_LABEL, EXPEDITION_LANDMARKS } from '../../shared/puzzle/types';
 import { getCover, getReveal } from '../game/api';
 import { IslandView } from '../game/components/IslandView';
-import { formatElapsed } from '../game/format';
 import { parsePostData } from './postData';
 
 /**
@@ -20,7 +20,7 @@ const readPostData = (): unknown => context?.postData;
 
 const statsText = (stats: Stats): string => {
   if (stats.charted === 0) return 'Nobody has charted it yet. Be the first.';
-  const median = stats.medianMs !== null ? ` · median ${formatElapsed(stats.medianMs)}` : '';
+  const median = stats.medianMs !== null ? ` · median ${cardTime(stats.medianMs)}` : '';
   return `${stats.charted} charted · ${stats.cleanPct}% clean${median}`;
 };
 
@@ -31,6 +31,10 @@ const ctaLabel = (cover: CoverResponse | null): string => {
 };
 
 const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+/** Spec 2.5: dated 9-landmark islands are labeled Expedition. */
+const isExpedition = (island: IslandPostData): boolean =>
+  island.date !== null && island.landmarkCount === EXPEDITION_LANDMARKS;
 
 export const Cover = () => {
   const [postIsland] = useState<IslandPostData | null>(() => parsePostData(readPostData()));
@@ -85,12 +89,17 @@ export const Cover = () => {
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           {island ? (
             <>
-              <p className="text-xs font-semibold tracking-wider text-ink/60 uppercase">
+              <p className="text-xs font-semibold tracking-wider text-muted uppercase">
                 {island.date === null ? 'Cartographer practice' : `Cartographer #${island.number}`}
               </p>
               <h1 className="text-xl leading-tight font-bold text-balance sm:text-2xl">{island.name}</h1>
               <p className="text-sm text-ink/70">
                 {DIFFICULTY_LABEL[island.difficulty]} · {plural(island.landmarkCount, 'landmark')}
+                {isExpedition(island) ? (
+                  <span className="ml-2 inline-block rounded-full border border-land bg-sand px-2 py-px align-middle text-xs font-semibold text-ink-on-sand">
+                    Expedition
+                  </span>
+                ) : null}
               </p>
             </>
           ) : (
@@ -100,15 +109,15 @@ export const Cover = () => {
           {solved ? (
             <dl className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-sm" aria-label="Your result">
               <div className="flex gap-1">
-                <dt className="text-ink/60">Time</dt>
-                <dd className="font-mono font-semibold tabular-nums">{formatElapsed(solved.elapsedMs)}</dd>
+                <dt className="text-muted">Time</dt>
+                <dd className="font-mono font-semibold tabular-nums">{cardTime(solved.elapsedMs)}</dd>
               </div>
               <div className="flex gap-1">
-                <dt className="text-ink/60">Corrections</dt>
+                <dt className="text-muted">Corrections</dt>
                 <dd className="font-semibold tabular-nums">{solved.corrections}</dd>
               </div>
               <div className="flex gap-1">
-                <dt className="text-ink/60">Rank</dt>
+                <dt className="text-muted">Rank</dt>
                 <dd className="font-semibold tabular-nums">{`#${solved.rank} of ${solved.total}`}</dd>
               </div>
             </dl>

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 
 import type { ApiError } from '../../shared/api';
 import { clueLandmarks } from '../../shared/puzzle/predicates';
-import { DIFFICULTY_LABEL } from '../../shared/puzzle/types';
+import { DIFFICULTY_LABEL, EXPEDITION_LANDMARKS } from '../../shared/puzzle/types';
 import type { LandmarkId } from '../../shared/puzzle/types';
 import { Board } from './components/Board';
 import { ChartButton } from './components/ChartButton';
@@ -20,7 +20,9 @@ const HIGHLIGHT_MS = 1200;
 const CHART_ERROR_TEXT: Record<ApiError['error'], string> = {
   mismatch: 'The survey does not match your chart.',
   invalid: 'Every landmark must sit on its own land cell.',
-  already: 'This island is already charted. Loading your result…',
+  // Not returned by /api/chart (a repeat chart answers 200 with the stored
+  // result); kept because the record must cover every ApiError code.
+  already: 'This island is already charted.',
   login: 'Your session expired. Log in and try again.',
   'not-found': 'This island could not be found.',
   server: 'The survey office did not answer. Try again.',
@@ -96,6 +98,8 @@ export const GamePage = () => {
   const chartVisible = g.canChart && !solved;
   const locked = solved || g.charting;
   const showTutorial = !game.tutorialSeen && !solved;
+  // Dated islands are numbered from 1; spec 2.5 labels their 9-landmark draw Expedition.
+  const expedition = puzzle.number > 0 && puzzle.landmarks.length === EXPEDITION_LANDMARKS;
 
   return (
     <main
@@ -117,9 +121,10 @@ export const GamePage = () => {
             corrections={result?.corrections ?? state.corrections}
             solved={solved}
           />
-          <p className="-mt-2 text-xs text-ink/60">
+          <p className="-mt-2 text-xs text-muted">
             Island {puzzle.number > 0 ? `#${puzzle.number}` : '(practice)'} ·{' '}
             {DIFFICULTY_LABEL[puzzle.difficulty]} · {puzzle.landmarks.length} landmarks
+            {expedition ? ' · Expedition' : ''}
           </p>
           {showResult ? (
             <ResultContainer
@@ -161,7 +166,11 @@ export const GamePage = () => {
               >
                 {CHART_ERROR_TEXT[g.chartError]}{' '}
                 {g.chartError === 'login' ? (
-                  <button type="button" className="underline" onClick={() => showLoginPrompt()}>
+                  <button
+                    type="button"
+                    className="min-h-11 px-2 font-semibold underline underline-offset-2"
+                    onClick={() => showLoginPrompt()}
+                  >
                     Log in
                   </button>
                 ) : null}

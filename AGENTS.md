@@ -1,52 +1,60 @@
-You are writing a Devvit web application that will be executed on Reddit.com.
+# AGENTS.md
 
-## Tech Stack
+Cartographer is a Devvit Web daily island-deduction game for Reddit: React 19 + Tailwind 4 client,
+Hono server on `@devvit/web` 0.15.4, Redis, and an offline puzzle generator. Node 24 (`.nvmrc`).
 
-- **Frontend**: React 19, Tailwind CSS 4, Vite
-- **Backend**: Node.js v22 serverless environment (Devvit), Hono, TRPC
-- **Communication**: tRPC v11 for end-to-end type safety
+## Never publish before 2026-12-17
 
-## Layout & Architecture
+Do not run `devvit publish` (or anything that submits the app for review) before judging ends on
+2026-12-17. `npm run launch` is deliberately blocked. `devvit upload` and `devvit playtest` are fine.
 
-- `/src/server`: **Backend Code**. This runs in a secure, serverless environment.
-  - `trpc.ts`: Defines the API router and procedures.
-  - `index.ts`: Main server entry point (Hono app).
-  - Access `redis`, `reddit`, and `context` here via `@devvit/web/server`.
-- `/src/client`: **Frontend Code**. This is executed inside of an iFrame on reddit.com
-  - To add an entrypoint, create a HTML file and add to the mapping inside of `devvit.json`
-  - Entrypoints:
-    - `game.html`: The main React entry point (Expanded View).
-    - `splash.html`: The initial React entry point (Inline View). This will be shown in the reddit.com feed. Please keep it fast and keep heavy dependencies inside of `game.html`
-- `/src/shared`: **Shared Code**. Code to share between the client and server
+## Where things are
 
-## Frontend
+- Spec: `docs/superpowers/specs/2026-11-22-cartographer-design.md`
+- Plan: `docs/superpowers/plans/2026-11-22-cartographer.md`
+- Review notes and after-playtest items: `docs/review-notes.md`
+- Devvit docs: https://developers.reddit.com/docs/llms.txt
 
-### Rules
+## Layout
 
-- Instead of `window.location` or `window.assign`, use `navigateTo` from `@devvit/web/client`
+- `src/shared/`: code shared by client, server and generator. `puzzle/` (types, grid math, clue
+  predicates, clue templates, both solvers), `api.ts` (request/response types), `card.ts` (the
+  Post my chart card and `cardTime`), `tiers.ts` (tier labels).
+- `src/server/`: Hono app. `index.ts` wires the real Devvit clients into `createApp(deps)`
+  (`app.ts`). Services take a `Deps` object (`deps.ts`); never import `redis`, `reddit` or
+  `context` from `@devvit/web/server` outside `index.ts`. `routes/api.ts` is the client API,
+  `routes/internal.ts` the cron, menu and triggers. `puzzles/*.json` are generated.
+- `src/client/`: two entries, `splash.html` (inline cover, keep it light) and `game.html` (the
+  board, expanded mode). `icons/Sprite.tsx` and `icons/icons.json` are generated.
+- `tools/gen/`: offline generator (`generate.ts`), review printer, verifier. Never runs in Devvit.
+- `tools/icons/`: icon extraction and sprite builder (see its README).
 
-### Limitations
+## Scripts
 
-- `window.alert`: Use `showToast` or `showForm` from `@devvit/web/client`
-- File downloads: Use clipboard API with `showToast` to confirm
-- Geolocation, camera, microphone, and notifications web APIs: No alternatives
-- Inline script tags inside of `html` files: Use a script tag and separate js/ts file
+| Script               | What it does                                             |
+| -------------------- | -------------------------------------------------------- |
+| `npm run test:unit`  | Vitest, node and jsdom projects (`vitest.config.ts`)     |
+| `npm run test:watch` | Vitest in watch mode                                     |
+| `npm run test:types` | `tsc --build` over every tsconfig                        |
+| `npm run lint`       | ESLint over `src` and `tools`                            |
+| `npm run build`      | Vite build of client and server into `dist/`             |
+| `npm run gen`        | Regenerate `src/server/puzzles/*.json` from the seed     |
+| `npm run gen:review` | Print every clue sheet for a human read-through          |
+| `npm run gen:verify` | Re-solve and check both puzzle files; non-zero on errors |
+| `npm run dev`        | `devvit playtest`                                        |
+| `npm run deploy`     | types + lint, then `devvit upload`                       |
+| `npm run login`      | `devvit login`                                           |
 
-## Commands
+The full gate before handing work back: `test:unit`, `lint`, `test:types`, `build`, `gen:verify`.
 
-- `npm run type-check`: Check typescript types
-- `npm run lint`: Check the linter
-- `npm run test -- my-file-name`: Run tests isolated to a file
+## Code rules
 
-## Code Style
-
-- Prefer type aliases over interfaces when writing typescript
-- Prefer named exports over default exports
-- Never cast typescript types
-
-## Global Rules
-
-- You may find code that references blocks or `@devvit/public-api` while building a feature. Do NOT use this code as this project is configured to use Devvit web only.
-- Whenever you add an endpoint for a new menu item action, ensure that you've added the corresponding mapping to `devvit.json` so that it is properly registered
-
-Docs: https://developers.reddit.com/docs/llms.txt.
+- Type aliases, not interfaces. Named exports, not default exports.
+- Never cast with `as` (an `as const` literal is fine). Narrow with type guards instead.
+- `@typescript-eslint/no-floating-promises` is an error: `await` or `void` every promise.
+- Follow the React hooks rules (enforced by `eslint-plugin-react-hooks`).
+- Server tests use the in-memory fakes in `src/server/fakes.ts` via `makeDeps()`; no module mocks.
+- Client API types live in `src/shared/api.ts`. No response may ever carry a puzzle solution.
+- Devvit Web only: ignore any `@devvit/public-api` or blocks examples. Use `navigateTo`,
+  `showToast` and friends from `@devvit/web/client` instead of `window.location` or `alert`.
+- A new menu item or trigger endpoint also needs its mapping in `devvit.json`.

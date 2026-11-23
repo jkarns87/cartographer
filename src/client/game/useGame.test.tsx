@@ -110,9 +110,9 @@ describe('useGame', () => {
     act(() => result.current.dispatch({ type: 'tapCell', cell: LAND_A }));
     expect(result.current.state.placements).toEqual({ lighthouse: LAND_A });
 
-    // The server now holds a different state (for example after an 'already'
-    // response); reloading must replace the local state and discard the
-    // queued save instead of letting the next chart() flush it.
+    // The server now holds a different state (for example after "Try again"
+    // on the fog panel); reloading must replace the local state and discard
+    // the queued save instead of letting the next chart() flush it.
     const fresh = game({ windmill: LAND_B }, 'P');
     setNextGame(fresh);
     act(() => result.current.reload());

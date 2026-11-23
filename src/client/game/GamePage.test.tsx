@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { GameResponse } from '../../shared/api';
@@ -70,6 +70,55 @@ describe('GamePage', () => {
     render(<GamePage />);
     const button = await screen.findByRole('button', { name: 'Log in' });
     fireEvent.click(button);
+    expect(showLoginPrompt).toHaveBeenCalledTimes(1);
+  });
+
+  it('labels a dated 9-landmark island as an Expedition in the header meta line', async () => {
+    const nine: GameResponse = {
+      ...GAME,
+      puzzle: {
+        ...GAME.puzzle,
+        landmarks: ['lighthouse', 'windmill', 'harbor', 'fort', 'temple', 'well', 'farm', 'cave', 'mine'],
+      },
+    };
+    stubGame(nine);
+    render(<GamePage />);
+    expect(await screen.findByText(/9 landmarks · Expedition/)).toBeInTheDocument();
+  });
+
+  it('does not label a 2-landmark or a practice island as an Expedition', async () => {
+    stubGame({ ...GAME, puzzle: { ...GAME.puzzle, number: 0 } });
+    render(<GamePage />);
+    expect(await screen.findByText(/2 landmarks/)).toBeInTheDocument();
+    expect(screen.queryByText(/Expedition/)).not.toBeInTheDocument();
+  });
+
+  it('gives the inline Log in button in a chart error a 44 px touch target', async () => {
+    const ready: GameResponse = {
+      ...GAME,
+      placements: { windmill: { r: 2, c: 2 }, lighthouse: { r: 3, c: 4 } },
+      history: 'PP',
+      status: 'in-progress',
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL): Promise<Response> => {
+        const url = String(input);
+        if (url === '/api/game') return new Response(JSON.stringify(ready), { status: 200 });
+        if (url === '/api/chart') return new Response(JSON.stringify({ error: 'login' }), { status: 401 });
+        return new Response(JSON.stringify({ ok: true }), { status: 200 });
+      })
+    );
+    render(<GamePage />);
+    const chartIt = await screen.findByRole('button', { name: 'Chart it' });
+    await act(async () => {
+      fireEvent.click(chartIt);
+    });
+    const alert = await screen.findByRole('alert');
+    const login = screen.getByRole('button', { name: 'Log in' });
+    expect(alert).toContainElement(login);
+    expect(login).toHaveClass('min-h-11', 'px-2');
+    fireEvent.click(login);
     expect(showLoginPrompt).toHaveBeenCalledTimes(1);
   });
 });

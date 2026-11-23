@@ -154,6 +154,24 @@ describe('Cover', () => {
     expect(document.querySelector('[data-settler="other"]')).toHaveClass('h-5', 'w-5');
   });
 
+  it('tags a dated 9-landmark island as an Expedition', () => {
+    devvit.context.postData = { ...POST_DATA, landmarkCount: 9, difficulty: 'hard' };
+    vi.mocked(api.getCover).mockReturnValue(never());
+    render(<Cover />);
+    expect(screen.getByText('Expedition')).toBeInTheDocument();
+    expect(screen.getByText(/Hard · 9 landmarks/)).toBeInTheDocument();
+  });
+
+  it('does not tag 8-landmark or practice islands', () => {
+    vi.mocked(api.getCover).mockReturnValue(never());
+    const { unmount } = render(<Cover />);
+    expect(screen.queryByText('Expedition')).not.toBeInTheDocument();
+    unmount();
+    devvit.context.postData = { ...POST_DATA, landmarkCount: 9, number: 0, date: null };
+    render(<Cover />);
+    expect(screen.queryByText('Expedition')).not.toBeInTheDocument();
+  });
+
   it('titles practice islands without a number', () => {
     devvit.context.postData = { ...POST_DATA, number: 0, date: null };
     vi.mocked(api.getCover).mockReturnValue(never());
