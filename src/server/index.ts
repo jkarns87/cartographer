@@ -1,20 +1,31 @@
-import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
-import { createServer, getServerPort } from '@devvit/web/server';
-import { api } from './routes/api';
-import { forms } from './routes/forms';
-import { menu } from './routes/menu';
-import { triggers } from './routes/triggers';
+import {
+  context,
+  createServer,
+  getServerPort,
+  reddit,
+  redis,
+  settings,
+} from '@devvit/web/server';
+import { createApp } from './app';
+import { loadSchedules } from './services/schedule';
 
-const app = new Hono();
-const internal = new Hono();
+const { schedule, practice } = loadSchedules();
 
-internal.route('/menu', menu);
-internal.route('/form', forms);
-internal.route('/triggers', triggers);
-
-app.route('/api', api);
-app.route('/internal', internal);
+const app = createApp({
+  redis,
+  reddit,
+  settings,
+  now: () => Date.now(),
+  ctx: () => ({
+    userId: context.userId,
+    username: context.username,
+    postId: context.postId,
+    subredditName: context.subredditName,
+  }),
+  schedule,
+  practice,
+});
 
 serve({
   fetch: app.fetch,
