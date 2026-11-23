@@ -94,10 +94,10 @@ describe('applySolve', () => {
       { ...day2, total: 2 },
     ],
     [
-      'practice island only increments total',
+      'practice island changes nothing, the total included',
       day2,
       event({ islandDate: null }),
-      { ...day2, total: 2 },
+      day2,
     ],
     [
       'corrections reset the clean run',

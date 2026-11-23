@@ -75,8 +75,10 @@ export const displayStreak = (s: StreakState, now: number): StreakState =>
 
 /** Pure streak rule (spec section 5.5). Never mutates `prev`. */
 export const applySolve = (prev: StreakState, e: SolveEvent): StreakState => {
+  // Practice islands do not count: nothing changes, the total included.
+  if (e.islandDate === null) return prev;
   const total = prev.total + 1;
-  if (e.islandDate === null || !isCounted(e)) return { ...prev, total };
+  if (!isCounted(e)) return { ...prev, total };
   // A malformed stored lastDate (NaN day) is treated as no previous date, so a
   // bad value can never freeze the streak; the next write repairs it.
   const prevDay =

@@ -409,7 +409,7 @@ describe('chart', () => {
     });
   });
 
-  it('never touches streak fields other than total on a practice island', async () => {
+  it('leaves the streak hash untouched on a practice island', async () => {
     const deps = makeDeps();
     const before = {
       current: 3,
@@ -431,7 +431,7 @@ describe('chart', () => {
     );
     expect(out.kind).toBe('ok');
     if (out.kind !== 'ok') return;
-    expect(await readStreak(deps, UID)).toEqual({ ...before, total: 11 });
+    expect(await readStreak(deps, UID)).toEqual(before);
     expect(out.result.streak).toMatchObject({
       current: 3,
       best: 5,

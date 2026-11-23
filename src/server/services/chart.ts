@@ -161,7 +161,8 @@ export const chart = async (
 
   const event = solveEvent(snap, now, req.corrections);
   const next = applySolve(await readStreak(deps, uid), event);
-  await writeStreak(deps, uid, next);
+  // Practice islands never touch the streak hash, so there is nothing to write.
+  if (snap.date !== null) await writeStreak(deps, uid, next);
   await deps.redis.hSet(userKey, { [F.elapsedMs]: String(elapsedMs) });
 
   if (username !== '') {
