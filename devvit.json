@@ -1,6 +1,9 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
   "name": "cartographer-daily",
+  "dev": {
+    "subreddit": "cartographer_dev"
+  },
   "post": {
     "dir": "dist/client",
     "entrypoints": {
@@ -22,10 +25,7 @@
     "reddit": {
       "enable": true,
       "scope": "user",
-      "asUser": [
-        "SUBMIT_COMMENT",
-        "SUBSCRIBE_TO_SUBREDDIT"
-      ]
+      "asUser": ["SUBMIT_COMMENT", "SUBSCRIBE_TO_SUBREDDIT"]
     }
   },
   "scheduler": {

@@ -102,7 +102,7 @@ appear on it.
   user under one stickied app comment, a fixed template, no free text, nothing gated on it.
 - Clue states use shape and color, every cell has a screen-reader label, tap targets are at least
   44 px, and dark mode and reduced motion are supported.
-- 755 automated tests cover the puzzle rules, both solvers, the generator, every server service
+- 796 automated tests cover the puzzle rules, both solvers, the generator, every server service
   and route, and the client's reducer and components. TODO(joey): update the count from the README
   if it changes before submitting.
 

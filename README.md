@@ -311,9 +311,13 @@ npm run login   # devvit login, once per machine
 npm run dev     # devvit playtest
 ```
 
-`npm run dev` runs `devvit playtest`. It needs `devvit login` first and a test subreddit you
-moderate. To see a board right away, use the subreddit menu item "Cartographer: post a practice
-island".
+`npm run dev` runs `devvit playtest` against the subreddit named in `dev.subreddit` of
+`devvit.json`, which is `r/cartographer_dev`. Create that subreddit with the account you used for
+`devvit login` (you must moderate it, and it must have fewer than 200 members), or point the field
+at a different name. The `DEVVIT_SUBREDDIT` environment variable overrides the field for one run.
+If the field is removed, the CLI creates a subreddit of its own on the first run and writes the
+name back into `devvit.json`. To see a board right away, use the subreddit menu item "Cartographer:
+post a practice island".
 
 | Command              | What it runs                                                                          |
 | -------------------- | ------------------------------------------------------------------------------------- |
