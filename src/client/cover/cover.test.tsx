@@ -149,6 +149,9 @@ describe('Cover', () => {
     });
     expect(api.getReveal).toHaveBeenCalledTimes(1);
     expect(document.querySelectorAll('[data-settler]')).toHaveLength(2);
+    // The cover drops the animation, so size alone marks yours.
+    expect(document.querySelector('[data-settler="me"]')).toHaveClass('h-7', 'w-7');
+    expect(document.querySelector('[data-settler="other"]')).toHaveClass('h-5', 'w-5');
   });
 
   it('titles practice islands without a number', () => {

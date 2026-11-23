@@ -1,9 +1,8 @@
 import type { Settler } from '../../../shared/api';
-import { cellAt, isLand, sameCell } from '../../../shared/puzzle/grid';
+import { cellAt, isLand, landmarkAt, sameCell } from '../../../shared/puzzle/grid';
 import { LANDMARK_NAMES, SIZE } from '../../../shared/puzzle/types';
 import type { Cell, LandMask, LandmarkId, Placement } from '../../../shared/puzzle/types';
 import { Icon } from '../../icons/Icon';
-import { landmarkAt } from '../reducer';
 
 type Props = {
   land: LandMask;
@@ -17,11 +16,15 @@ type Props = {
 
 const CELLS: Cell[] = Array.from({ length: SIZE * SIZE }, (_, i) => cellAt(i));
 
-/** Up to three settlers per cell, offset so they do not fully overlap. */
+/**
+ * Up to three settlers per cell. The first (yours, when you share the cell) sits
+ * in the centre; the other two go to opposite corners so they still peek out
+ * from behind your larger 28 px avatar.
+ */
 const SETTLER_OFFSETS = [
   { left: '50%', top: '50%' },
-  { left: '28%', top: '34%' },
-  { left: '72%', top: '66%' },
+  { left: '24%', top: '28%' },
+  { left: '76%', top: '72%' },
 ] as const;
 
 const cellLabel = (cell: Cell, land: boolean, occupant: LandmarkId | undefined): string => {
@@ -109,8 +112,10 @@ export const IslandView = ({
                     key={settler.userId}
                     data-settler={settler.isMe ? 'me' : 'other'}
                     className={[
-                      'pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full border bg-paper text-ink',
-                      settler.isMe ? 'z-20 border-ink motion-safe:animate-settle-me' : 'z-10 border-land motion-safe:animate-settle',
+                      'pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full bg-paper text-ink',
+                      settler.isMe
+                        ? 'z-20 h-7 w-7 border-2 border-ink motion-safe:animate-settle-me'
+                        : 'z-10 h-5 w-5 border border-land motion-safe:animate-settle',
                     ].join(' ')}
                     style={style}
                     title={settler.isMe ? 'You' : undefined}

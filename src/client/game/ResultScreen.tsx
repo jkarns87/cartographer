@@ -46,12 +46,13 @@ export type ResultScreenProps = {
   /** Resolves true when the chart is posted (or was already), false on failure. */
   onComment: () => Promise<boolean>;
   onShare: () => void;
-  onSubscribe: () => Promise<void>;
+  /** Resolves true when the subscription went through, false on failure. */
+  onSubscribe: () => Promise<boolean>;
   onResults: () => void;
 };
 
 type CommentState = 'idle' | 'busy' | 'posted' | 'failed';
-type SubscribeState = 'idle' | 'busy' | 'done';
+type SubscribeState = 'idle' | 'busy' | 'done' | 'failed';
 
 const PRIMARY =
   'flex h-12 items-center justify-center rounded-xl bg-lit px-4 text-base font-semibold text-white shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lit disabled:bg-lit/55 disabled:shadow-none';
@@ -92,13 +93,10 @@ export const ResultScreen = ({
   };
 
   const subscribe = async (): Promise<void> => {
-    if (subscribeState !== 'idle') return;
+    if (subscribeState === 'busy' || subscribeState === 'done') return;
     setSubscribeState('busy');
-    try {
-      await onSubscribe();
-    } finally {
-      setSubscribeState('done');
-    }
+    const ok = await onSubscribe().catch(() => false);
+    setSubscribeState(ok ? 'done' : 'failed');
   };
 
   return (
@@ -148,7 +146,7 @@ export const ResultScreen = ({
       {stats ? (
         <p className="text-center text-sm text-ink/80">{statsLine(stats)}</p>
       ) : (
-        <p aria-hidden="true" className="mx-auto h-5 w-56 animate-pulse rounded bg-land/50" />
+        <p aria-hidden="true" className="mx-auto h-5 w-56 rounded bg-land/50 motion-safe:animate-pulse" />
       )}
 
       <div className="flex flex-col items-center gap-1.5 text-center">
@@ -217,16 +215,26 @@ export const ResultScreen = ({
               Subscribed. See you tomorrow.
             </p>
           ) : (
-            <button
-              type="button"
-              className={SECONDARY}
-              disabled={subscribeState === 'busy'}
-              onClick={() => {
-                void subscribe();
-              }}
-            >
-              Join for tomorrow&apos;s island
-            </button>
+            <>
+              <button
+                type="button"
+                className={SECONDARY}
+                disabled={subscribeState === 'busy'}
+                onClick={() => {
+                  void subscribe();
+                }}
+              >
+                Join for tomorrow&apos;s island
+              </button>
+              {subscribeState === 'failed' ? (
+                <p
+                  role="alert"
+                  className="rounded-lg border border-warn/60 bg-warn/10 px-3 py-2 text-center text-sm text-ink"
+                >
+                  Could not subscribe. Try again.
+                </p>
+              ) : null}
+            </>
           )
         ) : null}
         <button
@@ -271,6 +279,11 @@ export const ResultContainer = ({ postId, puzzle, placements, result, stats }: R
     return 'error' in res ? res.error === 'already' : true;
   };
 
+  const onSubscribe = async (): Promise<boolean> => {
+    const res = await postSubscribe();
+    return !('error' in res);
+  };
+
   const onShare = () => {
     const text = chartCardText({
       number: puzzle.number,
@@ -296,7 +309,7 @@ export const ResultContainer = ({ postId, puzzle, placements, result, stats }: R
       revealDone={reveal.done}
       onComment={onComment}
       onShare={onShare}
-      onSubscribe={postSubscribe}
+      onSubscribe={onSubscribe}
       onResults={() => navigateTo(resultsThreadUrl(postId))}
     />
   );

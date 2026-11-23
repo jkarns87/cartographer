@@ -9,7 +9,7 @@ type Step = { title: string; body: string; icon: IconName };
 const STEPS: readonly Step[] = [
   {
     title: 'Pick an icon',
-    body: 'Tap a landmark in the strip under the map to select it.',
+    body: 'Tap a landmark in the legend of icons to select it.',
     icon: 'lighthouse',
   },
   {

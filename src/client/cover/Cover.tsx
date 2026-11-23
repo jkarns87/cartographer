@@ -70,7 +70,7 @@ export const Cover = () => {
           ) : (
             <div
               aria-hidden="true"
-              className={['aspect-square w-full rounded-xl bg-water/70', failed ? '' : 'animate-pulse'].join(' ')}
+              className={['aspect-square w-full rounded-xl bg-water/70', failed ? '' : 'motion-safe:animate-pulse'].join(' ')}
             />
           )}
           {solved ? (

@@ -1,5 +1,5 @@
-import { DIRS, SIZE } from './types';
-import type { Axis, Cell, Dir, LandMask } from './types';
+import { DIRS, LANDMARKS, SIZE } from './types';
+import type { Axis, Cell, Dir, LandMask, LandmarkId, Placement } from './types';
 
 export const inBounds = (cell: Cell): boolean =>
   cell.r >= 0 && cell.r < SIZE && cell.c >= 0 && cell.c < SIZE;
@@ -9,6 +9,15 @@ export const idx = (cell: Cell): number => cell.r * SIZE + cell.c;
 export const cellAt = (i: number): Cell => ({ r: Math.floor(i / SIZE), c: i % SIZE });
 
 export const sameCell = (a: Cell, b: Cell): boolean => a.r === b.r && a.c === b.c;
+
+/** The landmark occupying `cell` in `placements`, if any. */
+export const landmarkAt = (placements: Placement, cell: Cell): LandmarkId | undefined => {
+  for (const id of LANDMARKS) {
+    const at = placements[id];
+    if (at && sameCell(at, cell)) return id;
+  }
+  return undefined;
+};
 
 export const isLand = (land: LandMask, cell: Cell): boolean =>
   inBounds(cell) && land[idx(cell)] === '1';

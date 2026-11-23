@@ -17,7 +17,7 @@ vi.mock('./api', () => ({
   getCover: vi.fn(),
   getReveal: vi.fn(),
   postComment: vi.fn(),
-  postSubscribe: vi.fn(() => Promise.resolve()),
+  postSubscribe: vi.fn(),
 }));
 
 const { navigateTo, showShareSheet } = await import('@devvit/web/client');
@@ -83,7 +83,7 @@ const renderScreen = (overrides: Partial<ResultScreenProps> = {}) => {
     revealDone: true,
     onComment: vi.fn(() => Promise.resolve(true)),
     onShare: vi.fn(),
-    onSubscribe: vi.fn(() => Promise.resolve()),
+    onSubscribe: vi.fn(() => Promise.resolve(true)),
     onResults: vi.fn(),
     ...overrides,
   };
@@ -120,7 +120,7 @@ describe('ResultScreen', () => {
         revealDone={false}
         onComment={() => Promise.resolve(true)}
         onShare={() => {}}
-        onSubscribe={() => Promise.resolve()}
+        onSubscribe={() => Promise.resolve(true)}
         onResults={() => {}}
       />
     );
@@ -132,10 +132,15 @@ describe('ResultScreen', () => {
     expect(screen.queryByText(/charted ·/)).not.toBeInTheDocument();
   });
 
-  it('drops settlers into their cells with yours marked', () => {
+  it('drops settlers into their cells with yours marked and larger (28 px vs 20 px)', () => {
     renderScreen();
     expect(document.querySelectorAll('[data-settler]')).toHaveLength(2);
-    expect(document.querySelector('[data-settler="me"]')).not.toBeNull();
+    const me = document.querySelector('[data-settler="me"]');
+    const other = document.querySelector('[data-settler="other"]');
+    expect(me).toHaveClass('h-7', 'w-7');
+    expect(me).not.toHaveClass('h-5');
+    expect(other).toHaveClass('h-5', 'w-5');
+    expect(other).not.toHaveClass('h-7');
   });
 
   it('disables Post my chart with "Posted" once onComment resolves', async () => {
@@ -184,6 +189,25 @@ describe('ResultScreen', () => {
     expect(props.onSubscribe).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('status')).toHaveTextContent('Subscribed');
     expect(screen.queryByRole('button', { name: "Join for tomorrow's island" })).not.toBeInTheDocument();
+  });
+
+  it('keeps Join and shows an error line when subscribing fails', async () => {
+    const props = renderScreen({ onSubscribe: vi.fn(() => Promise.resolve(false)) });
+    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not subscribe. Try again.');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    const join = screen.getByRole('button', { name: "Join for tomorrow's island" });
+    expect(join).toBeEnabled();
+
+    fireEvent.click(join);
+    expect(props.onSubscribe).toHaveBeenCalledTimes(2);
+  });
+
+  it('treats a rejected onSubscribe as a failure instead of leaking the rejection', async () => {
+    renderScreen({ onSubscribe: vi.fn(() => Promise.reject(new Error('offline'))) });
+    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not subscribe');
+    expect(screen.getByRole('button', { name: "Join for tomorrow's island" })).toBeEnabled();
   });
 
   it('hides Join when the subscribe prompt was already seen', () => {
@@ -262,6 +286,18 @@ describe('ResultContainer', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Results thread' }));
     expect(navigateTo).toHaveBeenCalledWith('https://www.reddit.com/comments/abc123');
     await waitFor(() => expect(api.getReveal).toHaveBeenCalled());
+  });
+
+  it('reports a subscribe ApiError as a failure and success as subscribed', async () => {
+    vi.mocked(api.postSubscribe).mockResolvedValueOnce({ error: 'login' });
+    renderContainer(STATS);
+    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not subscribe');
+
+    vi.mocked(api.postSubscribe).mockResolvedValueOnce({ ok: true });
+    fireEvent.click(screen.getByRole('button', { name: "Join for tomorrow's island" }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Subscribed');
+    expect(api.postSubscribe).toHaveBeenCalledTimes(2);
   });
 
   it('treats an already-posted chart as posted', async () => {

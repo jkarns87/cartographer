@@ -45,10 +45,10 @@ describe('chartCardText', () => {
     );
   });
 
-  it('follows the stated rule literally for an uncounted streak with corrections', () => {
-    expect(card({ corrections: 2, streakCurrent: 0 })).toBe(
-      'Cartographer #12 · Thistle Reach\n📍📍📍↩📍📍📍📍📍  4:12\n0-day streak'
-    );
+  it('omits line 3 for an uncounted streak with corrections, never printing 0-day', () => {
+    const text = card({ corrections: 2, streakCurrent: 0 });
+    expect(text).toBe('Cartographer #12 · Thistle Reach\n📍📍📍↩📍📍📍📍📍  4:12');
+    expect(text).not.toContain('0-day');
   });
 
   it('renders practice islands with the practice title and no third line', () => {

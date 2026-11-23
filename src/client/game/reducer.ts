@@ -1,4 +1,4 @@
-import { isLand, sameCell } from '../../shared/puzzle/grid';
+import { isLand, landmarkAt } from '../../shared/puzzle/grid';
 import { LANDMARKS } from '../../shared/puzzle/types';
 import type { Cell, LandmarkId, Placement, Puzzle } from '../../shared/puzzle/types';
 
@@ -17,14 +17,8 @@ export type GameAction =
 
 type PuzzleShape = Pick<Puzzle, 'land' | 'landmarks'>;
 
-/** The landmark occupying `cell`, if any. */
-export const landmarkAt = (placements: Placement, cell: Cell): LandmarkId | undefined => {
-  for (const id of LANDMARKS) {
-    const at = placements[id];
-    if (at && sameCell(at, cell)) return id;
-  }
-  return undefined;
-};
+/** Lives in shared/puzzle/grid so IslandView (and the cover) need not import the reducer. */
+export { landmarkAt };
 
 /**
  * The next landmark in `landmarks` order that is not placed, starting after

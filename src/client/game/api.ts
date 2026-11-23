@@ -87,9 +87,8 @@ export const postChart = (req: ChartRequest): Promise<ChartResponse | ApiError> 
 export const postComment = (): Promise<{ ok: true; commentId: string } | ApiError> =>
   postJson<{ ok: true; commentId: string }>('/api/comment');
 
-export const postSubscribe = async (): Promise<void> => {
-  await postJson<{ ok: true }>('/api/subscribe');
-};
+export const postSubscribe = (): Promise<{ ok: true } | ApiError> =>
+  postJson<{ ok: true }>('/api/subscribe');
 
 export const postTutorialSeen = async (): Promise<void> => {
   await postJson<{ ok: true }>('/api/tutorial-seen');

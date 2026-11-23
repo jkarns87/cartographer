@@ -39,6 +39,18 @@ const pinLine = (history: string): string => {
   return symbols.slice(0, MAX_CARD_PINS).join('') + ELLIPSIS;
 };
 
+/**
+ * Line 3: omitted for practice; `Clean chart` for no corrections on a streak of
+ * at most one day; otherwise `<n>-day streak`. An uncounted streak (0) with
+ * corrections has nothing to say, so the line is omitted rather than "0-day".
+ */
+const streakLine = (opts: ChartCardOpts): string | null => {
+  if (opts.practice) return null;
+  if (opts.corrections === 0 && opts.streakCurrent <= 1) return 'Clean chart';
+  if (opts.streakCurrent >= 1) return `${opts.streakCurrent}-day streak`;
+  return null;
+};
+
 export const chartCardText = (opts: ChartCardOpts): string => {
   const title = opts.practice
     ? `Cartographer practice · ${opts.name}`
@@ -48,12 +60,7 @@ export const chartCardText = (opts: ChartCardOpts): string => {
   const time = cardTime(opts.elapsedMs);
   const lines = [title, pins ? `${pins}  ${time}` : time];
 
-  if (!opts.practice) {
-    lines.push(
-      opts.corrections === 0 && opts.streakCurrent <= 1
-        ? 'Clean chart'
-        : `${opts.streakCurrent}-day streak`
-    );
-  }
+  const footer = streakLine(opts);
+  if (footer) lines.push(footer);
   return lines.join('\n');
 };
