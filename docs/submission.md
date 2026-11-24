@@ -109,9 +109,11 @@ appear on it.
   inland Harbor made no sense, so Lighthouse, Harbor and Shipwreck always stand on the coast
   (islands from #2 on were regenerated under that rule; #1 already complied); "is inland" promised
   more than the rule checks (the four sides, so a water corner is allowed), so the clue now reads
-  "stands on no shore"; "lies between" now says "in one row or column" in the sentence itself; and
+  "stands on no shore"; "lies between" now says "in one row or column" in the sentence itself;
   the gaps between land cells, which read as canals and ponds, gave way to a drawn shoreline on
-  every water-facing side.
+  every water-facing side; and rank and the clean share were never defined on screen, so the
+  result screen now says that rank is by time, hints included, and that a clean chart has no
+  corrections and no hints.
 - **Keeping the answer off the client.** The board needs live feedback, but the solution never
   leaves the server. The clue predicates need only the clues and the land mask, so the client
   scores your placement itself and the server re-verifies. Settler positions are the solution's

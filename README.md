@@ -74,7 +74,9 @@ no shore" clue. You never need that rule to solve an island; it only keeps the m
 
 **Charting.** When every clue is lit, a Chart it button appears. The server checks your chart
 against the stored solution and records your time. The result screen shows your time, corrections,
-rank, the day's community numbers, your streak and tier, and the settlers.
+rank, the day's community numbers, your streak and tier, and the settlers. Rank is by time alone,
+hints included; corrections do not change it, they decide whether the chart is clean, and the
+screen says so.
 
 **Hints.** Ask for a hint, under the clue sheet, up to three times per island. A hint is worked
 out on your device from the clues alone, with the same propagation solver the generator uses, so
@@ -222,7 +224,8 @@ its settlers.
 
 **Community numbers.** The cover and the result screen show how many people charted the island,
 the share who did it clean (no corrections, no hints), and the median time. Times under 10 seconds are kept
-but left out of the median. The result screen adds your rank by time.
+but left out of the median. The result screen adds your rank by time, which corrections do not
+change, and a line that says so.
 
 **Share and subscribe.** Share opens Reddit's share sheet with the same card text, and Reddit adds
 the post link. "Join for tomorrow's island" subscribes you to the subreddit. After you use it on an

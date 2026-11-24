@@ -41,4 +41,14 @@ export const TERMS: readonly Term[] = [
     term: 'Chart it',
     meaning: 'Sends your placement to be checked once every clue is lit. The clock stops then.',
   },
+  {
+    term: 'Rank',
+    meaning:
+      'Your place by time among everyone who charted this island, hints included. Corrections do not change it.',
+  },
+  {
+    term: 'Clean',
+    meaning:
+      'A chart with no corrections and no hints. The clean share is the portion of charts that were clean.',
+  },
 ];

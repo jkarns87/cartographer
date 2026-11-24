@@ -180,6 +180,10 @@ export const ResultScreen = ({
           <dd className="text-lg font-semibold tabular-nums">{`#${result.rank} of ${result.total}`}</dd>
         </div>
       </dl>
+      <p className="-mt-2 text-center text-xs text-muted">
+        Rank is by time, hints included. Corrections do not change it; a chart with none and no
+        hints is clean.
+      </p>
 
       {result.hints > 0 ? (
         <p className="-mt-2 text-center text-xs text-muted">

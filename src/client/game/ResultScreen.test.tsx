@@ -129,6 +129,11 @@ describe('ResultScreen', () => {
     expect(screen.getByText('4:12')).toBeInTheDocument();
     expect(screen.getByText('#3 of 41')).toBeInTheDocument();
     expect(
+      screen.getByText(
+        'Rank is by time, hints included. Corrections do not change it; a chart with none and no hints is clean.'
+      )
+    ).toBeInTheDocument();
+    expect(
       screen.getByText('41 charted · 37% clean · median 3:18')
     ).toBeInTheDocument();
     expect(screen.getByText('7-day streak')).toBeInTheDocument();
@@ -251,7 +256,7 @@ describe('ResultScreen', () => {
 
   it('says nothing about hints when none were used', () => {
     renderScreen();
-    expect(screen.queryByText(/hint/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/hints? used/)).not.toBeInTheDocument();
   });
 
   it('calls the provided onShare and onResults', () => {

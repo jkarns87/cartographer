@@ -24,6 +24,8 @@ describe('Glossary', () => {
     expect(meaning('Somewhere east of')).toMatch(/whatever the row/);
     expect(meaning('No landmark stands north of')).toMatch(/same row or further south/);
     expect(meaning('Hint')).toMatch(/30 seconds/);
+    expect(meaning('Rank')).toMatch(/Corrections do not change it/);
+    expect(meaning('Clean')).toMatch(/no corrections and no hints/);
   });
 
   it('closes on the button and on Escape', () => {
