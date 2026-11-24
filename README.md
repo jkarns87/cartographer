@@ -39,8 +39,8 @@ cells are water. The edge of the grid counts as sea, so a land cell on the edge 
 - Tap a clue to pulse the landmarks it names, on the map and in the legend.
 - Tap Terms, above the map, for a definition of every phrase the clues use, in the exact sense the
   game checks them.
-- A gold compass rose sits in the water beneath the tiles, in whichever corner of the map has
-  the most sea. North is up.
+- A gold compass rose lettered N, E, S and W sits in the water beneath the tiles, in whichever
+  corner of the map has the most sea. North is up.
 - Every shore is drawn as a dark line along the side of the land cell that faces the water. The
   edge of the map counts as sea, so land on the edge has a shoreline there too.
 
@@ -358,7 +358,7 @@ post a practice island".
 | `npm run deploy`     | Type check, lint, then `devvit upload` (a private upload, not a publish)              |
 | `npm run launch`     | Disabled on purpose. The app is not published before judging ends on 2026-12-17.      |
 
-**Tests.** 853 Vitest tests in 40 files: 354 for the shared puzzle module (table-driven tests per
+**Tests.** 854 Vitest tests in 40 files: 354 for the shared puzzle module (table-driven tests per
 clue type, sentence templates, solver fixtures with known solution and round counts, and a
 randomized cross-check of the two solvers), 318 for the server (every service and route), 114 for
 the client (the reducer, components, the game hook and the cover), 57 for the generator (including

@@ -31,4 +31,13 @@ describe('CompassRose', () => {
     expect(svg?.className.baseVal).toMatch(/bottom-\[3%\] left-\[3%\]/);
     expect(svg?.textContent).toContain('N');
   });
+
+  it('letters all four cardinal points, N first and heaviest', () => {
+    const { container } = render(<CompassRose corner="se" />);
+    const letters = Array.from(container.querySelectorAll('text'));
+    expect(letters.map((t) => t.textContent?.trim())).toEqual(['N', 'E', 'S', 'W']);
+    const weight = (t: Element) =>
+      Number(t.getAttribute('font-weight') ?? t.parentElement?.getAttribute('font-weight'));
+    expect(weight(letters[0]!)).toBeGreaterThan(weight(letters[1]!));
+  });
 });
