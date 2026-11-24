@@ -1,4 +1,4 @@
-import { landCells } from '../../src/shared/puzzle/grid';
+import { idx, isCoast, landCells } from '../../src/shared/puzzle/grid';
 import { clueLandmarks } from '../../src/shared/puzzle/predicates';
 import {
   countSolutions,
@@ -7,8 +7,9 @@ import {
   propagateInPlace,
 } from '../../src/shared/puzzle/solver';
 import type { PropagateResult } from '../../src/shared/puzzle/solver';
-import { LANDMARKS } from '../../src/shared/puzzle/types';
+import { COASTAL_LANDMARKS, LANDMARKS } from '../../src/shared/puzzle/types';
 import type {
+  Cell,
   Clue,
   ClueType,
   LandMask,
@@ -396,6 +397,38 @@ export const fixForHumans = (
 
 type AttemptResult = { entry: ScheduleEntry } | { reject: RejectReason };
 
+const COASTAL = new Set<LandmarkId>(COASTAL_LANDMARKS);
+
+/**
+ * One land cell per landmark, drawn from a shuffle. Coastal landmarks draw
+ * first and only from coast cells, so a harbor is never inland; the rest take
+ * any free cell. Returns null when the island has too few coast cells.
+ */
+export const placeLandmarks = (
+  rng: Rng,
+  land: LandMask,
+  landmarks: LandmarkId[]
+): Placement | null => {
+  const cells = rng.shuffle(landCells(land));
+  const used = new Set<number>();
+  const take = (ok: (cell: Cell) => boolean): Cell | undefined => {
+    const cell = cells.find((c) => !used.has(idx(c)) && ok(c));
+    if (cell) used.add(idx(cell));
+    return cell;
+  };
+  const solution: Placement = {};
+  const order = [
+    ...landmarks.filter((id) => COASTAL.has(id)),
+    ...landmarks.filter((id) => !COASTAL.has(id)),
+  ];
+  for (const id of order) {
+    const cell = COASTAL.has(id) ? take((c) => isCoast(land, c)) : take(() => true);
+    if (!cell) return null;
+    solution[id] = cell;
+  }
+  return solution;
+};
+
 const attempt = (
   seed: number,
   opts: BuildOptions,
@@ -413,12 +446,8 @@ const attempt = (
   const drawn = new Set(rng.shuffle(LANDMARKS).slice(0, opts.landmarkCount));
   // Canonical order so the legend reads the same way every day.
   const landmarks = LANDMARKS.filter((id) => drawn.has(id));
-  const cells = rng.shuffle(landCells(land));
-  const solution: Placement = {};
-  landmarks.forEach((id, k) => {
-    const cell = cells[k];
-    if (cell) solution[id] = cell;
-  });
+  const solution = placeLandmarks(rng, land, landmarks);
+  if (solution === null) return { reject: 'island' };
   const ctx: Ctx = { land, landmarks };
 
   const pool = weightedOrder(

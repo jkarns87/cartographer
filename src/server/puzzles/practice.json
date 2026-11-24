@@ -114,7 +114,7 @@
       "id": "practice-02",
       "number": 0,
       "date": null,
-      "name": "Amber Point",
+      "name": "Heather Isle",
       "difficulty": "easy",
       "seed": 2039156541,
       "land": "001000011100001101011111000111000111",
@@ -129,21 +129,8 @@
       ],
       "clues": [
         {
-          "type": "shares",
-          "a": "camp",
-          "axis": "row",
-          "b": "windmill"
-        },
-        {
-          "type": "shore",
-          "a": "camp",
-          "dir": "N"
-        },
-        {
-          "type": "due",
-          "a": "windmill",
-          "dir": "E",
-          "b": "temple"
+          "type": "inland",
+          "a": "windmill"
         },
         {
           "type": "somewhere",
@@ -152,52 +139,64 @@
           "b": "watchtower"
         },
         {
-          "type": "somewhere",
-          "a": "windmill",
-          "dir": "S",
-          "b": "harbor"
-        },
-        {
-          "type": "inland",
-          "a": "harbor"
-        },
-        {
-          "type": "somewhere",
-          "a": "harbor",
-          "dir": "S",
-          "b": "well"
-        },
-        {
-          "type": "somewhere",
-          "a": "camp",
-          "dir": "W",
-          "b": "watchtower"
-        },
-        {
-          "type": "somewhere",
-          "a": "watchtower",
-          "dir": "S",
-          "b": "camp"
-        },
-        {
-          "type": "shore",
-          "a": "windmill",
-          "dir": "S"
-        },
-        {
           "type": "due",
           "a": "camp",
           "dir": "N",
           "b": "beacon"
+        },
+        {
+          "type": "due",
+          "a": "temple",
+          "dir": "W",
+          "b": "camp"
+        },
+        {
+          "type": "shore",
+          "a": "watchtower",
+          "dir": "E"
+        },
+        {
+          "type": "shore",
+          "a": "camp",
+          "dir": "N"
+        },
+        {
+          "type": "somewhere",
+          "a": "windmill",
+          "dir": "N",
+          "b": "harbor"
+        },
+        {
+          "type": "between",
+          "a": "windmill",
+          "b": "well",
+          "c": "harbor"
+        },
+        {
+          "type": "shares",
+          "a": "harbor",
+          "axis": "row",
+          "b": "camp"
+        },
+        {
+          "type": "somewhere",
+          "a": "temple",
+          "dir": "N",
+          "b": "watchtower"
+        },
+        {
+          "type": "shore",
+          "a": "temple",
+          "dir": "N"
         }
       ],
       "solution": {
         "windmill": {
-          "r": 3,
+          "r": 1,
           "c": 2
         },
         "harbor": {
-          "r": 1,
+          "r": 3,
           "c": 2
         },
         "temple": {
@@ -226,7 +225,7 @@
       "id": "practice-03",
       "number": 0,
       "date": null,
-      "name": "Sedge Bluff",
+      "name": "Copper Sound",
       "difficulty": "medium",
       "seed": 1691164279,
       "land": "000100111110011000111110111110100010",
@@ -242,33 +241,15 @@
       ],
       "clues": [
         {
-          "type": "somewhere",
-          "a": "camp",
-          "dir": "S",
-          "b": "temple"
-        },
-        {
           "type": "due",
-          "a": "cave",
-          "dir": "N",
+          "a": "temple",
+          "dir": "E",
           "b": "farm"
         },
         {
-          "type": "shore",
+          "type": "extreme",
           "a": "cave",
-          "dir": "N"
-        },
-        {
-          "type": "between",
-          "a": "temple",
-          "b": "shipwreck",
-          "c": "well"
-        },
-        {
-          "type": "due",
-          "a": "shipwreck",
-          "dir": "S",
-          "b": "temple"
+          "dir": "S"
         },
         {
           "type": "somewhere",
@@ -277,49 +258,71 @@
           "b": "camp"
         },
         {
-          "type": "somewhere",
+          "type": "touches",
+          "a": "shipwreck",
+          "b": "farm"
+        },
+        {
+          "type": "shore",
+          "a": "well",
+          "dir": "N"
+        },
+        {
+          "type": "due",
           "a": "lighthouse",
           "dir": "W",
           "b": "ruins"
         },
         {
-          "type": "due",
+          "type": "somewhere",
           "a": "well",
-          "dir": "W",
-          "b": "farm"
+          "dir": "E",
+          "b": "lighthouse"
         },
         {
           "type": "somewhere",
-          "a": "well",
+          "a": "temple",
+          "dir": "E",
+          "b": "well"
+        },
+        {
+          "type": "somewhere",
+          "a": "ruins",
           "dir": "N",
+          "b": "camp"
+        },
+        {
+          "type": "somewhere",
+          "a": "temple",
+          "dir": "W",
           "b": "ruins"
         },
         {
           "type": "between",
-          "a": "farm",
-          "b": "well",
-          "c": "lighthouse"
+          "a": "lighthouse",
+          "b": "shipwreck",
+          "c": "cave"
         }
       ],
       "solution": {
         "lighthouse": {
-          "r": 3,
-          "c": 2
-        },
-        "temple": {
           "r": 4,
           "c": 0
         },
-        "well": {
+        "temple": {
           "r": 3,
-          "c": 0
+          "c": 2
         },
-        "cave": {
+        "well": {
           "r": 1,
           "c": 1
         },
-        "shipwreck": {
+        "cave": {
           "r": 5,
+          "c": 0
+        },
+        "shipwreck": {
+          "r": 3,
           "c": 0
         },
         "farm": {
@@ -340,116 +343,113 @@
       "id": "practice-04",
       "number": 0,
       "date": null,
-      "name": "Amber Tor",
-      "difficulty": "easy",
+      "name": "Bramble Atoll",
+      "difficulty": "medium",
       "seed": 33478325,
-      "land": "000100101100111000111100111100111100",
+      "land": "100000110100110110111110001110001100",
       "landmarks": [
-        "windmill",
-        "fort",
-        "well",
+        "lighthouse",
+        "harbor",
+        "temple",
+        "cave",
         "shipwreck",
         "watchtower",
-        "camp",
-        "ruins",
-        "beacon"
+        "mine",
+        "ruins"
       ],
       "clues": [
         {
-          "type": "due",
-          "a": "watchtower",
-          "dir": "E",
-          "b": "beacon"
-        },
-        {
-          "type": "between",
-          "a": "well",
-          "b": "beacon",
-          "c": "windmill"
-        },
-        {
-          "type": "inland",
-          "a": "camp"
-        },
-        {
           "type": "somewhere",
-          "a": "shipwreck",
-          "dir": "E",
-          "b": "fort"
-        },
-        {
-          "type": "due",
-          "a": "camp",
-          "dir": "W",
-          "b": "fort"
-        },
-        {
-          "type": "somewhere",
-          "a": "camp",
+          "a": "lighthouse",
           "dir": "N",
-          "b": "well"
-        },
-        {
-          "type": "shore",
-          "a": "ruins",
-          "dir": "N"
-        },
-        {
-          "type": "extreme",
-          "a": "watchtower",
-          "dir": "E"
-        },
-        {
-          "type": "shares",
-          "a": "ruins",
-          "axis": "column",
-          "b": "fort"
-        },
-        {
-          "type": "shares",
-          "a": "windmill",
-          "axis": "row",
           "b": "ruins"
         },
         {
           "type": "somewhere",
-          "a": "camp",
-          "dir": "N",
+          "a": "harbor",
+          "dir": "E",
           "b": "shipwreck"
+        },
+        {
+          "type": "due",
+          "a": "ruins",
+          "dir": "E",
+          "b": "cave"
+        },
+        {
+          "type": "somewhere",
+          "a": "watchtower",
+          "dir": "S",
+          "b": "mine"
+        },
+        {
+          "type": "due",
+          "a": "mine",
+          "dir": "E",
+          "b": "harbor"
+        },
+        {
+          "type": "somewhere",
+          "a": "temple",
+          "dir": "S",
+          "b": "harbor"
+        },
+        {
+          "type": "due",
+          "a": "shipwreck",
+          "dir": "S",
+          "b": "watchtower"
+        },
+        {
+          "type": "somewhere",
+          "a": "shipwreck",
+          "dir": "N",
+          "b": "lighthouse"
+        },
+        {
+          "type": "somewhere",
+          "a": "lighthouse",
+          "dir": "E",
+          "b": "mine"
+        },
+        {
+          "type": "touches",
+          "a": "temple",
+          "b": "watchtower"
         }
       ],
       "solution": {
-        "windmill": {
+        "lighthouse": {
+          "r": 4,
+          "c": 4
+        },
+        "harbor": {
           "r": 1,
-          "c": 0
-        },
-        "fort": {
-          "r": 3,
-          "c": 2
-        },
-        "well": {
-          "r": 4,
-          "c": 0
-        },
-        "shipwreck": {
-          "r": 4,
-          "c": 3
-        },
-        "watchtower": {
-          "r": 5,
-          "c": 3
-        },
-        "camp": {
-          "r": 3,
           "c": 1
         },
-        "ruins": {
-          "r": 1,
+        "temple": {
+          "r": 2,
+          "c": 1
+        },
+        "cave": {
+          "r": 5,
           "c": 2
         },
-        "beacon": {
-          "r": 5,
+        "shipwreck": {
+          "r": 3,
           "c": 0
+        },
+        "watchtower": {
+          "r": 2,
+          "c": 0
+        },
+        "mine": {
+          "r": 1,
+          "c": 3
+        },
+        "ruins": {
+          "r": 5,
+          "c": 3
         }
       }
     },
@@ -457,122 +457,118 @@
       "id": "practice-05",
       "number": 0,
       "date": null,
-      "name": "Ember Skerry",
-      "difficulty": "easy",
+      "name": "Briar Sound",
+      "difficulty": "hard",
       "seed": 3827772656,
-      "land": "000000000111011110011111011111111011",
+      "land": "011111001111011111000110001100000000",
       "landmarks": [
-        "windmill",
-        "fort",
+        "harbor",
         "temple",
-        "well",
         "shipwreck",
         "farm",
+        "watchtower",
+        "camp",
         "mine",
         "ruins",
         "beacon"
       ],
       "clues": [
         {
-          "type": "between",
-          "a": "shipwreck",
-          "b": "temple",
-          "c": "fort"
-        },
-        {
-          "type": "shares",
-          "a": "beacon",
-          "axis": "column",
-          "b": "windmill"
-        },
-        {
           "type": "shore",
-          "a": "shipwreck",
+          "a": "camp",
           "dir": "N"
         },
         {
-          "type": "touches",
-          "a": "temple",
-          "b": "windmill"
-        },
-        {
-          "type": "somewhere",
-          "a": "farm",
-          "dir": "N",
-          "b": "beacon"
-        },
-        {
-          "type": "touches",
-          "a": "well",
-          "b": "shipwreck"
-        },
-        {
           "type": "due",
-          "a": "shipwreck",
-          "dir": "N",
+          "a": "watchtower",
+          "dir": "S",
           "b": "farm"
         },
         {
           "type": "due",
           "a": "ruins",
-          "dir": "W",
+          "dir": "S",
           "b": "temple"
         },
         {
-          "type": "due",
-          "a": "ruins",
-          "dir": "S",
-          "b": "mine"
-        },
-        {
           "type": "somewhere",
-          "a": "mine",
-          "dir": "N",
-          "b": "windmill"
+          "a": "temple",
+          "dir": "E",
+          "b": "camp"
         },
         {
           "type": "somewhere",
           "a": "shipwreck",
+          "dir": "N",
+          "b": "mine"
+        },
+        {
+          "type": "due",
+          "a": "beacon",
           "dir": "E",
-          "b": "fort"
+          "b": "harbor"
+        },
+        {
+          "type": "between",
+          "a": "watchtower",
+          "b": "shipwreck",
+          "c": "ruins"
+        },
+        {
+          "type": "somewhere",
+          "a": "beacon",
+          "dir": "E",
+          "b": "mine"
+        },
+        {
+          "type": "due",
+          "a": "temple",
+          "dir": "W",
+          "b": "farm"
+        },
+        {
+          "type": "somewhere",
+          "a": "ruins",
+          "dir": "E",
+          "b": "beacon"
         }
       ],
       "solution": {
-        "windmill": {
-          "r": 3,
-          "c": 4
-        },
-        "fort": {
-          "r": 2,
+        "harbor": {
+          "r": 0,
           "c": 1
         },
         "temple": {
-          "r": 2,
-          "c": 4
-        },
-        "well": {
-          "r": 3,
-          "c": 2
+          "r": 0,
+          "c": 3
         },
         "shipwreck": {
-          "r": 2,
-          "c": 2
+          "r": 1,
+          "c": 5
         },
         "farm": {
+          "r": 0,
+          "c": 4
+        },
+        "watchtower": {
+          "r": 1,
+          "c": 4
+        },
+        "camp": {
           "r": 4,
           "c": 2
         },
         "mine": {
+          "r": 2,
+          "c": 1
+        },
+        "ruins": {
           "r": 1,
           "c": 3
         },
-        "ruins": {
-          "r": 2,
-          "c": 3
-        },
         "beacon": {
-          "r": 5,
-          "c": 4
+          "r": 0,
+          "c": 2
         }
       }
     },
@@ -580,7 +576,7 @@
       "id": "practice-06",
       "number": 0,
       "date": null,
-      "name": "Gannet Barrow",
+      "name": "Gull Sound",
       "difficulty": "easy",
       "seed": 3921206355,
       "land": "111110110000111000111110101010000000",
@@ -596,15 +592,49 @@
       "clues": [
         {
           "type": "somewhere",
+          "a": "farm",
+          "dir": "W",
+          "b": "beacon"
+        },
+        {
+          "type": "somewhere",
+          "a": "farm",
+          "dir": "S",
+          "b": "windmill"
+        },
+        {
+          "type": "due",
           "a": "camp",
-          "dir": "N",
+          "dir": "E",
+          "b": "beacon"
+        },
+        {
+          "type": "extreme",
+          "a": "temple",
+          "dir": "S"
+        },
+        {
+          "type": "shore",
+          "a": "windmill",
+          "dir": "N"
+        },
+        {
+          "type": "somewhere",
+          "a": "harbor",
+          "dir": "E",
           "b": "farm"
         },
         {
           "type": "due",
           "a": "windmill",
-          "dir": "E",
+          "dir": "N",
           "b": "temple"
+        },
+        {
+          "type": "due",
+          "a": "mine",
+          "dir": "S",
+          "b": "beacon"
         },
         {
           "type": "shore",
@@ -612,61 +642,26 @@
           "dir": "N"
         },
         {
-          "type": "due",
+          "type": "somewhere",
           "a": "harbor",
-          "dir": "N",
-          "b": "temple"
-        },
-        {
-          "type": "shares",
-          "a": "camp",
-          "axis": "row",
-          "b": "harbor"
+          "dir": "S",
+          "b": "mine"
         },
         {
           "type": "somewhere",
-          "a": "mine",
-          "dir": "E",
+          "a": "windmill",
+          "dir": "W",
           "b": "farm"
-        },
-        {
-          "type": "shore",
-          "a": "temple",
-          "dir": "E"
-        },
-        {
-          "type": "due",
-          "a": "camp",
-          "dir": "E",
-          "b": "beacon"
-        },
-        {
-          "type": "shares",
-          "a": "camp",
-          "axis": "column",
-          "b": "windmill"
-        },
-        {
-          "type": "shares",
-          "a": "mine",
-          "axis": "column",
-          "b": "beacon"
-        },
-        {
-          "type": "touches",
-          "a": "beacon",
-          "b": "harbor",
-          "not": true
         }
       ],
       "solution": {
         "windmill": {
-          "r": 4,
-          "c": 4
-        },
-        "harbor": {
           "r": 0,
           "c": 0
+        },
+        "harbor": {
+          "r": 4,
+          "c": 4
         },
         "temple": {
           "r": 4,
@@ -694,8 +689,8 @@
       "id": "practice-07",
       "number": 0,
       "date": null,
-      "name": "Kestrel Reef",
-      "difficulty": "hard",
+      "name": "Heron Skerry",
+      "difficulty": "easy",
       "seed": 56023795,
       "land": "011110001110011111011110011110000000",
       "landmarks": [
@@ -709,26 +704,15 @@
       ],
       "clues": [
         {
-          "type": "extreme",
-          "a": "harbor",
-          "dir": "E"
+          "type": "due",
+          "a": "watchtower",
+          "dir": "S",
+          "b": "shipwreck"
         },
         {
           "type": "touches",
           "a": "lighthouse",
-          "b": "shipwreck"
-        },
-        {
-          "type": "between",
-          "a": "shipwreck",
-          "b": "farm",
-          "c": "watchtower"
-        },
-        {
-          "type": "touches",
-          "a": "farm",
-          "b": "cave",
-          "not": true
+          "b": "farm"
         },
         {
           "type": "due",
@@ -737,51 +721,53 @@
           "b": "beacon"
         },
         {
-          "type": "somewhere",
-          "a": "farm",
-          "dir": "N",
-          "b": "shipwreck"
-        },
-        {
-          "type": "shore",
-          "a": "harbor",
-          "dir": "E"
-        },
-        {
-          "type": "touches",
-          "a": "shipwreck",
+          "type": "shares",
+          "a": "cave",
+          "axis": "column",
           "b": "harbor"
         },
         {
-          "type": "extreme",
-          "a": "lighthouse",
-          "dir": "W"
+          "type": "touches",
+          "a": "farm",
+          "b": "cave"
         },
         {
           "type": "shore",
-          "a": "cave",
-          "dir": "N"
+          "a": "lighthouse",
+          "dir": "E"
+        },
+        {
+          "type": "between",
+          "a": "farm",
+          "b": "shipwreck",
+          "c": "watchtower"
+        },
+        {
+          "type": "somewhere",
+          "a": "shipwreck",
+          "dir": "S",
+          "b": "harbor"
         }
       ],
       "solution": {
         "lighthouse": {
           "r": 2,
-          "c": 3
-        },
-        "harbor": {
-          "r": 2,
           "c": 5
         },
-        "cave": {
+        "harbor": {
           "r": 0,
           "c": 3
         },
-        "shipwreck": {
+        "cave": {
           "r": 2,
+          "c": 3
+        },
+        "shipwreck": {
+          "r": 1,
           "c": 4
         },
         "farm": {
-          "r": 1,
+          "r": 2,
           "c": 4
         },
         "watchtower": {
@@ -798,8 +784,8 @@
       "id": "practice-08",
       "number": 0,
       "date": null,
-      "name": "Cinder Bank",
-      "difficulty": "hard",
+      "name": "Willow Bank",
+      "difficulty": "medium",
       "seed": 1026583383,
       "land": "010000111000111100111100001110111000",
       "landmarks": [
@@ -814,94 +800,94 @@
       ],
       "clues": [
         {
-          "type": "shore",
-          "a": "windmill",
-          "dir": "E"
-        },
-        {
-          "type": "touches",
-          "a": "cave",
-          "b": "windmill"
-        },
-        {
           "type": "due",
-          "a": "shipwreck",
-          "dir": "S",
-          "b": "cave"
-        },
-        {
-          "type": "shares",
-          "a": "mine",
-          "axis": "column",
-          "b": "farm"
-        },
-        {
-          "type": "somewhere",
-          "a": "fort",
-          "dir": "E",
-          "b": "shipwreck"
-        },
-        {
-          "type": "shares",
-          "a": "cave",
-          "axis": "column",
-          "b": "windmill"
-        },
-        {
-          "type": "due",
-          "a": "cave",
-          "dir": "E",
-          "b": "farm"
-        },
-        {
-          "type": "somewhere",
-          "a": "harbor",
-          "dir": "N",
-          "b": "shipwreck"
-        },
-        {
-          "type": "somewhere",
-          "a": "mine",
+          "a": "farm",
           "dir": "W",
           "b": "temple"
         },
         {
+          "type": "somewhere",
+          "a": "farm",
+          "dir": "S",
+          "b": "harbor"
+        },
+        {
+          "type": "touches",
+          "a": "harbor",
+          "b": "temple"
+        },
+        {
+          "type": "somewhere",
+          "a": "mine",
+          "dir": "S",
+          "b": "windmill"
+        },
+        {
+          "type": "somewhere",
+          "a": "windmill",
+          "dir": "E",
+          "b": "cave"
+        },
+        {
+          "type": "shore",
+          "a": "harbor",
+          "dir": "E"
+        },
+        {
           "type": "due",
-          "a": "fort",
-          "dir": "W",
+          "a": "cave",
+          "dir": "S",
           "b": "harbor"
         },
         {
           "type": "between",
-          "a": "temple",
-          "b": "shipwreck",
+          "a": "fort",
+          "b": "cave",
           "c": "mine"
+        },
+        {
+          "type": "shares",
+          "a": "mine",
+          "axis": "column",
+          "b": "farm"
+        },
+        {
+          "type": "somewhere",
+          "a": "mine",
+          "dir": "W",
+          "b": "fort"
+        },
+        {
+          "type": "due",
+          "a": "shipwreck",
+          "dir": "E",
+          "b": "windmill"
         }
       ],
       "solution": {
         "windmill": {
-          "r": 1,
-          "c": 2
-        },
-        "harbor": {
-          "r": 4,
-          "c": 4
-        },
-        "fort": {
           "r": 4,
           "c": 3
         },
-        "temple": {
+        "harbor": {
+          "r": 1,
+          "c": 2
+        },
+        "fort": {
           "r": 5,
           "c": 1
         },
-        "cave": {
+        "temple": {
           "r": 2,
           "c": 2
         },
-        "shipwreck": {
+        "cave": {
           "r": 5,
           "c": 2
+        },
+        "shipwreck": {
+          "r": 4,
+          "c": 4
         },
         "farm": {
           "r": 2,
@@ -917,8 +903,8 @@
       "id": "practice-09",
       "number": 0,
       "date": null,
-      "name": "Kelp Sound",
-      "difficulty": "medium",
+      "name": "Fennel Bight",
+      "difficulty": "hard",
       "seed": 2571155265,
       "land": "001000011100001110011111000111001111",
       "landmarks": [
@@ -933,43 +919,39 @@
       ],
       "clues": [
         {
-          "type": "somewhere",
-          "a": "shipwreck",
-          "dir": "W",
-          "b": "temple"
+          "type": "due",
+          "a": "windmill",
+          "dir": "S",
+          "b": "harbor"
         },
         {
-          "type": "shares",
-          "a": "camp",
-          "axis": "row",
-          "b": "temple"
+          "type": "due",
+          "a": "farm",
+          "dir": "N",
+          "b": "beacon"
         },
         {
           "type": "somewhere",
           "a": "shipwreck",
           "dir": "E",
+          "b": "temple"
+        },
+        {
+          "type": "due",
+          "a": "temple",
+          "dir": "N",
           "b": "camp"
         },
         {
-          "type": "shore",
-          "a": "shipwreck",
-          "dir": "S"
+          "type": "somewhere",
+          "a": "harbor",
+          "dir": "E",
+          "b": "shipwreck"
         },
         {
           "type": "touches",
           "a": "camp",
-          "b": "harbor"
-        },
-        {
-          "type": "shore",
-          "a": "farm",
-          "dir": "S"
-        },
-        {
-          "type": "due",
-          "a": "harbor",
-          "dir": "N",
-          "b": "camp"
+          "b": "temple"
         },
         {
           "type": "between",
@@ -979,21 +961,24 @@
         },
         {
           "type": "due",
+          "a": "harbor",
+          "dir": "E",
+          "b": "camp"
+        },
+        {
+          "type": "shore",
           "a": "farm",
-          "dir": "N",
-          "b": "beacon"
+          "dir": "S"
         },
         {
-          "type": "due",
-          "a": "temple",
-          "dir": "N",
-          "b": "windmill"
-        },
-        {
-          "type": "somewhere",
+          "type": "shore",
           "a": "shipwreck",
-          "dir": "S",
-          "b": "windmill"
+          "dir": "S"
+        },
+        {
+          "type": "touches",
+          "a": "windmill",
+          "b": "harbor"
         }
       ],
       "solution": {
@@ -1002,12 +987,12 @@
           "c": 4
         },
         "harbor": {
-          "r": 1,
-          "c": 2
-        },
-        "temple": {
           "r": 2,
           "c": 4
+        },
+        "temple": {
+          "r": 1,
+          "c": 2
         },
         "shipwreck": {
           "r": 5,
@@ -1035,123 +1020,121 @@
       "id": "practice-10",
       "number": 0,
       "date": null,
-      "name": "Gannet Rest",
-      "difficulty": "medium",
+      "name": "Briar Skerry",
+      "difficulty": "hard",
       "seed": 1186065130,
-      "land": "000100111100111000011000011111111100",
+      "land": "011000011000011100000111011110111110",
       "landmarks": [
-        "lighthouse",
         "windmill",
         "fort",
         "temple",
-        "cave",
+        "well",
         "shipwreck",
-        "watchtower",
         "camp",
-        "ruins"
+        "mine",
+        "ruins",
+        "beacon"
       ],
       "clues": [
-        {
-          "type": "somewhere",
-          "a": "ruins",
-          "dir": "N",
-          "b": "watchtower"
-        },
-        {
-          "type": "due",
-          "a": "ruins",
-          "dir": "S",
-          "b": "windmill"
-        },
-        {
-          "type": "somewhere",
-          "a": "ruins",
-          "dir": "E",
-          "b": "temple"
-        },
-        {
-          "type": "shares",
-          "a": "fort",
-          "axis": "row",
-          "b": "windmill"
-        },
-        {
-          "type": "somewhere",
-          "a": "fort",
-          "dir": "E",
-          "b": "lighthouse"
-        },
         {
           "type": "due",
           "a": "temple",
           "dir": "W",
-          "b": "camp"
-        },
-        {
-          "type": "somewhere",
-          "a": "windmill",
-          "dir": "S",
-          "b": "lighthouse"
-        },
-        {
-          "type": "due",
-          "a": "windmill",
-          "dir": "N",
           "b": "shipwreck"
         },
         {
-          "type": "touches",
-          "a": "watchtower",
-          "b": "camp"
+          "type": "shares",
+          "a": "ruins",
+          "axis": "column",
+          "b": "fort"
         },
         {
           "type": "due",
-          "a": "cave",
-          "dir": "S",
-          "b": "temple"
+          "a": "well",
+          "dir": "W",
+          "b": "mine"
+        },
+        {
+          "type": "due",
+          "a": "camp",
+          "dir": "E",
+          "b": "mine"
         },
         {
           "type": "somewhere",
-          "a": "shipwreck",
+          "a": "well",
           "dir": "N",
+          "b": "ruins"
+        },
+        {
+          "type": "shore",
+          "a": "beacon",
+          "dir": "S"
+        },
+        {
+          "type": "somewhere",
+          "a": "temple",
+          "dir": "N",
+          "b": "beacon"
+        },
+        {
+          "type": "touches",
+          "a": "well",
+          "b": "windmill"
+        },
+        {
+          "type": "somewhere",
+          "a": "ruins",
+          "dir": "E",
           "b": "camp"
+        },
+        {
+          "type": "touches",
+          "a": "shipwreck",
+          "b": "beacon"
+        },
+        {
+          "type": "somewhere",
+          "a": "camp",
+          "dir": "S",
+          "b": "fort"
         }
       ],
       "solution": {
-        "lighthouse": {
-          "r": 1,
-          "c": 0
-        },
         "windmill": {
-          "r": 2,
-          "c": 2
-        },
-        "fort": {
-          "r": 2,
+          "r": 5,
           "c": 1
         },
+        "fort": {
+          "r": 3,
+          "c": 4
+        },
         "temple": {
+          "r": 1,
+          "c": 1
+        },
+        "well": {
           "r": 4,
           "c": 1
         },
-        "cave": {
-          "r": 5,
-          "c": 1
-        },
         "shipwreck": {
-          "r": 3,
+          "r": 1,
           "c": 2
-        },
-        "watchtower": {
-          "r": 5,
-          "c": 3
         },
         "camp": {
           "r": 4,
           "c": 3
         },
-        "ruins": {
+        "mine": {
           "r": 4,
+          "c": 2
+        },
+        "ruins": {
+          "r": 5,
+          "c": 4
+        },
+        "beacon": {
+          "r": 2,
           "c": 2
         }
       }
@@ -1274,8 +1257,8 @@
       "id": "practice-12",
       "number": 0,
       "date": null,
-      "name": "Ember Head",
-      "difficulty": "medium",
+      "name": "Thistle Barrow",
+      "difficulty": "easy",
       "seed": 2167269056,
       "land": "000000101110111110111000111100011111",
       "landmarks": [
@@ -1289,33 +1272,20 @@
       ],
       "clues": [
         {
-          "type": "somewhere",
-          "a": "lighthouse",
-          "dir": "N",
-          "b": "shipwreck"
-        },
-        {
-          "type": "due",
-          "a": "beacon",
-          "dir": "W",
-          "b": "mine"
-        },
-        {
-          "type": "somewhere",
-          "a": "lighthouse",
-          "dir": "W",
-          "b": "farm"
-        },
-        {
           "type": "shore",
-          "a": "harbor",
+          "a": "lighthouse",
           "dir": "E"
         },
         {
-          "type": "due",
-          "a": "temple",
-          "dir": "S",
-          "b": "mine"
+          "type": "touches",
+          "a": "farm",
+          "b": "temple"
+        },
+        {
+          "type": "shares",
+          "a": "farm",
+          "axis": "column",
+          "b": "temple"
         },
         {
           "type": "somewhere",
@@ -1324,14 +1294,22 @@
           "b": "lighthouse"
         },
         {
-          "type": "touches",
+          "type": "due",
           "a": "shipwreck",
-          "b": "farm"
+          "dir": "S",
+          "b": "harbor"
         },
         {
-          "type": "shore",
-          "a": "lighthouse",
-          "dir": "E"
+          "type": "due",
+          "a": "beacon",
+          "dir": "W",
+          "b": "mine"
+        },
+        {
+          "type": "somewhere",
+          "a": "temple",
+          "dir": "E",
+          "b": "lighthouse"
         },
         {
           "type": "due",
@@ -1341,9 +1319,9 @@
         },
         {
           "type": "due",
-          "a": "shipwreck",
-          "dir": "S",
-          "b": "farm"
+          "a": "temple",
+          "dir": "W",
+          "b": "shipwreck"
         }
       ],
       "solution": {
@@ -1357,11 +1335,11 @@
         },
         "temple": {
           "r": 5,
-          "c": 4
+          "c": 3
         },
         "shipwreck": {
           "r": 5,
-          "c": 3
+          "c": 4
         },
         "farm": {
           "r": 4,
@@ -1381,8 +1359,8 @@
       "id": "practice-13",
       "number": 0,
       "date": null,
-      "name": "Bramble Bight",
-      "difficulty": "hard",
+      "name": "Osprey Knoll",
+      "difficulty": "medium",
       "seed": 745563823,
       "land": "001100011110111000111000111100100100",
       "landmarks": [
@@ -1398,90 +1376,90 @@
       "clues": [
         {
           "type": "shares",
-          "a": "shipwreck",
+          "a": "watchtower",
           "axis": "row",
-          "b": "windmill"
-        },
-        {
-          "type": "due",
-          "a": "windmill",
-          "dir": "S",
-          "b": "well"
+          "b": "cave"
         },
         {
           "type": "somewhere",
           "a": "lighthouse",
-          "dir": "E",
-          "b": "cave"
+          "dir": "S",
+          "b": "well"
         },
         {
-          "type": "due",
-          "a": "watchtower",
-          "dir": "S",
-          "b": "lighthouse"
+          "type": "shares",
+          "a": "cave",
+          "axis": "column",
+          "b": "shipwreck"
         },
         {
           "type": "between",
-          "a": "well",
-          "b": "windmill",
+          "a": "fort",
+          "b": "lighthouse",
           "c": "harbor"
         },
         {
           "type": "due",
-          "a": "shipwreck",
-          "dir": "S",
-          "b": "fort"
-        },
-        {
-          "type": "somewhere",
-          "a": "watchtower",
-          "dir": "S",
+          "a": "windmill",
+          "dir": "E",
           "b": "well"
         },
         {
-          "type": "due",
+          "type": "shares",
           "a": "harbor",
-          "dir": "E",
-          "b": "lighthouse"
+          "axis": "row",
+          "b": "well"
+        },
+        {
+          "type": "somewhere",
+          "a": "windmill",
+          "dir": "W",
+          "b": "fort"
         },
         {
           "type": "shore",
-          "a": "fort",
-          "dir": "N"
+          "a": "shipwreck",
+          "dir": "E"
         },
         {
-          "type": "touches",
-          "a": "lighthouse",
-          "b": "cave"
+          "type": "due",
+          "a": "windmill",
+          "dir": "N",
+          "b": "watchtower"
+        },
+        {
+          "type": "extreme",
+          "a": "cave",
+          "dir": "S"
         }
       ],
       "solution": {
         "lighthouse": {
-          "r": 2,
-          "c": 1
-        },
-        "windmill": {
           "r": 4,
           "c": 2
+        },
+        "windmill": {
+          "r": 2,
+          "c": 1
         },
         "harbor": {
           "r": 2,
           "c": 2
         },
         "fort": {
-          "r": 0,
-          "c": 3
-        },
-        "well": {
           "r": 3,
           "c": 2
         },
-        "cave": {
+        "well": {
           "r": 2,
           "c": 0
         },
-        "shipwreck": {
+        "cave": {
           "r": 4,
+          "c": 3
+        },
+        "shipwreck": {
+          "r": 0,
           "c": 3
         },
         "watchtower": {
@@ -1494,115 +1472,113 @@
       "id": "practice-14",
       "number": 0,
       "date": null,
-      "name": "Fennel Rise",
+      "name": "Curlew Sound",
       "difficulty": "easy",
       "seed": 4248789642,
-      "land": "100111111110011111001110000100000000",
+      "land": "111100111110111110011110110100100000",
       "landmarks": [
+        "lighthouse",
         "windmill",
-        "harbor",
+        "temple",
         "well",
-        "cave",
         "shipwreck",
         "farm",
         "watchtower",
-        "ruins"
+        "beacon"
       ],
       "clues": [
         {
-          "type": "shares",
-          "a": "shipwreck",
-          "axis": "row",
-          "b": "well"
-        },
-        {
-          "type": "due",
-          "a": "shipwreck",
-          "dir": "S",
-          "b": "ruins"
-        },
-        {
-          "type": "due",
-          "a": "ruins",
-          "dir": "E",
-          "b": "farm"
-        },
-        {
-          "type": "somewhere",
-          "a": "harbor",
-          "dir": "E",
-          "b": "windmill"
-        },
-        {
-          "type": "touches",
-          "a": "harbor",
-          "b": "farm"
-        },
-        {
           "type": "between",
-          "a": "shipwreck",
-          "b": "watchtower",
-          "c": "ruins"
+          "a": "windmill",
+          "b": "temple",
+          "c": "beacon"
         },
         {
-          "type": "touches",
-          "a": "harbor",
-          "b": "ruins"
+          "type": "inland",
+          "a": "temple"
+        },
+        {
+          "type": "extreme",
+          "a": "shipwreck",
+          "dir": "S"
+        },
+        {
+          "type": "shore",
+          "a": "shipwreck",
+          "dir": "N"
         },
         {
           "type": "shore",
           "a": "windmill",
-          "dir": "E"
-        },
-        {
-          "type": "shore",
-          "a": "ruins",
-          "dir": "E"
-        },
-        {
-          "type": "touches",
-          "a": "well",
-          "b": "farm"
+          "dir": "S"
         },
         {
           "type": "due",
-          "a": "shipwreck",
-          "dir": "S",
-          "b": "cave"
+          "a": "lighthouse",
+          "dir": "W",
+          "b": "well"
+        },
+        {
+          "type": "shore",
+          "a": "well",
+          "dir": "E"
+        },
+        {
+          "type": "due",
+          "a": "watchtower",
+          "dir": "W",
+          "b": "farm"
+        },
+        {
+          "type": "somewhere",
+          "a": "farm",
+          "dir": "E",
+          "b": "well"
+        },
+        {
+          "type": "due",
+          "a": "watchtower",
+          "dir": "N",
+          "b": "beacon"
+        },
+        {
+          "type": "touches",
+          "a": "lighthouse",
+          "b": "watchtower"
         }
       ],
       "solution": {
-        "windmill": {
+        "lighthouse": {
           "r": 0,
-          "c": 0
+          "c": 1
         },
-        "harbor": {
-          "r": 1,
+        "windmill": {
+          "r": 3,
+          "c": 2
+        },
+        "temple": {
+          "r": 3,
           "c": 3
         },
         "well": {
-          "r": 2,
-          "c": 2
-        },
-        "cave": {
           "r": 0,
-          "c": 4
+          "c": 3
         },
         "shipwreck": {
-          "r": 2,
-          "c": 4
+          "r": 4,
+          "c": 0
         },
         "farm": {
           "r": 1,
-          "c": 2
+          "c": 4
         },
         "watchtower": {
-          "r": 3,
-          "c": 4
-        },
-        "ruins": {
           "r": 1,
-          "c": 4
+          "c": 1
+        },
+        "beacon": {
+          "r": 3,
+          "c": 1
         }
       }
     },
@@ -1610,124 +1586,120 @@
       "id": "practice-15",
       "number": 0,
       "date": null,
-      "name": "Ember Holm",
+      "name": "Marram Fold",
       "difficulty": "medium",
       "seed": 431732518,
-      "land": "000000001111000110001111001111001111",
+      "land": "000000100000110011111110111110111100",
       "landmarks": [
+        "lighthouse",
         "windmill",
-        "harbor",
         "temple",
         "well",
-        "cave",
+        "shipwreck",
         "farm",
-        "watchtower",
-        "ruins",
+        "camp",
+        "mine",
         "beacon"
       ],
       "clues": [
         {
-          "type": "somewhere",
-          "a": "windmill",
+          "type": "due",
+          "a": "camp",
           "dir": "W",
-          "b": "temple"
-        },
-        {
-          "type": "between",
-          "a": "cave",
-          "b": "harbor",
-          "c": "beacon"
-        },
-        {
-          "type": "shore",
-          "a": "ruins",
-          "dir": "S"
+          "b": "well"
         },
         {
           "type": "due",
-          "a": "temple",
-          "dir": "N",
-          "b": "beacon"
-        },
-        {
-          "type": "somewhere",
-          "a": "windmill",
-          "dir": "E",
-          "b": "ruins"
-        },
-        {
-          "type": "somewhere",
-          "a": "well",
-          "dir": "S",
+          "a": "camp",
+          "dir": "W",
           "b": "windmill"
         },
         {
-          "type": "between",
-          "a": "cave",
-          "b": "ruins",
-          "c": "watchtower"
+          "type": "somewhere",
+          "a": "beacon",
+          "dir": "W",
+          "b": "camp"
+        },
+        {
+          "type": "shares",
+          "a": "farm",
+          "axis": "row",
+          "b": "mine"
         },
         {
           "type": "due",
-          "a": "harbor",
-          "dir": "S",
-          "b": "farm"
+          "a": "lighthouse",
+          "dir": "W",
+          "b": "well"
         },
         {
-          "type": "somewhere",
-          "a": "windmill",
-          "dir": "S",
-          "b": "harbor"
+          "type": "touches",
+          "a": "shipwreck",
+          "b": "mine"
         },
         {
-          "type": "somewhere",
-          "a": "temple",
+          "type": "due",
+          "a": "farm",
           "dir": "N",
-          "b": "watchtower"
+          "b": "beacon"
         },
         {
           "type": "due",
-          "a": "well",
-          "dir": "S",
+          "a": "lighthouse",
+          "dir": "W",
           "b": "beacon"
+        },
+        {
+          "type": "inland",
+          "a": "windmill"
+        },
+        {
+          "type": "touches",
+          "a": "temple",
+          "b": "lighthouse"
+        },
+        {
+          "type": "touches",
+          "a": "lighthouse",
+          "b": "mine"
         }
       ],
       "solution": {
+        "lighthouse": {
+          "r": 4,
+          "c": 0
+        },
         "windmill": {
+          "r": 4,
+          "c": 3
+        },
+        "temple": {
+          "r": 5,
+          "c": 0
+        },
+        "well": {
           "r": 4,
           "c": 4
         },
-        "harbor": {
-          "r": 3,
-          "c": 2
-        },
-        "temple": {
-          "r": 1,
-          "c": 5
-        },
-        "well": {
-          "r": 5,
-          "c": 5
-        },
-        "cave": {
-          "r": 3,
-          "c": 3
+        "shipwreck": {
+          "r": 2,
+          "c": 0
         },
         "farm": {
-          "r": 1,
+          "r": 3,
+          "c": 1
+        },
+        "camp": {
+          "r": 4,
           "c": 2
         },
-        "watchtower": {
-          "r": 2,
-          "c": 3
-        },
-        "ruins": {
-          "r": 5,
-          "c": 3
+        "mine": {
+          "r": 3,
+          "c": 0
         },
         "beacon": {
-          "r": 3,
-          "c": 5
+          "r": 4,
+          "c": 1
         }
       }
     },
@@ -1848,7 +1820,7 @@
       "id": "practice-17",
       "number": 0,
       "date": null,
-      "name": "Thistle Ness",
+      "name": "Gannet Haven",
       "difficulty": "medium",
       "seed": 2320436457,
       "land": "100000111000111000001100111110011011",
@@ -1864,30 +1836,19 @@
       "clues": [
         {
           "type": "extreme",
-          "a": "fort",
-          "dir": "S"
-        },
-        {
-          "type": "shore",
           "a": "temple",
-          "dir": "S"
+          "dir": "N"
         },
         {
           "type": "due",
-          "a": "temple",
-          "dir": "S",
-          "b": "mine"
-        },
-        {
-          "type": "shore",
-          "a": "mine",
-          "dir": "S"
-        },
-        {
-          "type": "somewhere",
           "a": "beacon",
           "dir": "S",
           "b": "lighthouse"
+        },
+        {
+          "type": "shore",
+          "a": "temple",
+          "dir": "W"
         },
         {
           "type": "shore",
@@ -1895,33 +1856,37 @@
           "dir": "W"
         },
         {
-          "type": "somewhere",
-          "a": "mine",
-          "dir": "E",
+          "type": "shares",
+          "a": "harbor",
+          "axis": "row",
+          "b": "fort"
+        },
+        {
+          "type": "due",
+          "a": "fort",
+          "dir": "W",
           "b": "shipwreck"
+        },
+        {
+          "type": "shore",
+          "a": "temple",
+          "dir": "S"
         },
         {
           "type": "touches",
-          "a": "beacon",
-          "b": "lighthouse"
-        },
-        {
-          "type": "shares",
-          "a": "mine",
-          "axis": "row",
-          "b": "shipwreck"
+          "a": "temple",
+          "b": "mine"
         },
         {
           "type": "somewhere",
           "a": "harbor",
           "dir": "W",
-          "b": "lighthouse"
+          "b": "beacon"
         },
         {
-          "type": "shares",
-          "a": "harbor",
-          "axis": "row",
-          "b": "fort"
+          "type": "shore",
+          "a": "shipwreck",
+          "dir": "W"
         }
       ],
       "solution": {
@@ -1935,15 +1900,15 @@
         },
         "fort": {
           "r": 5,
-          "c": 4
-        },
-        "temple": {
-          "r": 5,
           "c": 1
         },
-        "shipwreck": {
+        "temple": {
           "r": 2,
           "c": 0
+        },
+        "shipwreck": {
+          "r": 5,
+          "c": 4
         },
         "mine": {
           "r": 2,
@@ -1959,7 +1924,7 @@
       "id": "practice-18",
       "number": 0,
       "date": null,
-      "name": "Kelp Landing",
+      "name": "Thistle Shoal",
       "difficulty": "medium",
       "seed": 3230998264,
       "land": "000011011111001111001110011100011000",
@@ -1976,75 +1941,89 @@
       "clues": [
         {
           "type": "due",
-          "a": "beacon",
+          "a": "fort",
           "dir": "E",
+          "b": "mine"
+        },
+        {
+          "type": "shares",
+          "a": "fort",
+          "axis": "column",
           "b": "windmill"
         },
         {
+          "type": "shares",
+          "a": "mine",
+          "axis": "column",
+          "b": "beacon"
+        },
+        {
+          "type": "between",
+          "a": "ruins",
+          "b": "shipwreck",
+          "c": "mine"
+        },
+        {
+          "type": "shares",
+          "a": "windmill",
+          "axis": "row",
+          "b": "harbor"
+        },
+        {
+          "type": "shore",
+          "a": "harbor",
+          "dir": "W"
+        },
+        {
+          "type": "touches",
+          "a": "windmill",
+          "b": "beacon"
+        },
+        {
           "type": "somewhere",
-          "a": "fort",
+          "a": "windmill",
           "dir": "N",
           "b": "ruins"
         },
         {
           "type": "somewhere",
-          "a": "shipwreck",
-          "dir": "S",
-          "b": "harbor"
-        },
-        {
-          "type": "touches",
-          "a": "ruins",
-          "b": "beacon"
-        },
-        {
-          "type": "due",
-          "a": "beacon",
-          "dir": "N",
-          "b": "harbor"
-        },
-        {
-          "type": "due",
           "a": "temple",
+          "dir": "W",
+          "b": "harbor"
+        },
+        {
+          "type": "somewhere",
+          "a": "fort",
           "dir": "N",
-          "b": "fort"
+          "b": "harbor"
         },
         {
-          "type": "shore",
-          "a": "shipwreck",
-          "dir": "W"
-        },
-        {
-          "type": "between",
-          "a": "ruins",
-          "b": "harbor",
-          "c": "mine"
-        },
-        {
-          "type": "inland",
-          "a": "temple"
+          "type": "somewhere",
+          "a": "temple",
+          "dir": "S",
+          "b": "shipwreck"
         }
       ],
       "solution": {
         "windmill": {
           "r": 2,
-          "c": 2
-        },
-        "harbor": {
-          "r": 4,
-          "c": 3
-        },
-        "fort": {
-          "r": 2,
           "c": 4
         },
-        "temple": {
+        "harbor": {
+          "r": 2,
+          "c": 2
+        },
+        "fort": {
           "r": 1,
           "c": 4
         },
-        "shipwreck": {
+        "temple": {
           "r": 5,
           "c": 1
+        },
+        "shipwreck": {
+          "r": 4,
+          "c": 3
         },
         "mine": {
           "r": 1,
@@ -2064,115 +2043,119 @@
       "id": "practice-19",
       "number": 0,
       "date": null,
-      "name": "Plover Reach",
-      "difficulty": "easy",
+      "name": "Storm Hollow",
+      "difficulty": "medium",
       "seed": 3213660047,
-      "land": "111100111100111000011111001110000110",
+      "land": "000010010111111110011111011110010100",
       "landmarks": [
         "lighthouse",
-        "windmill",
+        "harbor",
+        "fort",
         "well",
         "farm",
         "watchtower",
-        "camp",
-        "mine",
+        "ruins",
         "beacon"
       ],
       "clues": [
         {
-          "type": "shore",
-          "a": "farm",
-          "dir": "S"
+          "type": "between",
+          "a": "fort",
+          "b": "harbor",
+          "c": "beacon"
         },
         {
-          "type": "shore",
-          "a": "watchtower",
-          "dir": "N"
-        },
-        {
-          "type": "due",
-          "a": "camp",
-          "dir": "W",
-          "b": "mine"
-        },
-        {
-          "type": "due",
+          "type": "shares",
           "a": "beacon",
+          "axis": "column",
+          "b": "harbor"
+        },
+        {
+          "type": "due",
+          "a": "well",
+          "dir": "W",
+          "b": "harbor"
+        },
+        {
+          "type": "shares",
+          "a": "farm",
+          "axis": "column",
+          "b": "beacon"
+        },
+        {
+          "type": "somewhere",
+          "a": "watchtower",
+          "dir": "N",
+          "b": "beacon"
+        },
+        {
+          "type": "somewhere",
+          "a": "ruins",
+          "dir": "S",
+          "b": "farm"
+        },
+        {
+          "type": "due",
+          "a": "well",
+          "dir": "W",
+          "b": "watchtower"
+        },
+        {
+          "type": "due",
+          "a": "lighthouse",
+          "dir": "N",
+          "b": "well"
+        },
+        {
+          "type": "somewhere",
+          "a": "ruins",
           "dir": "E",
           "b": "watchtower"
         },
         {
-          "type": "shore",
-          "a": "camp",
-          "dir": "W"
-        },
-        {
-          "type": "between",
-          "a": "mine",
-          "b": "watchtower",
-          "c": "well"
-        },
-        {
-          "type": "due",
-          "a": "lighthouse",
-          "dir": "S",
-          "b": "windmill"
-        },
-        {
-          "type": "due",
-          "a": "beacon",
-          "dir": "N",
-          "b": "farm"
-        },
-        {
-          "type": "touches",
-          "a": "well",
-          "b": "windmill"
-        },
-        {
-          "type": "touches",
-          "a": "lighthouse",
-          "b": "mine",
-          "not": true
+          "type": "somewhere",
+          "a": "farm",
+          "dir": "E",
+          "b": "ruins"
         },
         {
           "type": "somewhere",
-          "a": "lighthouse",
+          "a": "ruins",
           "dir": "N",
           "b": "watchtower"
         }
       ],
       "solution": {
         "lighthouse": {
-          "r": 2,
-          "c": 2
+          "r": 1,
+          "c": 1
         },
-        "windmill": {
-          "r": 0,
-          "c": 2
+        "harbor": {
+          "r": 2,
+          "c": 4
+        },
+        "fort": {
+          "r": 3,
+          "c": 4
         },
         "well": {
-          "r": 0,
-          "c": 3
+          "r": 2,
+          "c": 1
         },
         "farm": {
-          "r": 5,
+          "r": 0,
           "c": 4
         },
         "watchtower": {
-          "r": 3,
-          "c": 3
+          "r": 2,
+          "c": 2
         },
-        "camp": {
-          "r": 1,
-          "c": 0
-        },
-        "mine": {
+        "ruins": {
           "r": 1,
           "c": 3
         },
         "beacon": {
-          "r": 3,
+          "r": 4,
           "c": 4
         }
       }
@@ -2181,7 +2164,7 @@
       "id": "practice-20",
       "number": 0,
       "date": null,
-      "name": "Wren Key",
+      "name": "Sedge Reef",
       "difficulty": "medium",
       "seed": 466291554,
       "land": "010110111110101111100101100100000000",
@@ -2198,21 +2181,43 @@
       ],
       "clues": [
         {
-          "type": "somewhere",
-          "a": "harbor",
-          "dir": "W",
-          "b": "well"
+          "type": "between",
+          "a": "farm",
+          "b": "watchtower",
+          "c": "mine"
         },
         {
           "type": "due",
           "a": "well",
-          "dir": "S",
-          "b": "watchtower"
+          "dir": "E",
+          "b": "harbor"
+        },
+        {
+          "type": "due",
+          "a": "beacon",
+          "dir": "W",
+          "b": "windmill"
+        },
+        {
+          "type": "extreme",
+          "a": "well",
+          "dir": "E"
+        },
+        {
+          "type": "somewhere",
+          "a": "fort",
+          "dir": "W",
+          "b": "harbor"
         },
         {
           "type": "shore",
-          "a": "beacon",
-          "dir": "N"
+          "a": "watchtower",
+          "dir": "E"
+        },
+        {
+          "type": "shore",
+          "a": "well",
+          "dir": "S"
         },
         {
           "type": "somewhere",
@@ -2221,56 +2226,31 @@
           "b": "well"
         },
         {
-          "type": "due",
-          "a": "beacon",
-          "dir": "N",
-          "b": "windmill"
-        },
-        {
           "type": "between",
           "a": "mine",
           "b": "fort",
           "c": "temple"
         },
         {
-          "type": "shares",
-          "a": "harbor",
-          "axis": "row",
-          "b": "beacon"
-        },
-        {
-          "type": "due",
-          "a": "well",
-          "dir": "E",
-          "b": "windmill"
-        },
-        {
-          "type": "between",
-          "a": "farm",
-          "b": "watchtower",
-          "c": "mine"
+          "type": "shore",
+          "a": "windmill",
+          "dir": "N"
         },
         {
           "type": "shares",
           "a": "beacon",
           "axis": "column",
           "b": "farm"
-        },
-        {
-          "type": "somewhere",
-          "a": "harbor",
-          "dir": "E",
-          "b": "farm"
         }
       ],
       "solution": {
         "windmill": {
-          "r": 3,
-          "c": 3
-        },
-        "harbor": {
           "r": 0,
           "c": 4
+        },
+        "harbor": {
+          "r": 3,
+          "c": 3
         },
         "fort": {
           "r": 4,

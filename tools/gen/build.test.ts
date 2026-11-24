@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { landCells, maskFromRows } from '../../src/shared/puzzle/grid';
+import { isCoast, landCells, maskFromRows } from '../../src/shared/puzzle/grid';
 import { clueHolds } from '../../src/shared/puzzle/predicates';
 import { countSolutions, propagate } from '../../src/shared/puzzle/solver';
 import type {
@@ -15,6 +15,7 @@ import {
   clueWeight,
   fixForHumans,
   isNegative,
+  placeLandmarks,
   REJECT_REASONS,
   isOppositeShorePair,
 } from './build';
@@ -478,4 +479,35 @@ describe('buildPuzzle', () => {
     },
     180_000
   );
+});
+
+describe('placeLandmarks', () => {
+  const ids: LandmarkId[] = ['harbor', 'well', 'lighthouse', 'farm', 'shipwreck', 'temple', 'mine'];
+
+  it('gives every landmark its own land cell and keeps coastal landmarks on the coast', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const solution = placeLandmarks(mulberry32(seed), GOOD, ids);
+      expect(solution).not.toBeNull();
+      if (!solution) return;
+      const cells = ids.map((id) => solution[id]);
+      expect(cells.every((c) => c !== undefined)).toBe(true);
+      expect(new Set(cells.map((c) => `${c?.r},${c?.c}`)).size).toBe(ids.length);
+      for (const id of ['harbor', 'lighthouse', 'shipwreck'] as const) {
+        const cell = solution[id];
+        expect(cell && isCoast(GOOD, cell), id).toBe(true);
+      }
+    }
+  });
+
+  it('still lets other landmarks sit inland', () => {
+    const inland = new Set<string>();
+    for (let seed = 1; seed <= 60; seed++) {
+      const solution = placeLandmarks(mulberry32(seed), GOOD, ids);
+      for (const id of ['well', 'farm', 'temple', 'mine'] as const) {
+        const cell = solution?.[id];
+        if (cell && !isCoast(GOOD, cell)) inland.add(id);
+      }
+    }
+    expect(inland.size).toBeGreaterThan(0);
+  });
 });

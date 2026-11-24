@@ -96,7 +96,7 @@ const lineIsFull = (land: LandMask, line: (k: number) => Cell): boolean => {
  *   that runs the full width (or height) meets the frame on both sides, so the shape reads as a
  *   band cut off by the grid rather than an island. It does not make shore clues trivial (only
  *   the strip's two end cells become coastal on those sides).
- * - No lakes: enclosed water makes "northern shore" ambiguous to a player scanning the coast.
+ * - No lakes: enclosed water makes "north-facing shore" ambiguous to a player scanning the coast.
  * - At least 3 distinct rows hold a cell on the northern or southern shore, and at least 3
  *   distinct columns hold a cell on the eastern or western shore. A near-rectangle has only
  *   2 of each, so shore clues collapse to "top row" / "bottom row" and the coastline is dull.

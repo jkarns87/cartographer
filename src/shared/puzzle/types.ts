@@ -19,6 +19,13 @@ export const LANDMARKS = [
 
 export type LandmarkId = (typeof LANDMARKS)[number];
 
+/**
+ * Landmarks that only make sense on the coast. The generator never places them
+ * inland (so they never get an "is inland" clue), and the verifier checks it.
+ * Players never need the rule to deduce anything; it only keeps islands sensible.
+ */
+export const COASTAL_LANDMARKS: readonly LandmarkId[] = ['lighthouse', 'harbor', 'shipwreck'];
+
 export const LANDMARK_NAMES: Record<LandmarkId, string> = {
   lighthouse: 'Lighthouse',
   windmill: 'Windmill',

@@ -8,7 +8,31 @@ import { buildPuzzle } from './build';
 import { OPPOSITE } from './clues';
 import { PRACTICE_PATH, readSchedule, SCHEDULE_PATH } from './io';
 import { addDays } from './schedule';
-import { crossFileProblems, verifySchedule } from './verify';
+import { crossFileProblems, entryProblems, verifySchedule } from './verify';
+
+describe('coastal landmarks', () => {
+  it('flags a harbor, lighthouse or shipwreck that stands inland', () => {
+    const schedule = readSchedule(SCHEDULE_PATH);
+    const entry = schedule.entries.find((e) => e.landmarks.includes('harbor'));
+    if (!entry) throw new Error('no island with a harbor in the schedule');
+    // Move the harbor onto the first inland cell of its island.
+    const land = entry.land;
+    let inlandCell: { r: number; c: number } | null = null;
+    for (let r = 1; r < 5 && !inlandCell; r++) {
+      for (let c = 1; c < 5; c++) {
+        const i = r * 6 + c;
+        if (land[i] === '1' && land[i - 6] === '1' && land[i + 6] === '1' && land[i - 1] === '1' && land[i + 1] === '1') {
+          inlandCell = { r, c };
+          break;
+        }
+      }
+    }
+    if (!inlandCell) throw new Error('fixture island has no inland cell');
+    const moved: ScheduleEntry = { ...entry, solution: { ...entry.solution, harbor: inlandCell } };
+    expect(entryProblems(moved).some((p) => p === 'harbor is inland but must stand on the coast')).toBe(true);
+    expect(entryProblems(entry)).toEqual([]);
+  });
+});
 
 describe('committed puzzle files', () => {
   const schedule = readSchedule(SCHEDULE_PATH);

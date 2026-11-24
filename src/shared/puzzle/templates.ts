@@ -8,11 +8,12 @@ export const DIR_WORD: Record<Dir, string> = {
   W: 'west',
 };
 
+/** "north-facing": the cell faces water on that side. A cell can face water on several sides. */
 export const SHORE_WORD: Record<Dir, string> = {
-  N: 'northern',
-  E: 'eastern',
-  S: 'southern',
-  W: 'western',
+  N: 'north-facing',
+  E: 'east-facing',
+  S: 'south-facing',
+  W: 'west-facing',
 };
 
 /** A sentence fragment: literal text, or a landmark the UI renders as icon + display name. */
@@ -28,7 +29,7 @@ export const clueParts = (clue: Clue): CluePart[] => {
       return [
         text('The '),
         landmark(clue.a),
-        text(` stands on the ${SHORE_WORD[clue.dir]} shore.`),
+        text(` stands on a ${SHORE_WORD[clue.dir]} shore.`),
       ];
     case 'inland':
       return [text('The '), landmark(clue.a), text(' is inland.')];

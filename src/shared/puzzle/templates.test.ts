@@ -9,7 +9,7 @@ import type { Clue, Dir } from './types';
 const TABLE: Array<{ clue: Clue; text: string }> = [
   {
     clue: { type: 'shore', a: 'lighthouse', dir: 'N' },
-    text: 'The Lighthouse stands on the northern shore.',
+    text: 'The Lighthouse stands on a north-facing shore.',
   },
   { clue: { type: 'inland', a: 'temple' }, text: 'The Temple is inland.' },
   {
@@ -67,10 +67,10 @@ describe('direction words', () => {
 
   it('SHORE_WORD', () => {
     expect(SHORE_WORD).toEqual({
-      N: 'northern',
-      E: 'eastern',
-      S: 'southern',
-      W: 'western',
+      N: 'north-facing',
+      E: 'east-facing',
+      S: 'south-facing',
+      W: 'west-facing',
     });
   });
 });
@@ -104,28 +104,28 @@ describe('clueText', () => {
   }>([
     {
       dir: 'N',
-      shore: 'The Lighthouse stands on the northern shore.',
+      shore: 'The Lighthouse stands on a north-facing shore.',
       due: 'The Windmill is due north of the Well.',
       somewhere: 'The Farm lies somewhere north of the Temple.',
       extreme: 'No landmark stands north of the Well.',
     },
     {
       dir: 'E',
-      shore: 'The Lighthouse stands on the eastern shore.',
+      shore: 'The Lighthouse stands on a east-facing shore.',
       due: 'The Windmill is due east of the Well.',
       somewhere: 'The Farm lies somewhere east of the Temple.',
       extreme: 'No landmark stands east of the Well.',
     },
     {
       dir: 'S',
-      shore: 'The Lighthouse stands on the southern shore.',
+      shore: 'The Lighthouse stands on a south-facing shore.',
       due: 'The Windmill is due south of the Well.',
       somewhere: 'The Farm lies somewhere south of the Temple.',
       extreme: 'No landmark stands south of the Well.',
     },
     {
       dir: 'W',
-      shore: 'The Lighthouse stands on the western shore.',
+      shore: 'The Lighthouse stands on a west-facing shore.',
       due: 'The Windmill is due west of the Well.',
       somewhere: 'The Farm lies somewhere west of the Temple.',
       extreme: 'No landmark stands west of the Well.',
@@ -174,7 +174,7 @@ describe('clueParts', () => {
       parts: [
         { text: 'The ' },
         { landmark: 'lighthouse' },
-        { text: ' stands on the northern shore.' },
+        { text: ' stands on a north-facing shore.' },
       ],
     },
     {

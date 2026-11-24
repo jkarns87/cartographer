@@ -5,9 +5,9 @@ type Term = { term: string; meaning: string };
 /** Every phrase the clue sheet uses, defined the way `shared/puzzle/grid` checks it. */
 export const TERMS: readonly Term[] = [
   {
-    term: 'Northern shore',
+    term: 'North-facing shore',
     meaning:
-      'The cell directly north of the landmark is water, or the edge of the map. One cell can stand on several shores at once.',
+      'The cell directly north of the landmark is water, or the edge of the map. One cell can face water on several sides at once.',
   },
   { term: 'Inland', meaning: 'Land on all four sides: north, east, south and west.' },
   {

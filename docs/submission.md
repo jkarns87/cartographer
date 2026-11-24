@@ -101,9 +101,12 @@ appear on it.
   above the 11-clue cap. Re-running the removal pass with fresh shuffles before rejecting an
   attempt roughly halved the reject rate.
 - **Readable islands.** Reading the generated sheets as plain text (`npm run gen:review`) turned up
-  problems no metric caught: full-width land bars, enclosed lakes that made "northern shore"
+  problems no metric caught: full-width land bars, enclosed lakes that made "north-facing shore"
   ambiguous, near-rectangles where every shore clue meant "top row", and clues that another clue
-  already implied. Each became a generator rule.
+  already implied. Each became a generator rule. Playtesters added two more: "northern shore" read
+  as a mislabel on a cell that also faced west, so the clue now says "a north-facing shore", and an
+  inland Harbor made no sense, so Lighthouse, Harbor and Shipwreck always stand on the coast
+  (islands from #2 on were regenerated under that rule; #1 already complied).
 - **Keeping the answer off the client.** The board needs live feedback, but the solution never
   leaves the server. The clue predicates need only the clues and the land mask, so the client
   scores your placement itself and the server re-verifies. Settler positions are the solution's
@@ -136,7 +139,7 @@ appear on it.
   user under one stickied app comment, a fixed template, no free text, nothing gated on it.
 - Clue states use shape and color, every cell has a screen-reader label, tap targets are at least
   44 px, and dark mode and reduced motion are supported.
-- 847 automated tests cover the puzzle rules, both solvers, the generator, every server service
+- 850 automated tests cover the puzzle rules, both solvers, the generator, every server service
   and route, and the client's reducer and components.
 
 ## What we learned
@@ -178,7 +181,7 @@ island around you.
 
 **Polish.** The app is built for publishing: the inline cover stays small and tap-only, the board
 fits a phone in portrait and moves the clues to a sidebar in landscape and on desktop, and dark mode
-and reduced motion are handled. Every service has tests (847 in all), the server
+and reduced motion are handled. Every service has tests (850 in all), the server
 verifies every solve, the cron is idempotent with a retry 15 minutes later, and Reddit-side failures
 are logged without breaking the game. Icons are open-licensed and credited, and there are no
 third-party requests at runtime.

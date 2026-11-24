@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { clueText } from '../../src/shared/puzzle/templates';
-import { isValidMask } from '../../src/shared/puzzle/grid';
+import { isCoast, isValidMask } from '../../src/shared/puzzle/grid';
 import {
   clueHolds,
   clueLandmarks,
@@ -13,7 +13,7 @@ import {
   difficultyFor,
   propagate,
 } from '../../src/shared/puzzle/solver';
-import { LANDMARKS } from '../../src/shared/puzzle/types';
+import { COASTAL_LANDMARKS, LANDMARKS } from '../../src/shared/puzzle/types';
 import type { Schedule, ScheduleEntry } from '../../src/shared/puzzle/types';
 import { capProblems } from './build';
 import { impliedPairs } from './clues';
@@ -59,6 +59,11 @@ export const entryProblems = (entry: ScheduleEntry): string[] => {
   const placement = validatePlacement(entry, entry.solution);
   if (!placement.ok)
     return [...problems, `solution is invalid (${placement.reason})`];
+  for (const id of COASTAL_LANDMARKS) {
+    const cell = entry.solution[id];
+    if (cell && !isCoast(entry.land, cell))
+      problems.push(`${id} is inland but must stand on the coast`);
+  }
 
   const inPuzzle = new Set<string>(landmarks);
   for (const clue of entry.clues) {
