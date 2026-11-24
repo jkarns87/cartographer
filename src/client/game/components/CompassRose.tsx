@@ -10,9 +10,11 @@ const POSITION: Record<Corner, string> = {
 type Props = { corner: Corner; className?: string | undefined };
 
 /**
- * A faint eight-point compass rose drawn in the water of the island frame.
- * Decorative (hidden from assistive tech) and never catches taps, but the N
- * marker is what every shore and direction clue reads against.
+ * A gold eight-point compass rose painted beneath the tiles, in the water of
+ * the island frame. `IslandView` renders it before the grid, so the opaque sand
+ * cells cover it and only the sea shows it. Decorative (hidden from assistive
+ * tech) and never catches taps, but the N marker is what every shore and
+ * direction clue reads against.
  */
 export const CompassRose = ({ corner, className = 'w-[30%]' }: Props) => (
   <svg
@@ -20,7 +22,7 @@ export const CompassRose = ({ corner, className = 'w-[30%]' }: Props) => (
     data-compass={corner}
     viewBox="0 0 100 100"
     className={[
-      'pointer-events-none absolute text-water-deep opacity-70',
+      'pointer-events-none absolute text-gold opacity-90',
       POSITION[corner],
       className,
     ].join(' ')}

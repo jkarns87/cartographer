@@ -11,6 +11,8 @@
   /* Fills: chart button, check badge, stamp. White text on lit is 4.89:1. */
   --color-lit: #29804e;
   --color-warn: #d98e04;
+  /* The compass rose, painted beneath the tiles in the water. Decorative only. */
+  --color-gold: #d4af37;
   --color-paper: #fbf7ee;
   /* Content on sand surfaces (board cells, legend chips, sand buttons). Never
      overridden in dark mode: sand stays light there, so its ink stays dark. */

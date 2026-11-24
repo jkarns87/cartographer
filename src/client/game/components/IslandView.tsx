@@ -87,6 +87,9 @@ export const IslandView = ({
       role={interactive ? 'group' : 'img'}
       aria-label={interactive ? 'Island' : 'Island map'}
     >
+      {/* Painted first so the cells stack over it: sand tiles hide the rose and
+          the transparent water cells show it. */}
+      <CompassRose corner={compassCorner(land)} className={isBoard ? 'w-[30%]' : 'w-[26%]'} />
       {/* The grid carries the aspect ratio itself. Safari does not resolve a
           percentage height inside an aspect-ratio box until a later layout
           pass, which collapsed the rows to a pixel until the first placement. */}
@@ -102,7 +105,8 @@ export const IslandView = ({
 
           const surface = landHere
             ? 'bg-sand border border-land'
-            : 'bg-water border border-transparent';
+            // Transparent: the frame paints the sea, and the compass shows through.
+            : 'border border-transparent';
           const className = [
             'relative flex items-center justify-center rounded-sm',
             surface,
@@ -180,7 +184,6 @@ export const IslandView = ({
           );
         })}
       </div>
-      <CompassRose corner={compassCorner(land)} className={isBoard ? 'w-[30%]' : 'w-[26%]'} />
     </div>
   );
 };

@@ -33,6 +33,20 @@ describe('IslandView layout', () => {
     expect(container.querySelector('[data-compass="se"]')).not.toBeNull();
   });
 
+  it('paints the compass rose beneath the tiles', () => {
+    render(<IslandView land={LAND} placements={{}} onCellTap={() => {}} />);
+    const frame = screen.getByRole('group', { name: 'Island' });
+    const order = Array.from(frame.children);
+    const compassAt = order.findIndex((el) => el.hasAttribute('data-compass'));
+    const gridAt = order.findIndex((el) => el.classList.contains('grid'));
+    // Rendered before the grid, so the cells stack over it: sand covers it...
+    expect(compassAt).toBeGreaterThanOrEqual(0);
+    expect(compassAt).toBeLessThan(gridAt);
+    expect(screen.getByRole('button', { name: 'row 2 column 2, land, empty' }).className).toMatch(/bg-sand/);
+    // ...and water cells are transparent, so it shows through the sea.
+    expect(screen.getByRole('button', { name: 'row 1 column 1, water' }).className).not.toMatch(/bg-water/);
+  });
+
   it('rings the cells a hint points at', () => {
     render(
       <IslandView

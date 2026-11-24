@@ -27,6 +27,7 @@ describe('CompassRose', () => {
     expect(svg).toHaveAttribute('aria-hidden', 'true');
     expect(svg).toHaveAttribute('data-compass', 'sw');
     expect(svg?.className.baseVal).toMatch(/pointer-events-none/);
+    expect(svg?.className.baseVal).toMatch(/text-gold/);
     expect(svg?.className.baseVal).toMatch(/bottom-\[3%\] left-\[3%\]/);
     expect(svg?.textContent).toContain('N');
   });

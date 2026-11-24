@@ -39,7 +39,8 @@ cells are water. The edge of the grid counts as sea, so a land cell on the edge 
 - Tap a clue to pulse the landmarks it names, on the map and in the legend.
 - Tap Terms, above the map, for a definition of every phrase the clues use, in the exact sense the
   game checks them.
-- A compass rose sits in the water, in whichever corner of the map has the most sea. North is up.
+- A gold compass rose sits in the water beneath the tiles, in whichever corner of the map has
+  the most sea. North is up.
 
 **Clue states.** Each clue shows its state with a shape and a color, so color alone never carries
 the meaning.
