@@ -108,6 +108,22 @@ Useful tools: the app logs from the playtest session, the browser devtools Netwo
     the right of the board, and the board fits the viewport height.
   - If it fails: the layout is breakpoint-only (`md:` and `sm:landscape:` in `GamePage.tsx`).
 
+- [ ] **Safari (desktop web).**
+  - Look at: open an island in Safari before placing anything. The map rows are full height from
+    the start, and they stay that way after lifting a landmark. Seen 2026-11-23 by a playtester:
+    rows one pixel high until the first placement, because Safari did not resolve the grid's
+    percentage height inside the aspect-ratio frame; the grid now carries the aspect ratio itself.
+  - If it fails: check that the `.grid` inside the island frame still has `aspect-square` and no
+    `h-full` (`src/client/game/components/IslandView.tsx`).
+
+- [ ] **Hints and Terms.**
+  - Look at: Ask for a hint names a misplaced landmark (place one wrong first) or the next
+    landmark with its cells ringed for two seconds; the button counts down from 3 and disables at
+    0; the result screen shows the hints and the added time; the card shows a 💡 per hint; Terms
+    opens the glossary and closes on Escape.
+  - If it fails: the hint comes from `computeHint` in `src/shared/puzzle/hints.ts`; the penalty
+    is applied in `src/server/services/chart.ts`.
+
 - [ ] **Reduced motion.**
   - Look at: with reduced motion on, settlers appear without dropping, the stamp does not scale
     in, water taps do not shake, and highlighted landmarks get a ring or glow instead of a pulse.

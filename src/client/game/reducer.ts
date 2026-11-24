@@ -1,4 +1,5 @@
 import { isLand, landmarkAt } from '../../shared/puzzle/grid';
+import { countHints, MAX_HINTS } from '../../shared/puzzle/hints';
 import { LANDMARKS } from '../../shared/puzzle/types';
 import type { Cell, LandmarkId, Placement, Puzzle } from '../../shared/puzzle/types';
 
@@ -7,12 +8,15 @@ export type GameState = {
   placements: Placement;
   history: string;
   corrections: number;
+  /** Hints taken on this island; always `countHints(history)`. */
+  hints: number;
 };
 
 export type GameAction =
   | { type: 'select'; id: LandmarkId }
   | { type: 'tapCell'; cell: Cell }
   | { type: 'lift'; id: LandmarkId }
+  | { type: 'hint' }
   | { type: 'hydrate'; placements: Placement; history: string; corrections: number };
 
 type PuzzleShape = Pick<Puzzle, 'land' | 'landmarks'>;
@@ -50,6 +54,7 @@ export const initialState = (
   placements,
   history,
   corrections,
+  hints: countHints(history),
 });
 
 const without = (placements: Placement, id: LandmarkId): Placement => {
@@ -66,6 +71,7 @@ const lift = (state: GameState, id: LandmarkId): GameState => ({
   placements: without(state.placements, id),
   history: state.history + 'L',
   corrections: state.corrections + 1,
+  hints: state.hints,
 });
 
 const place = (state: GameState, id: LandmarkId, cell: Cell, puzzle: PuzzleShape): GameState => {
@@ -75,6 +81,7 @@ const place = (state: GameState, id: LandmarkId, cell: Cell, puzzle: PuzzleShape
     placements,
     history: state.history + 'P',
     corrections: state.corrections,
+    hints: state.hints,
   };
 };
 
@@ -101,12 +108,17 @@ export const reduce = (state: GameState, action: GameAction, puzzle: PuzzleShape
       if (state.placements[action.id] === undefined) return state;
       return lift(state, action.id);
     }
+    case 'hint': {
+      if (state.hints >= MAX_HINTS) return state;
+      return { ...state, history: state.history + 'H', hints: state.hints + 1 };
+    }
     case 'hydrate':
       return {
         selected: nextUnplaced(puzzle.landmarks, action.placements),
         placements: action.placements,
         history: action.history,
         corrections: action.corrections,
+        hints: countHints(action.history),
       };
   }
 };

@@ -18,6 +18,37 @@ const settler = (over: Partial<Settler> = {}): Settler => ({
 const glyphIn = (el: Element | null): string | null | undefined =>
   el?.querySelector('use')?.getAttribute('href');
 
+describe('IslandView layout', () => {
+  it('keeps the aspect ratio on the grid itself so Safari sizes the rows', () => {
+    render(<IslandView land={LAND} placements={{}} onCellTap={() => {}} />);
+    const frame = screen.getByRole('group', { name: 'Island' });
+    expect(frame.className).not.toMatch(/aspect-square/);
+    const grid = frame.querySelector('.grid');
+    expect(grid?.className).toMatch(/aspect-square/);
+    expect(grid?.className).not.toMatch(/\bh-full\b/);
+  });
+
+  it('draws the compass rose in the corner with the most water', () => {
+    const { container } = render(<IslandView land={LAND} placements={{}} />);
+    expect(container.querySelector('[data-compass="se"]')).not.toBeNull();
+  });
+
+  it('rings the cells a hint points at', () => {
+    render(
+      <IslandView
+        land={LAND}
+        placements={{}}
+        onCellTap={() => {}}
+        highlightCells={[{ r: 1, c: 1 }, { r: 2, c: 2 }]}
+      />
+    );
+    const hinted = document.querySelectorAll('[data-hint="true"]');
+    expect(hinted).toHaveLength(2);
+    expect(hinted[0]?.className).toMatch(/ring-warn/);
+    expect(screen.getByRole('button', { name: 'row 2 column 2, land, empty' })).toHaveAttribute('data-hint', 'true');
+  });
+});
+
 describe('IslandView settlers', () => {
   it('shows the snoovatar eagerly (no lazy loading)', () => {
     render(<IslandView land={LAND} placements={{}} settlers={[settler()]} />);

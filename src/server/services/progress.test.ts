@@ -142,6 +142,10 @@ describe('parsePlaceRequest', () => {
     });
   });
 
+  it('accepts hints in the history', () => {
+    expect(parsePlaceRequest({ ...ok, history: 'PHLPH' }, landmarks)).toEqual({ ...ok, history: 'PHLPH' });
+  });
+
   it.each<[string, unknown]>([
     ['not an object', 'x'],
     ['null', null],

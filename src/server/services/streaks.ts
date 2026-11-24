@@ -16,7 +16,12 @@ export type SolveEvent = {
   postedAt: number;
   solvedAt: number;
   corrections: number;
+  /** Hints taken; a hinted solve is not clean. Absent means none. */
+  hints?: number | undefined;
 };
+
+/** A clean solve took no corrections and no hints. */
+const isCleanSolve = (e: SolveEvent): boolean => e.corrections === 0 && (e.hints ?? 0) === 0;
 
 export const COUNTED_WINDOW_MS = 24 * 3600 * 1000;
 export const STEADY_HAND_RUN = 7;
@@ -93,7 +98,7 @@ export const applySolve = (prev: StreakState, e: SolveEvent): StreakState => {
       current,
       best: Math.max(prev.best, current),
       lastDate: e.islandDate,
-      cleanRun: e.corrections === 0 ? prev.cleanRun + 1 : 0,
+      cleanRun: isCleanSolve(e) ? prev.cleanRun + 1 : 0,
       total,
     };
   }
@@ -101,7 +106,7 @@ export const applySolve = (prev: StreakState, e: SolveEvent): StreakState => {
     current: 1,
     best: Math.max(prev.best, 1),
     lastDate: e.islandDate,
-    cleanRun: e.corrections === 0 ? prev.cleanRun + 1 : 0,
+    cleanRun: isCleanSolve(e) ? prev.cleanRun + 1 : 0,
     total,
   };
 };

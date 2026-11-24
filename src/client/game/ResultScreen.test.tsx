@@ -70,6 +70,7 @@ const RESULT: Result = {
     steadyHand: true,
     counted: true,
   },
+  hints: 0,
   commented: false,
   subscribePromptSeen: false,
 };
@@ -241,6 +242,16 @@ describe('ResultScreen', () => {
   it('starts as Posted when the result says the chart was already commented', () => {
     renderScreen({ result: { ...RESULT, commented: true } });
     expect(screen.getByRole('button', { name: 'Posted' })).toBeDisabled();
+  });
+
+  it('notes the hints used and the time they added', () => {
+    renderScreen({ result: { ...RESULT, hints: 2 } });
+    expect(screen.getByText('2 hints used, +1:00 added to your time')).toBeInTheDocument();
+  });
+
+  it('says nothing about hints when none were used', () => {
+    renderScreen();
+    expect(screen.queryByText(/hint/)).not.toBeInTheDocument();
   });
 
   it('calls the provided onShare and onResults', () => {

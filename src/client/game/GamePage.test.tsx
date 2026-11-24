@@ -65,6 +65,40 @@ describe('GamePage', () => {
     expect(screen.getByRole('complementary')).toBeInTheDocument();
   });
 
+  it('asks for a hint, shows it with the landmark highlighted, and charges it', async () => {
+    stubGame(GAME);
+    render(<GamePage />);
+    const button = await screen.findByRole('button', { name: 'Ask for a hint (3 left)' });
+    fireEvent.click(button);
+    expect(await screen.findByRole('status')).toHaveTextContent(/Work out the Windmill next: only \d+ cells fit it\. See Clue 1\./);
+    expect(screen.getByRole('button', { name: 'Ask for a hint (2 left)' })).toBeInTheDocument();
+    expect(document.querySelectorAll('[data-hint="true"]').length).toBeGreaterThan(1);
+    expect(screen.getByRole('button', { name: 'Windmill' }).className).toMatch(/animate-pulse-mark/);
+
+    // The hint stays until the next move, then clears.
+    fireEvent.click(screen.getByRole('button', { name: 'row 3 column 3, land, empty' }));
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('runs out after three hints', async () => {
+    stubGame(GAME);
+    render(<GamePage />);
+    for (const left of [3, 2, 1]) {
+      fireEvent.click(await screen.findByRole('button', { name: `Ask for a hint (${left} left)` }));
+    }
+    expect(screen.getByRole('button', { name: 'No hints left' })).toBeDisabled();
+  });
+
+  it('opens the terminology sheet from the Terms button and closes it', async () => {
+    stubGame(GAME);
+    render(<GamePage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Terms' }));
+    const dialog = screen.getByRole('dialog', { name: 'Terms' });
+    expect(dialog).toHaveTextContent('Inland');
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('renders a login button that calls showLoginPrompt on a 401', async () => {
     stubGame({ error: 'login' }, 401);
     render(<GamePage />);

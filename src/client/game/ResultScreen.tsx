@@ -10,6 +10,7 @@ import { useEffect, useId, useState } from 'react';
 
 import type { Result, Settler, Stats } from '../../shared/api';
 import { cardTime, chartCardText } from '../../shared/card';
+import { HINT_PENALTY_MS } from '../../shared/puzzle/hints';
 import type { Placement, Puzzle } from '../../shared/puzzle/types';
 import { TIER_LABEL } from '../../shared/tiers';
 import { getCover, postComment, postSubscribe } from './api';
@@ -179,6 +180,13 @@ export const ResultScreen = ({
           <dd className="text-lg font-semibold tabular-nums">{`#${result.rank} of ${result.total}`}</dd>
         </div>
       </dl>
+
+      {result.hints > 0 ? (
+        <p className="-mt-2 text-center text-xs text-muted">
+          {result.hints === 1 ? '1 hint' : `${result.hints} hints`} used, +
+          {cardTime(result.hints * HINT_PENALTY_MS)} added to your time
+        </p>
+      ) : null}
 
       {stats ? (
         <p className="text-center text-sm text-ink/80">{statsLine(stats)}</p>

@@ -42,6 +42,7 @@ const RESULT: Result = {
   rank: 3,
   total: 41,
   streak: { current: 2, best: 2, cleanRun: 0, total: 2, tier: 'deckhand', steadyHand: false, counted: true },
+  hints: 0,
   commented: false,
   subscribePromptSeen: false,
 };

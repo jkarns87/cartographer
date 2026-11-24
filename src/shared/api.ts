@@ -30,6 +30,8 @@ export type Result = {
   rank: number;
   total: number;
   streak: StreakInfo;
+  /** Hints taken; each added `HINT_PENALTY_MS` to `elapsedMs`. */
+  hints: number;
   commented: boolean;
   subscribePromptSeen: boolean;
 };

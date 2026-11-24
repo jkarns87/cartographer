@@ -19,7 +19,7 @@ const STEPS: readonly Step[] = [
   },
   {
     title: 'Light every clue',
-    body: 'Clues turn green when your chart satisfies them. When every clue is lit, tap Chart it.',
+    body: 'Clues turn green when your chart satisfies them. When every clue is lit, tap Chart it. Stuck? Ask for a hint; each one adds 30 seconds.',
     icon: 'beacon',
   },
 ];

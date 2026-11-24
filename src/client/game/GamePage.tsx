@@ -3,19 +3,24 @@ import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import type { ApiError } from '../../shared/api';
+import type { Hint } from '../../shared/puzzle/hints';
 import { clueLandmarks } from '../../shared/puzzle/predicates';
 import { DIFFICULTY_LABEL, EXPEDITION_LANDMARKS } from '../../shared/puzzle/types';
-import type { LandmarkId } from '../../shared/puzzle/types';
+import type { Cell, LandmarkId } from '../../shared/puzzle/types';
 import { Board } from './components/Board';
 import { ChartButton } from './components/ChartButton';
 import { ClueSheet } from './components/ClueSheet';
 import { Header } from './components/Header';
+import { HintPanel } from './components/HintPanel';
 import { Legend } from './components/Legend';
+import { Glossary } from './Glossary';
 import { ResultContainer } from './ResultScreen';
 import { Tutorial } from './Tutorial';
 import { useGame } from './useGame';
 
 const HIGHLIGHT_MS = 1200;
+/** How long a hint's candidate cells stay ringed on the map. */
+const HINT_CELLS_MS = 2000;
 
 const CHART_ERROR_TEXT: Record<ApiError['error'], string> = {
   mismatch: 'The survey does not match your chart.',
@@ -80,12 +85,22 @@ const ErrorPanel = ({ onRetry }: { onRetry: () => void }) => (
 export const GamePage = () => {
   const g = useGame();
   const [highlight, setHighlight] = useState<LandmarkId[]>([]);
+  const [highlightCells, setHighlightCells] = useState<Cell[]>([]);
+  // The hint shown, keyed to the history length it was given at; it clears on the next move.
+  const [shownHint, setShownHint] = useState<{ hint: Hint; at: number } | null>(null);
+  const [glossaryOpen, setGlossaryOpen] = useState(false);
 
   useEffect(() => {
     if (highlight.length === 0) return;
     const id = setTimeout(() => setHighlight([]), HIGHLIGHT_MS);
     return () => clearTimeout(id);
   }, [highlight]);
+
+  useEffect(() => {
+    if (highlightCells.length === 0) return;
+    const id = setTimeout(() => setHighlightCells([]), HINT_CELLS_MS);
+    return () => clearTimeout(id);
+  }, [highlightCells]);
 
   if (g.phase === 'loading') return <LoadingSkeleton />;
   if (g.phase === 'login') return <LoginPanel />;
@@ -102,6 +117,23 @@ export const GamePage = () => {
   const showTutorial = !game.tutorialSeen && !solved;
   // Dated islands are numbered from 1; spec 2.5 labels their 9-landmark draw Expedition.
   const expedition = puzzle.number > 0 && puzzle.landmarks.length === EXPEDITION_LANDMARKS;
+  const currentHint =
+    shownHint !== null && shownHint.at === state.history.length ? shownHint.hint : null;
+
+  const askHint = () => {
+    if (locked) return;
+    const hint = g.hint();
+    if (!hint) return;
+    // A charged hint has just appended H, so it belongs to the next history length.
+    setShownHint({ hint, at: state.history.length + (hint.kind === 'none' ? 0 : 1) });
+    if (hint.kind === 'misplaced') {
+      setHighlight([hint.landmark]);
+      setHighlightCells([]);
+    } else if (hint.kind === 'next') {
+      setHighlight([hint.landmark]);
+      setHighlightCells(hint.cells);
+    }
+  };
 
   return (
     <main
@@ -123,11 +155,20 @@ export const GamePage = () => {
             corrections={result?.corrections ?? state.corrections}
             solved={solved}
           />
-          <p className="-mt-2 text-xs text-muted">
-            Island {puzzle.number > 0 ? `#${puzzle.number}` : '(practice)'} ·{' '}
-            {DIFFICULTY_LABEL[puzzle.difficulty]} · {puzzle.landmarks.length} landmarks
-            {expedition ? ' · Expedition' : ''}
-          </p>
+          <div className="-mt-2 flex items-center justify-between gap-2 text-xs text-muted">
+            <p>
+              Island {puzzle.number > 0 ? `#${puzzle.number}` : '(practice)'} ·{' '}
+              {DIFFICULTY_LABEL[puzzle.difficulty]} · {puzzle.landmarks.length} landmarks
+              {expedition ? ' · Expedition' : ''}
+            </p>
+            <button
+              type="button"
+              onClick={() => setGlossaryOpen(true)}
+              className="min-h-8 shrink-0 rounded-md px-2 font-medium text-ink/80 underline underline-offset-2 focus-visible:outline-2 focus-visible:outline-ink"
+            >
+              Terms
+            </button>
+          </div>
           {showResult ? (
             <ResultContainer
               postId={game.postId}
@@ -141,6 +182,7 @@ export const GamePage = () => {
               land={puzzle.land}
               placements={state.placements}
               highlight={highlight}
+              highlightCells={highlightCells}
               disabled={locked}
               onTapCell={(cell) => g.dispatch({ type: 'tapCell', cell })}
             />
@@ -187,6 +229,9 @@ export const GamePage = () => {
                 if (clue) setHighlight(clueLandmarks(clue));
               }}
             />
+            {solved || g.canChart ? null : (
+              <HintPanel hintsLeft={g.hintsLeft} hint={currentHint} onHint={askHint} />
+            )}
             <ChartButton
               visible={chartVisible}
               busy={g.charting}
@@ -198,6 +243,7 @@ export const GamePage = () => {
         )}
       </div>
       {showTutorial ? <Tutorial /> : null}
+      {glossaryOpen ? <Glossary onClose={() => setGlossaryOpen(false)} /> : null}
     </main>
   );
 };

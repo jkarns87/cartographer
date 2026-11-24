@@ -57,7 +57,8 @@ export const FINAL = {
   corrections: 'finalCorrections',
 } as const;
 
-export const HISTORY_RE = /^[PL]{0,200}$/;
+/** `P` place, `L` lift, `H` hint (see `shared/puzzle/hints`). */
+export const HISTORY_RE = /^[PLH]{0,200}$/;
 export const MAX_CORRECTIONS = 999;
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>

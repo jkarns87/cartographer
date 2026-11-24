@@ -1,4 +1,6 @@
 import type { ChartRequest, Result, Stats, StreakInfo } from '../../shared/api';
+import { isClean } from '../../shared/card';
+import { countHints, HINT_PENALTY_MS } from '../../shared/puzzle/hints';
 import {
   allCluesLit,
   samePlacement,
@@ -31,12 +33,14 @@ export type ChartOutcome =
 const solveEvent = (
   snap: Snapshot,
   solvedAt: number,
-  corrections: number
+  corrections: number,
+  hints: number
 ): SolveEvent => ({
   islandDate: snap.date,
   postedAt: snap.postedAt,
   solvedAt,
   corrections,
+  hints,
 });
 
 const assemble = async (
@@ -54,6 +58,7 @@ const assemble = async (
     rank,
     total,
     streak,
+    hints: countHints(p.history),
     commented: p.commented,
     subscribePromptSeen: p.subscribePromptSeen,
   };
@@ -73,7 +78,7 @@ export const buildResult = async (
 ): Promise<Result> => {
   const counted =
     p.solvedAt !== null &&
-    isCounted(solveEvent(snap, p.solvedAt, p.corrections));
+    isCounted(solveEvent(snap, p.solvedAt, p.corrections, countHints(p.history)));
   const streak = toStreakInfo(await readStreak(deps, uid), counted, deps.now());
   return assemble(deps, postId, uid, p, streak);
 };
@@ -149,17 +154,19 @@ export const chart = async (
     return { kind: 'ok', result, stats: await readStats(deps, postId) };
   }
 
-  const elapsedMs = Math.max(0, now - startedAt);
+  // Each hint costs HINT_PENALTY_MS on top of the measured time (spec: hints).
+  const hints = countHints(req.history);
+  const elapsedMs = Math.max(0, now - startedAt) + hints * HINT_PENALTY_MS;
   await deps.redis.hSet(userKey, {
     [FINAL.placements]: JSON.stringify(req.placements),
     [FINAL.history]: req.history,
     [FINAL.corrections]: String(req.corrections),
   });
   await deps.redis.expire(userKey, USER_TTL_SECONDS);
-  await recordTime(deps, postId, uid, elapsedMs, req.corrections === 0);
+  await recordTime(deps, postId, uid, elapsedMs, isClean(req.corrections, req.history));
   await deps.redis.zAdd(keys.settlers(postId), { member: uid, score: now });
 
-  const event = solveEvent(snap, now, req.corrections);
+  const event = solveEvent(snap, now, req.corrections, hints);
   const next = applySolve(await readStreak(deps, uid), event);
   // Practice islands never touch the streak hash, so there is nothing to write.
   if (snap.date !== null) await writeStreak(deps, uid, next);

@@ -57,6 +57,12 @@ appear on it.
   title, a row of pin and lift symbols that shows how you solved it without showing where, your
   time, and your streak. Share sends the same card through Reddit's share sheet. Join for
   tomorrow's island subscribes you. All three are optional and separate.
+- Ask for a hint, up to three per island, when you are stuck. The hint is worked out on the device
+  from the clues alone with the same propagation solver the generator uses: it names a misplaced
+  landmark and the clues that prove it, or the unplaced landmark with the fewest possible cells and
+  rings those cells for two seconds. Each hint adds 30 seconds to your time and a 💡 to your card.
+- A Terms button defines every phrase the clues use in the exact sense the game checks it, and a
+  compass rose sits in the water of every map so "north" is never in doubt.
 - Counted solves earn user flair in the subreddit: Deckhand, Navigator (3-day streak), Cartographer
   (7 days) and Master Cartographer (30 days), with the streak in the text (`Navigator · 5d`) and a
   Steady Hand mark for seven clean solves in a row.
@@ -108,6 +114,10 @@ appear on it.
 - **Platform unknowns.** The cron time zone, whether snoovatar images load inside the webview, and
   how post flair behaves on a subreddit without a matching template are not documented. Each has a
   fallback in code and an item on the playtest checklist.
+- **Safari and aspect ratio.** The map is a square frame with a 6x6 grid filling it. On Safari the
+  grid's percentage height inside an `aspect-ratio` box did not resolve until a later layout pass,
+  so a playtester saw rows one pixel high until the first placement. The grid now carries the
+  aspect ratio itself and the frame simply wraps it.
 - **User actions before approval.** Devvit grants `runAs: 'USER'` and subscribing only to the app
   owner until the app version is published and approved, which cannot happen before judging ends.
   A playtest with a second account showed it: the card posted under the app account, and
@@ -126,7 +136,7 @@ appear on it.
   user under one stickied app comment, a fixed template, no free text, nothing gated on it.
 - Clue states use shape and color, every cell has a screen-reader label, tap targets are at least
   44 px, and dark mode and reduced motion are supported.
-- 814 automated tests cover the puzzle rules, both solvers, the generator, every server service
+- 847 automated tests cover the puzzle rules, both solvers, the generator, every server service
   and route, and the client's reducer and components.
 
 ## What we learned
@@ -168,7 +178,7 @@ island around you.
 
 **Polish.** The app is built for publishing: the inline cover stays small and tap-only, the board
 fits a phone in portrait and moves the clues to a sidebar in landscape and on desktop, and dark mode
-and reduced motion are handled. Every service has tests (814 in all), the server
+and reduced motion are handled. Every service has tests (847 in all), the server
 verifies every solve, the cron is idempotent with a retry 15 minutes later, and Reddit-side failures
 are logged without breaking the game. Icons are open-licensed and credited, and there are no
 third-party requests at runtime.

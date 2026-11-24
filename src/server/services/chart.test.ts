@@ -80,6 +80,7 @@ describe('chart', () => {
           steadyHand: false,
           counted: true,
         },
+        hints: 0,
         commented: false,
         subscribePromptSeen: false,
       },
@@ -118,6 +119,28 @@ describe('chart', () => {
       text: 'Deckhand · 1d',
     });
     expect(await deps.redis.get(keys.flair(UID))).toBe('Deckhand · 1d');
+  });
+
+  it('adds 30 seconds per hint, counts the solve as not clean, and reports the hints', async () => {
+    const deps = makeDeps();
+    const postId = await post(deps);
+    await ensureStarted(deps, postId, UID);
+    deps.clock.now = FIXTURE_NOW + 95_000;
+
+    const out = await chart(deps, postId, UID, NAME, solve(dated, { history: 'PHPPHPPPP' }));
+    expect(out.kind).toBe('ok');
+    if (out.kind !== 'ok') return;
+    expect(out.result.elapsedMs).toBe(95_000 + 60_000);
+    expect(out.result.hints).toBe(2);
+    expect(out.result.corrections).toBe(0);
+    expect(out.result.streak.cleanRun).toBe(0);
+    expect(out.stats).toMatchObject({ charted: 1, cleanPct: 0, medianMs: 155_000 });
+    // The stored time carries the penalty, so a later read and the rank agree with the result.
+    const p = await readProgress(deps, postId, UID);
+    expect(p.elapsedMs).toBe(155_000);
+    const snap = await loadSnapshot(deps, postId);
+    if (!snap) throw new Error('snapshot missing');
+    expect(await buildResult(deps, postId, UID, p, snap)).toMatchObject({ elapsedMs: 155_000, hints: 2 });
   });
 
   it('counts a solve with corrections as charted but not clean', async () => {

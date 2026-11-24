@@ -1,3 +1,5 @@
+import { countHints } from './puzzle/hints';
+
 /**
  * The fixed "Post my chart" card (spec 5.8). The server posts it as the user's
  * comment and the client passes the same text to the share sheet, so both sides
@@ -7,7 +9,7 @@
 export type ChartCardOpts = {
   number: number;
   name: string;
-  /** 'P' = place, 'L' = lift, in order. Any other character is ignored. */
+  /** 'P' = place, 'L' = lift, 'H' = hint, in order. Any other character is ignored. */
   history: string;
   elapsedMs: number;
   corrections: number;
@@ -19,6 +21,7 @@ export const MAX_CARD_PINS = 24;
 
 const PIN = '📍';
 const LIFT = '↩';
+const HINT = '💡';
 const ELLIPSIS = '…';
 
 /** Milliseconds to `m:ss`. Negative or non-finite input renders as `0:00`. */
@@ -34,19 +37,24 @@ const pinLine = (history: string): string => {
   for (const ch of history) {
     if (ch === 'P') symbols.push(PIN);
     else if (ch === 'L') symbols.push(LIFT);
+    else if (ch === 'H') symbols.push(HINT);
   }
   if (symbols.length <= MAX_CARD_PINS) return symbols.join('');
   return symbols.slice(0, MAX_CARD_PINS).join('') + ELLIPSIS;
 };
 
+/** A clean chart took no corrections and no hints. */
+export const isClean = (corrections: number, history: string): boolean =>
+  corrections === 0 && countHints(history) === 0;
+
 /**
- * Line 3: omitted for practice; `Clean chart` for no corrections on a streak of
+ * Line 3: omitted for practice; `Clean chart` for a clean solve on a streak of
  * at most one day; otherwise `<n>-day streak`. An uncounted streak (0) with
  * corrections has nothing to say, so the line is omitted rather than "0-day".
  */
 const streakLine = (opts: ChartCardOpts): string | null => {
   if (opts.practice) return null;
-  if (opts.corrections === 0 && opts.streakCurrent <= 1) return 'Clean chart';
+  if (isClean(opts.corrections, opts.history) && opts.streakCurrent <= 1) return 'Clean chart';
   if (opts.streakCurrent >= 1) return `${opts.streakCurrent}-day streak`;
   return null;
 };

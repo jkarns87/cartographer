@@ -177,6 +177,18 @@ describe('applySolve', () => {
   });
 });
 
+describe('applySolve with hints', () => {
+  it('a hinted solve counts for the streak but resets the clean run', () => {
+    const prev: StreakState = { current: 1, best: 1, lastDate: '2026-12-01', cleanRun: 1, total: 1 };
+    expect(
+      applySolve(prev, event({ islandDate: '2026-12-02', postedAt: POSTED + DAY, solvedAt: POSTED + DAY + 1, hints: 1 }))
+    ).toEqual({ current: 2, best: 2, lastDate: '2026-12-02', cleanRun: 0, total: 2 });
+    expect(
+      applySolve(prev, event({ islandDate: '2026-12-02', postedAt: POSTED + DAY, solvedAt: POSTED + DAY + 1, hints: 0 }))
+    ).toEqual({ current: 2, best: 2, lastDate: '2026-12-02', cleanRun: 2, total: 2 });
+  });
+});
+
 describe('tierFor', () => {
   it.each<[Partial<StreakState>, ReturnType<typeof tierFor>]>([
     [{}, null],

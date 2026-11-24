@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import type { ApiError, ChartResponse, GameResponse, PlaceRequest } from '../../shared/api';
+import { computeHint, MAX_HINTS } from '../../shared/puzzle/hints';
+import type { Hint } from '../../shared/puzzle/hints';
 import { evaluateClue } from '../../shared/puzzle/predicates';
 import type { ClueState } from '../../shared/puzzle/types';
 import { getGame, postChart, postPlace } from './api';
@@ -23,10 +25,16 @@ export type UseGame = {
   chartError: ApiError['error'] | null;
   clearChartError: () => void;
   reload: () => void;
+  /**
+   * Works out a hint from the clues and charges it (an `H` in the history)
+   * unless there is nothing to say. Null once the island's hints are used up.
+   */
+  hint: () => Hint | null;
+  hintsLeft: number;
 };
 
 const SAVE_DEBOUNCE_MS = 400;
-const EMPTY: GameState = { selected: null, placements: {}, history: '', corrections: 0 };
+const EMPTY: GameState = { selected: null, placements: {}, history: '', corrections: 0, hints: 0 };
 
 /**
  * Loads the game, owns the interaction state, debounces saves, and charts.
@@ -146,6 +154,14 @@ export const useGame = (): UseGame => {
 
   const clearChartError = useCallback(() => setChartError(null), []);
 
+  const hint = useCallback((): Hint | null => {
+    if (!puzzle || state.hints >= MAX_HINTS) return null;
+    const h = computeHint(puzzle, state.placements);
+    if (h.kind !== 'none') dispatch({ type: 'hint' });
+    return h;
+  }, [puzzle, state.hints, state.placements]);
+  const hintsLeft = Math.max(0, MAX_HINTS - state.hints);
+
   const phase: GamePhase = game
     ? 'ready'
     : loadError === 'login'
@@ -168,5 +184,7 @@ export const useGame = (): UseGame => {
     chartError,
     clearChartError,
     reload,
+    hint,
+    hintsLeft,
   };
 };

@@ -449,6 +449,7 @@ describe('POST /api/chart', () => {
             steadyHand: false,
             counted: true,
           },
+          hints: 0,
           commented: false,
           subscribePromptSeen: false,
         },

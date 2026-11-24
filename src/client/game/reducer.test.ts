@@ -25,7 +25,7 @@ const LAND_C = { r: 5, c: 3 };
 describe('initialState', () => {
   it('selects the first landmark when nothing is placed', () => {
     const s = initialState(LANDMARKS);
-    expect(s).toEqual({ selected: 'lighthouse', placements: {}, history: '', corrections: 0 });
+    expect(s).toEqual({ selected: 'lighthouse', placements: {}, history: '', corrections: 0, hints: 0 });
   });
 
   it('selects the first unplaced landmark when some are placed', () => {
@@ -39,6 +39,30 @@ describe('initialState', () => {
     const s = initialState(LANDMARKS, { lighthouse: LAND_A, windmill: LAND_B, well: LAND_C }, 'PPP', 2);
     expect(s.selected).toBeNull();
     expect(s.corrections).toBe(2);
+  });
+});
+
+describe('hints', () => {
+  it('appends H, counts the hint, and refuses a fourth', () => {
+    let s = initialState(LANDMARKS);
+    for (let i = 1; i <= 3; i++) {
+      s = reduce(s, { type: 'hint' }, PUZZLE);
+      expect(s.hints).toBe(i);
+    }
+    expect(s.history).toBe('HHH');
+    const same = reduce(s, { type: 'hint' }, PUZZLE);
+    expect(same).toBe(s);
+  });
+
+  it('keeps the hint count through place and lift, and derives it on hydrate', () => {
+    let s = reduce(initialState(LANDMARKS), { type: 'hint' }, PUZZLE);
+    s = reduce(s, { type: 'tapCell', cell: LAND_A }, PUZZLE);
+    s = reduce(s, { type: 'lift', id: 'lighthouse' }, PUZZLE);
+    expect(s.history).toBe('HPL');
+    expect(s.hints).toBe(1);
+    const h = reduce(s, { type: 'hydrate', placements: {}, history: 'PHHL', corrections: 1 }, PUZZLE);
+    expect(h.hints).toBe(2);
+    expect(initialState(LANDMARKS, {}, 'HPH', 0).hints).toBe(2);
   });
 });
 
@@ -207,6 +231,7 @@ describe('reduce: hydrate', () => {
       placements: { windmill: LAND_B },
       history: 'PLP',
       corrections: 1,
+      hints: 0,
     });
   });
 });

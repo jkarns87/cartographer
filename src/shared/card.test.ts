@@ -33,6 +33,15 @@ describe('chartCardText', () => {
     );
   });
 
+  it('shows a bulb per hint and never calls a hinted chart clean', () => {
+    expect(card({ history: 'PPHPPLPPP', corrections: 1, streakCurrent: 1 })).toBe(
+      'Cartographer #12 · Thistle Reach\n📍📍💡📍📍↩📍📍📍  4:12\n1-day streak'
+    );
+    expect(card({ history: 'HPPPPPPP', corrections: 0, streakCurrent: 0 })).toBe(
+      'Cartographer #12 · Thistle Reach\n💡📍📍📍📍📍📍📍  4:12'
+    );
+  });
+
   it('keeps the streak line for a clean chart on a longer streak', () => {
     expect(card({ history: 'PPPPPPP', corrections: 0, streakCurrent: 2 })).toBe(
       'Cartographer #12 · Thistle Reach\n📍📍📍📍📍📍📍  4:12\n2-day streak'

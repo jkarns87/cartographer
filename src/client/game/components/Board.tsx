@@ -10,6 +10,7 @@ type Props = {
   placements: Placement;
   onTapCell: (cell: Cell) => void;
   highlight?: LandmarkId[] | undefined;
+  highlightCells?: Cell[] | undefined;
   settlers?: Settler[] | undefined;
   disabled?: boolean | undefined;
 };
@@ -21,7 +22,7 @@ const SHAKE_MS = 300;
  * is not forwarded; everything else goes to the reducer. The shake keyframe
  * is suppressed under `prefers-reduced-motion` by the `motion-safe:` variant.
  */
-export const Board = ({ land, placements, onTapCell, highlight, settlers, disabled }: Props) => {
+export const Board = ({ land, placements, onTapCell, highlight, highlightCells, settlers, disabled }: Props) => {
   const [shakeCell, setShakeCell] = useState<Cell | null>(null);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export const Board = ({ land, placements, onTapCell, highlight, settlers, disabl
       land={land}
       placements={placements}
       highlight={highlight}
+      highlightCells={highlightCells}
       settlers={settlers}
       onCellTap={disabled ? undefined : handleTap}
       shakeCell={shakeCell}

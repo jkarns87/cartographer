@@ -37,6 +37,9 @@ cells are water. The edge of the grid counts as sea, so a land cell on the edge 
 - Tapping an occupied cell always lifts that landmark. It never stacks or swaps.
 - Water cells refuse a tap with a short shake.
 - Tap a clue to pulse the landmarks it names, on the map and in the legend.
+- Tap Terms, above the map, for a definition of every phrase the clues use, in the exact sense the
+  game checks them.
+- A compass rose sits in the water, in whichever corner of the map has the most sea. North is up.
 
 **Clue states.** Each clue shows its state with a shape and a color, so color alone never carries
 the meaning.
@@ -66,6 +69,14 @@ as soon as a placed landmark breaks it, and it lights only once every landmark i
 **Charting.** When every clue is lit, a Chart it button appears. The server checks your chart
 against the stored solution and records your time. The result screen shows your time, corrections,
 rank, the day's community numbers, your streak and tier, and the settlers.
+
+**Hints.** Ask for a hint, under the clue sheet, up to three times per island. A hint is worked
+out on your device from the clues alone, with the same propagation solver the generator uses, so
+the solution never has to leave the server. If a placed landmark sits where the clues say it
+cannot, the hint names it and the clues that say so, and pulses it. Otherwise it names the
+unplaced landmark with the fewest possible cells, rings those cells on the map for two seconds, and
+points at its clues. Each hint adds 30 seconds to your recorded time, puts a 💡 in your card, and
+makes the solve not clean. The hint stays on screen until your next move.
 
 **Time and saving.** The timer starts the first time you open the board and is measured by the
 server, so reloading does not reset it. Every placement and lift is saved, so you can pick up on
@@ -172,9 +183,10 @@ the game to add yours." After charting, the Post my chart button replies to that
 with a fixed card of up to three lines:
 
 1. `Cartographer #12 · Thistle Reach`
-2. one pin symbol per placement and a return arrow per lift (at most 24 symbols, then an ellipsis),
+2. one pin symbol per placement, a return arrow per lift and a bulb per hint (at most 24 symbols,
+   then an ellipsis),
    followed by your time as `m:ss`
-3. `7-day streak`, or `Clean chart` when you made no corrections and your streak is at most one
+3. `7-day streak`, or `Clean chart` when you made no corrections, took no hints, and your streak is at most one
    day; left out on practice islands
 
 The card never contains the grid, so it never gives the solution away. The Results thread button on
@@ -190,7 +202,7 @@ the result screen opens the post's comments, where the stickied thread sits on t
 | Master Cartographer | A current streak of 30 days |
 
 The highest tier wins, and the flair text carries the streak, for example `Navigator · 5d`. Steady
-Hand is a badge for seven counted solves in a row with zero corrections; it adds a trailing ✦ to
+Hand is a badge for seven counted solves in a row with zero corrections and no hints; it adds a trailing ✦ to
 the flair and shows on the result screen. The app writes flair only when your current flair is
 empty or is the text the app wrote last time, so flair you chose yourself is never overwritten.
 Moderators can turn flair off.
@@ -203,7 +215,7 @@ as a small tent. Once you have solved, the inline cover in the feed shows the st
 its settlers.
 
 **Community numbers.** The cover and the result screen show how many people charted the island,
-the share who did it with zero corrections, and the median time. Times under 10 seconds are kept
+the share who did it clean (no corrections, no hints), and the median time. Times under 10 seconds are kept
 but left out of the median. The result screen adds your rank by time.
 
 **Share and subscribe.** Share opens Reddit's share sheet with the same card text, and Reddit adds
@@ -305,9 +317,10 @@ rebuild it.
   `startedAt`) is rejected (400), so a bare request cannot record a 0 ms time. `hSetNX` on
   `solvedAt` makes the solve happen once per player per post; a repeat returns the stored result.
 - Solve time is measured by the server. `startedAt` is claimed with `hSetNX` on the first
-  `GET /api/game`, and the elapsed time is the server clock at chart time minus that. Corrections
-  and the place and lift history are client-reported soft stats, checked for shape (at most 200
-  `P` and `L` characters, corrections 0 to 999).
+  `GET /api/game`, and the elapsed time is the server clock at chart time minus that, plus 30
+  seconds for every hint in the history. Corrections and the place, lift and hint history are
+  client-reported soft stats, checked for shape (at most 200 `P`, `L` and `H` characters,
+  corrections 0 to 999).
 - `GET /api/reveal` returns settler positions only to a player who has already solved, because
   those positions are the solution's empty cells.
 
@@ -339,9 +352,9 @@ post a practice island".
 | `npm run deploy`     | Type check, lint, then `devvit upload` (a private upload, not a publish)              |
 | `npm run launch`     | Disabled on purpose. The app is not published before judging ends on 2026-12-17.      |
 
-**Tests.** 814 Vitest tests in 36 files: 345 for the shared puzzle module (table-driven tests per
+**Tests.** 847 Vitest tests in 40 files: 354 for the shared puzzle module (table-driven tests per
 clue type, sentence templates, solver fixtures with known solution and round counts, and a
-randomized cross-check of the two solvers), 315 for the server (every service and route), 93 for
+randomized cross-check of the two solvers), 318 for the server (every service and route), 114 for
 the client (the reducer, components, the game hook and the cover), 54 for the generator (including
 a property test over 100 seeds for each landmark count and verification of the committed files),
 and 7 for the icon pipeline.

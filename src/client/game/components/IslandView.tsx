@@ -5,11 +5,15 @@ import { cellAt, isLand, landmarkAt, sameCell } from '../../../shared/puzzle/gri
 import { LANDMARK_NAMES, SIZE } from '../../../shared/puzzle/types';
 import type { Cell, LandMask, LandmarkId, Placement } from '../../../shared/puzzle/types';
 import { Icon } from '../../icons/Icon';
+import { compassCorner } from './compass';
+import { CompassRose } from './CompassRose';
 
 type Props = {
   land: LandMask;
   placements: Placement;
   highlight?: LandmarkId[] | undefined;
+  /** Cells a hint points at; drawn with a ring. */
+  highlightCells?: Cell[] | undefined;
   settlers?: Settler[] | undefined;
   onCellTap?: ((cell: Cell) => void) | undefined;
   shakeCell?: Cell | null | undefined;
@@ -64,6 +68,7 @@ export const IslandView = ({
   land,
   placements,
   highlight,
+  highlightCells,
   settlers,
   onCellTap,
   shakeCell,
@@ -76,18 +81,22 @@ export const IslandView = ({
   return (
     <div
       className={[
-        'aspect-square w-full select-none rounded-xl bg-water p-1.5',
+        'relative w-full select-none rounded-xl bg-water p-1.5',
         isBoard ? 'shadow-inner' : '',
       ].join(' ')}
       role={interactive ? 'group' : 'img'}
       aria-label={interactive ? 'Island' : 'Island map'}
     >
-      <div className="grid h-full w-full grid-cols-6 grid-rows-6 gap-px">
+      {/* The grid carries the aspect ratio itself. Safari does not resolve a
+          percentage height inside an aspect-ratio box until a later layout
+          pass, which collapsed the rows to a pixel until the first placement. */}
+      <div className="grid aspect-square w-full grid-cols-6 grid-rows-6 gap-px">
         {CELLS.map((cell) => {
           const landHere = isLand(land, cell);
           const occupant = landHere ? landmarkAt(placements, cell) : undefined;
           const shaking = shakeCell ? sameCell(shakeCell, cell) : false;
           const pulsing = occupant !== undefined && (highlight?.includes(occupant) ?? false);
+          const hinted = highlightCells?.some((c) => sameCell(c, cell)) ?? false;
           const here = meFirst.filter((s) => sameCell(s.cell, cell)).slice(0, 3);
           const label = cellLabel(cell, landHere, occupant);
 
@@ -102,6 +111,7 @@ export const IslandView = ({
               ? 'focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink'
               : '',
             shaking ? 'motion-safe:animate-shake' : '',
+            hinted ? 'ring-2 ring-warn ring-inset' : '',
           ].join(' ');
 
           const content = (
@@ -155,6 +165,7 @@ export const IslandView = ({
                 key={`${cell.r}-${cell.c}`}
                 type="button"
                 aria-label={label}
+                data-hint={hinted ? 'true' : undefined}
                 onClick={() => onCellTap(cell)}
                 className={className}
               >
@@ -163,12 +174,13 @@ export const IslandView = ({
             );
           }
           return (
-            <div key={`${cell.r}-${cell.c}`} className={className}>
+            <div key={`${cell.r}-${cell.c}`} data-hint={hinted ? 'true' : undefined} className={className}>
               {content}
             </div>
           );
         })}
       </div>
+      <CompassRose corner={compassCorner(land)} className={isBoard ? 'w-[30%]' : 'w-[26%]'} />
     </div>
   );
 };
