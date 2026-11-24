@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
 import type { Settler } from '../../../shared/api';
-import { cellAt, isLand, landmarkAt, sameCell } from '../../../shared/puzzle/grid';
-import { LANDMARK_NAMES, SIZE } from '../../../shared/puzzle/types';
-import type { Cell, LandMask, LandmarkId, Placement } from '../../../shared/puzzle/types';
+import { cellAt, isLand, landmarkAt, onShore, sameCell } from '../../../shared/puzzle/grid';
+import { DIRS, LANDMARK_NAMES, SIZE } from '../../../shared/puzzle/types';
+import type { Cell, Dir, LandMask, LandmarkId, Placement } from '../../../shared/puzzle/types';
 import { Icon } from '../../icons/Icon';
 import { compassCorner } from './compass';
 import { CompassRose } from './CompassRose';
@@ -21,6 +21,24 @@ type Props = {
 };
 
 const CELLS: Cell[] = Array.from({ length: SIZE * SIZE }, (_, i) => cellAt(i));
+
+/**
+ * The shoreline: a 2 px stroke on each side of a land cell that faces water or
+ * the edge of the map (which counts as sea). Land cells sit flush, with only a
+ * hairline in the sand between them, so the island reads as one mass and every
+ * shore is a line you can see.
+ */
+const SHORE_EDGE: Record<Dir, string> = {
+  N: 'border-t-2 border-t-shore',
+  E: 'border-r-2 border-r-shore',
+  S: 'border-b-2 border-b-shore',
+  W: 'border-l-2 border-l-shore',
+};
+
+const shoreline = (land: LandMask, cell: Cell): string =>
+  DIRS.filter((d) => onShore(land, cell, d))
+    .map((d) => SHORE_EDGE[d])
+    .join(' ');
 
 /**
  * Up to three settlers per cell. The first (yours, when you share the cell) sits
@@ -93,7 +111,7 @@ export const IslandView = ({
       {/* The grid carries the aspect ratio itself. Safari does not resolve a
           percentage height inside an aspect-ratio box until a later layout
           pass, which collapsed the rows to a pixel until the first placement. */}
-      <div className="grid aspect-square w-full grid-cols-6 grid-rows-6 gap-px">
+      <div className="grid aspect-square w-full grid-cols-6 grid-rows-6">
         {CELLS.map((cell) => {
           const landHere = isLand(land, cell);
           const occupant = landHere ? landmarkAt(placements, cell) : undefined;
@@ -104,11 +122,11 @@ export const IslandView = ({
           const label = cellLabel(cell, landHere, occupant);
 
           const surface = landHere
-            ? 'bg-sand border border-land'
+            ? `bg-sand border border-land ${shoreline(land, cell)}`
             // Transparent: the frame paints the sea, and the compass shows through.
-            : 'border border-transparent';
+            : '';
           const className = [
-            'relative flex items-center justify-center rounded-sm',
+            'relative flex items-center justify-center',
             surface,
             interactive ? 'touch-manipulation cursor-pointer active:brightness-95' : '',
             interactive

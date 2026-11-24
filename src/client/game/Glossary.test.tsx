@@ -18,7 +18,8 @@ describe('Glossary', () => {
   it('defines the phrases the way the rules check them', () => {
     const meaning = (term: string) => TERMS.find((t) => t.term === term)?.meaning ?? '';
     expect(meaning('Touches')).toMatch(/share an edge/);
-    expect(meaning('Inland')).toMatch(/all four sides/);
+    expect(meaning('Stands on no shore')).toMatch(/none of its four sides/);
+    expect(meaning('Lies between')).toMatch(/Diagonals do not count/);
     expect(meaning('Due east of')).toMatch(/same row/);
     expect(meaning('Somewhere east of')).toMatch(/whatever the row/);
     expect(meaning('No landmark stands north of')).toMatch(/same row or further south/);

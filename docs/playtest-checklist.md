@@ -185,6 +185,10 @@ Useful tools: the app logs from the playtest session, the browser devtools Netwo
     other players cannot be verified before publishing on 2026-12-17. Still to check with the
     non-owner account: the reply sits under the stickied results comment and matches the fixed
     card, and a second tap shows Posted with no second reply.
+  - Seen 2026-11-23 from a non-owner playtester: the first Post my chart, on the dated island,
+    went out as the app account with no prompt; a later one on the practice island showed
+    Reddit's consent prompt. Check whose name is on that second card. If it is the player's, the
+    first was a first-run glitch on Reddit's side and the 403 fallback already covers it.
   - If it fails: if the call errors, the claim is released and the button shows "Could not post
     your chart"; read the logs. A "refresh token does not exist" error means consent was not
     granted; the client asks through `canRunAsUser` before calling the server.

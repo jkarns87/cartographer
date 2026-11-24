@@ -41,6 +41,8 @@ cells are water. The edge of the grid counts as sea, so a land cell on the edge 
   game checks them.
 - A gold compass rose sits in the water beneath the tiles, in whichever corner of the map has
   the most sea. North is up.
+- Every shore is drawn as a dark line along the side of the land cell that faces the water. The
+  edge of the map counts as sea, so land on the edge has a shoreline there too.
 
 **Clue states.** Each clue shows its state with a shape and a color, so color alone never carries
 the meaning.
@@ -56,19 +58,19 @@ as soon as a placed landmark breaks it, and it lights only once every landmark i
 
 **Clue types.** Eight sentence patterns. Each clue names at most three landmarks.
 
-| Example                                                             | True when                                                 |
-| ------------------------------------------------------------------- | --------------------------------------------------------- |
-| The Lighthouse stands on a north-facing shore.                      | The cell north of it is water or off the map              |
-| The Temple is inland.                                               | All four of its neighbors are land on the map             |
-| The Windmill is due east of the Well.                               | Same row, with the Windmill somewhere to the east         |
-| The Farm lies somewhere south of the Temple.                        | The Farm is in a lower row, in any column                 |
-| The Fort touches (does not touch) the Windmill.                     | The two share an edge (or do not)                         |
-| The Shipwreck shares (does not share) a column with the Lighthouse. | Same column, or same row for the row form (or not)        |
-| The Well lies between the Mine and the Farm.                        | All three on one row or column, the Well strictly between |
-| No landmark stands west of the Well.                                | No other landmark is in a column further west             |
+| Example                                                             | True when                                                      |
+| ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| The Lighthouse stands on a north-facing shore.                      | The cell north of it is water or off the map                   |
+| The Temple stands on no shore.                                      | Water on none of its four sides; a water corner does not count |
+| The Windmill is due east of the Well.                               | Same row, with the Windmill somewhere to the east              |
+| The Farm lies somewhere south of the Temple.                        | The Farm is in a lower row, in any column                      |
+| The Fort touches (does not touch) the Windmill.                     | The two share an edge (or do not)                              |
+| The Shipwreck shares (does not share) a column with the Lighthouse. | Same column, or same row for the row form (or not)             |
+| The Well lies between the Mine and the Farm, in one row or column.  | All three on one row or column, the Well strictly between      |
+| No landmark stands west of the Well.                                | No other landmark is in a column further west                  |
 
-Lighthouse, Harbor and Shipwreck always stand on the coast, so none of them ever gets an inland
-clue. You never need that rule to solve an island; it only keeps the map sensible.
+Lighthouse, Harbor and Shipwreck always stand on the coast, so none of them ever gets a "stands on
+no shore" clue. You never need that rule to solve an island; it only keeps the map sensible.
 
 **Charting.** When every clue is lit, a Chart it button appears. The server checks your chart
 against the stored solution and records your time. The result screen shows your time, corrections,
@@ -356,7 +358,7 @@ post a practice island".
 | `npm run deploy`     | Type check, lint, then `devvit upload` (a private upload, not a publish)              |
 | `npm run launch`     | Disabled on purpose. The app is not published before judging ends on 2026-12-17.      |
 
-**Tests.** 850 Vitest tests in 40 files: 354 for the shared puzzle module (table-driven tests per
+**Tests.** 853 Vitest tests in 40 files: 354 for the shared puzzle module (table-driven tests per
 clue type, sentence templates, solver fixtures with known solution and round counts, and a
 randomized cross-check of the two solvers), 318 for the server (every service and route), 114 for
 the client (the reducer, components, the game hook and the cover), 57 for the generator (including

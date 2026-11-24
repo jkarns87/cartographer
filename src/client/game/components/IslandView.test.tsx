@@ -47,6 +47,31 @@ describe('IslandView layout', () => {
     expect(screen.getByRole('button', { name: 'row 1 column 1, water' }).className).not.toMatch(/bg-water/);
   });
 
+  it('draws the shoreline on the land sides that face water, with no canals between cells', () => {
+    render(<IslandView land={LAND} placements={{}} onCellTap={() => {}} />);
+    const frame = screen.getByRole('group', { name: 'Island' });
+    expect(frame.querySelector('.grid')?.className).not.toMatch(/\bgap-/);
+    const cls = (name: string) => screen.getByRole('button', { name }).className;
+    // (1,1) is the island's north-west corner: shore to the north and west only, square corners.
+    const corner = cls('row 2 column 2, land, empty');
+    expect(corner).toMatch(/border-t-2/);
+    expect(corner).toMatch(/border-l-2/);
+    expect(corner).not.toMatch(/border-r-2|border-b-2|rounded/);
+    // (2,2) has land on all four sides: only the hairline survey grid.
+    const inland = cls('row 3 column 3, land, empty');
+    expect(inland).toMatch(/border-land/);
+    expect(inland).not.toMatch(/border-[trbl]-2/);
+  });
+
+  it('counts the edge of the map as sea when drawing the shoreline', () => {
+    const edge = maskFromRows(['###...', '###...', '......', '......', '......', '......']);
+    render(<IslandView land={edge} placements={{}} onCellTap={() => {}} />);
+    const nw = screen.getByRole('button', { name: 'row 1 column 1, land, empty' }).className;
+    expect(nw).toMatch(/border-t-2/);
+    expect(nw).toMatch(/border-l-2/);
+    expect(nw).not.toMatch(/border-r-2|border-b-2/);
+  });
+
   it('rings the cells a hint points at', () => {
     render(
       <IslandView

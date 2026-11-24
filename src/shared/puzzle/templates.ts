@@ -32,7 +32,7 @@ export const clueParts = (clue: Clue): CluePart[] => {
         text(` stands on a ${SHORE_WORD[clue.dir]} shore.`),
       ];
     case 'inland':
-      return [text('The '), landmark(clue.a), text(' is inland.')];
+      return [text('The '), landmark(clue.a), text(' stands on no shore.')];
     case 'due':
       return [
         text('The '),
@@ -77,7 +77,7 @@ export const clueParts = (clue: Clue): CluePart[] => {
         landmark(clue.b),
         text(' and the '),
         landmark(clue.c),
-        text('.'),
+        text(', in one row or column.'),
       ];
     case 'extreme':
       return [

@@ -94,7 +94,7 @@ describe('GamePage', () => {
     render(<GamePage />);
     fireEvent.click(await screen.findByRole('button', { name: 'Terms' }));
     const dialog = screen.getByRole('dialog', { name: 'Terms' });
-    expect(dialog).toHaveTextContent('Inland');
+    expect(dialog).toHaveTextContent('Stands on no shore');
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });

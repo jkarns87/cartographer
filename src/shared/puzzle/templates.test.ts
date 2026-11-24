@@ -11,7 +11,7 @@ const TABLE: Array<{ clue: Clue; text: string }> = [
     clue: { type: 'shore', a: 'lighthouse', dir: 'N' },
     text: 'The Lighthouse stands on a north-facing shore.',
   },
-  { clue: { type: 'inland', a: 'temple' }, text: 'The Temple is inland.' },
+  { clue: { type: 'inland', a: 'temple' }, text: 'The Temple stands on no shore.' },
   {
     clue: { type: 'due', a: 'windmill', dir: 'E', b: 'well' },
     text: 'The Windmill is due east of the Well.',
@@ -52,7 +52,7 @@ const TABLE: Array<{ clue: Clue; text: string }> = [
   },
   {
     clue: { type: 'between', a: 'well', b: 'mine', c: 'farm' },
-    text: 'The Well lies between the Mine and the Farm.',
+    text: 'The Well lies between the Mine and the Farm, in one row or column.',
   },
   {
     clue: { type: 'extreme', a: 'well', dir: 'W' },
@@ -148,7 +148,7 @@ describe('clueText', () => {
     'uses the display name for $id',
     ({ id }) => {
       expect(clueText({ type: 'inland', a: id })).toBe(
-        `The ${LANDMARK_NAMES[id]} is inland.`
+        `The ${LANDMARK_NAMES[id]} stands on no shore.`
       );
     }
   );
@@ -183,7 +183,7 @@ describe('clueParts', () => {
       parts: [
         { text: 'The ' },
         { landmark: 'temple' },
-        { text: ' is inland.' },
+        { text: ' stands on no shore.' },
       ],
     },
     {
@@ -257,7 +257,7 @@ describe('clueParts', () => {
         { landmark: 'mine' },
         { text: ' and the ' },
         { landmark: 'farm' },
-        { text: '.' },
+        { text: ', in one row or column.' },
       ],
     },
     {

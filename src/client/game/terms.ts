@@ -9,7 +9,10 @@ export const TERMS: readonly Term[] = [
     meaning:
       'The cell directly north of the landmark is water, or the edge of the map. One cell can face water on several sides at once.',
   },
-  { term: 'Inland', meaning: 'Land on all four sides: north, east, south and west.' },
+  {
+    term: 'Stands on no shore',
+    meaning: 'Water on none of its four sides. A water corner does not count.',
+  },
   {
     term: 'Due east of',
     meaning: 'In the same row and further east. Due north or south means the same column.',
@@ -22,7 +25,8 @@ export const TERMS: readonly Term[] = [
   },
   {
     term: 'Lies between',
-    meaning: 'On the same row or column as both of the others, with one on each side.',
+    meaning:
+      'On the same row or column as both of the others, with one on each side. Diagonals do not count.',
   },
   {
     term: 'No landmark stands north of',
